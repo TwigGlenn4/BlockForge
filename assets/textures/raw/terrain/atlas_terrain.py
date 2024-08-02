@@ -7,8 +7,11 @@ from PIL import Image
 from math import ceil
 from os import path
 
-project_root = "/home/twig/GodotProjects/BlockheadsRenewedG"
-textures = project_root + "/assets/textures"
+# project_root = "/home/twig/GodotProjects/BlockheadsRenewedG"
+# textures = project_root + "/assets/textures"
+
+script_path = path.dirname(path.realpath(__file__))
+atlas_path = script_path + "/../../atlas"
 
 print("Generating terrain atlas...")
 
@@ -31,7 +34,6 @@ ATLAS_X = 16   # number of sprites per row
 
 ATLAS_Y = ceil(len(tiles) / ATLAS_X)
 
-
 atlas = Image.new('RGBA', (TILE_SIZE * ATLAS_X, TILE_SIZE * ATLAS_Y), (0,0,0,0) )
 
 print("Looping through tiles...")
@@ -45,8 +47,9 @@ for x in range(ATLAS_X):
     if i >= len(tiles):
       break
     
-    sprite_path = textures + "/raw/terrain/"+tiles[i]+".png"
-
+    sprite_path = script_path + "/" + tiles[i]+".png"
+    print(sprite_path)
+    
     if not path.isfile(sprite_path):
       print("Leaving sprite "+str(i)+" ("+tiles[i]+") blank due to nonexistent sprite...")
       i += 1
@@ -59,6 +62,6 @@ for x in range(ATLAS_X):
 
 print("Atlas generated with "+str(i)+" tiles, saving...")
 
-atlas.save(textures + "/atlas/terrain.png")
+atlas.save(atlas_path + "/terrain.png")
 
 print("Done!")
