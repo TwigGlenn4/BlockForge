@@ -119,10 +119,10 @@ static func coord_string( x:int, y:int ):
   return "("+str(x)+", "+str(y)+")"
 
 # Convert between block coordinates and godot pixel units
-static func pos_block_to_pixel( block_pos: Vector2 ):
-  return Vector2(block_pos.x*16 + 8, -block_pos.y*16 - 8)
-static func pos_pixel_to_block( block_pos: Vector2 ):
-  return Vector2((block_pos.x-8)/16.0, (-block_pos.x+8)/16.0)
+static func pos_block_to_pixel( block_pos: Vector2i ):
+  return Vector2i(block_pos.x*16 + 8, -block_pos.y*16 - 8)
+static func pos_pixel_to_block( block_pos: Vector2i ):
+  return Vector2i((block_pos.x-8)/16, (-block_pos.y+8)/16)
 
 # camera_to(): centers the camera on the given position at given zoom
 static func camera_to( cam: Camera2D, pos: Vector2, zoom=null ):

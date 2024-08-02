@@ -13,6 +13,9 @@ signal gentimer_start
 signal gentimer_stop
 var generation_working = true
 
+signal move_camera(block_pos)
+signal character_to_portal(portal_pos)
+
 
 const QUEUE_DELAY:int = 0; # min seconds between chunk generation starts
 var queue_timer:int = 0;
@@ -25,8 +28,8 @@ var queue_timer:int = 0;
 # Initalize persistent variables used on every chunk.
 func setup():
   # Noise
-  noise.stone = Helpers.create_noise( world.w_seed + 1, 0.003, 25 )
-  noise.dirt = Helpers.create_noise( world.w_seed + 2, 0.001, 10 )
+  noise.stone = Helpers.create_noise( world.w_seed + 1, 0.003, 3 )
+  noise.dirt = Helpers.create_noise( world.w_seed + 2, 0.001, 3 )
   noise.mountain = Helpers.create_noise( world.w_seed + 3, 0.002, 3 )
   noise.humidity = Helpers.create_noise( world.w_seed + 10, 0.002, 3 )
 
@@ -305,14 +308,16 @@ func _physics_process(delta):
     print("Portal will be at "+str(world.world_portal_pos.x)+" in chunk "+ str(world_portal_chunk))
     
     # Move camera to portal chunk
-    Helpers.camera_to(camera, Vector2(world.world_portal_pos.x, Chunk.HEIGHT/2))
+    move_camera.emit(Vector2i(world.world_portal_pos.x, Chunk.HEIGHT/2))
     print("camera moved to "+ str(Vector2(world.world_portal_pos.x, Chunk.HEIGHT/2)))
 
     # generate portal if y not set AND the chunk is generated.
   if world.world_portal_pos.y == 0 and world.chunks[world.world_portal_pos.x/Chunk.WIDTH].gen_state == 2:
     world.world_portal_pos.y = world.get_surface(world.world_portal_pos.x )
     gen_feature_portal( world.world_portal_pos.x, world.world_portal_pos.y, true )
-    Helpers.camera_to(camera, world.world_portal_pos)
+    move_camera.emit(world.world_portal_pos)
+    character_to_portal.emit(world.world_portal_pos)
+
     camera.generating_chunks_enabled = true
   if chunk_queue.size() == 0 and generation_working:
     gentimer_stop.emit()

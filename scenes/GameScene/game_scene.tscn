@@ -1,12 +1,14 @@
-[gd_scene load_steps=11 format=3 uid="uid://bkuecm30s0en7"]
+[gd_scene load_steps=13 format=3 uid="uid://bkuecm30s0en7"]
 
 [ext_resource type="Script" path="res://classes/world.gd" id="1_7un8v"]
 [ext_resource type="Texture2D" uid="uid://bcwqxm7o0po3x" path="res://assets/textures/atlas/terrain.png" id="1_r7ng2"]
 [ext_resource type="Texture2D" uid="uid://bwk8f7aw78c6v" path="res://assets/textures/atlas/portal.png" id="2_0q8pn"]
-[ext_resource type="Script" path="res://scenes/GameScene/manual_camera_mover.gd" id="3_o56cf"]
+[ext_resource type="Script" path="res://classes/interacter.gd" id="4_ws153"]
 [ext_resource type="Script" path="res://scenes/GameScene/GeneratorProgress.gd" id="5_4gwsg"]
 [ext_resource type="Script" path="res://classes/worldgen_v2.gd" id="6_s71n1"]
 [ext_resource type="Script" path="res://scenes/GameScene/WorldGenTimer.gd" id="7_8d45b"]
+[ext_resource type="Script" path="res://classes/character.gd" id="8_dcpno"]
+[ext_resource type="Texture2D" uid="uid://c145e8oi1b1dq" path="res://assets/textures/entity/character.png" id="8_rfaf3"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_omqh2"]
 texture = ExtResource("2_0q8pn")
@@ -46,10 +48,9 @@ format = 2
 layer_0/name = "Foreground"
 
 [node name="Camera2D" type="Camera2D" parent="World"]
-position = Vector2(-331, -3676)
 scale = Vector2(0.5, 0.5)
 zoom = Vector2(0.1, 0.1)
-script = ExtResource("3_o56cf")
+script = ExtResource("4_ws153")
 
 [node name="Control" type="Control" parent="World/Camera2D"]
 visible = false
@@ -76,8 +77,18 @@ script = ExtResource("5_4gwsg")
 [node name="WorldGen" type="Node" parent="World"]
 script = ExtResource("6_s71n1")
 
-[node name="WorldGenTimer" type="Node" parent="."]
+[node name="WorldGenTimer" type="Node" parent="World/WorldGen"]
 script = ExtResource("7_8d45b")
 
-[connection signal="gentimer_start" from="World/WorldGen" to="WorldGenTimer" method="_timer_start"]
-[connection signal="gentimer_stop" from="World/WorldGen" to="WorldGenTimer" method="_timer_stop"]
+[node name="Character" type="Node2D" parent="World"]
+script = ExtResource("8_dcpno")
+
+[node name="Sprite2D" type="Sprite2D" parent="World/Character"]
+z_index = 1
+texture = ExtResource("8_rfaf3")
+offset = Vector2(0, -8)
+
+[connection signal="character_to_portal" from="World/WorldGen" to="World/Character" method="_go_to_portal"]
+[connection signal="gentimer_start" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_start"]
+[connection signal="gentimer_stop" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_stop"]
+[connection signal="move_camera" from="World/WorldGen" to="World/Camera2D" method="_move_to_block"]
