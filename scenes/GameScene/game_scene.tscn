@@ -1,0 +1,83 @@
+[gd_scene load_steps=11 format=3 uid="uid://bkuecm30s0en7"]
+
+[ext_resource type="Script" path="res://classes/world.gd" id="1_7un8v"]
+[ext_resource type="Texture2D" uid="uid://bcwqxm7o0po3x" path="res://assets/textures/atlas/terrain.png" id="1_r7ng2"]
+[ext_resource type="Texture2D" uid="uid://bwk8f7aw78c6v" path="res://assets/textures/atlas/portal.png" id="2_0q8pn"]
+[ext_resource type="Script" path="res://scenes/GameScene/manual_camera_mover.gd" id="3_o56cf"]
+[ext_resource type="Script" path="res://scenes/GameScene/GeneratorProgress.gd" id="5_4gwsg"]
+[ext_resource type="Script" path="res://classes/worldgen_v2.gd" id="6_s71n1"]
+[ext_resource type="Script" path="res://scenes/GameScene/WorldGenTimer.gd" id="7_8d45b"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_omqh2"]
+texture = ExtResource("2_0q8pn")
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_t2i5t"]
+texture = ExtResource("1_r7ng2")
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+0:0/0 = 0
+6:0/0 = 0
+5:0/0 = 0
+7:0/0 = 0
+8:0/0 = 0
+9:0/0 = 0
+10:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_hv4oi"]
+terrain_set_0/mode = 0
+sources/5 = SubResource("TileSetAtlasSource_t2i5t")
+sources/0 = SubResource("TileSetAtlasSource_omqh2")
+
+[node name="GameScene" type="Node2D"]
+
+[node name="World" type="Node" parent="."]
+script = ExtResource("1_7un8v")
+
+[node name="TileMap" type="TileMap" parent="World"]
+texture_filter = 1
+tile_set = SubResource("TileSet_hv4oi")
+format = 2
+layer_0/name = "Foreground"
+
+[node name="Camera2D" type="Camera2D" parent="World"]
+position = Vector2(-331, -3676)
+scale = Vector2(0.5, 0.5)
+zoom = Vector2(0.1, 0.1)
+script = ExtResource("3_o56cf")
+
+[node name="Control" type="Control" parent="World/Camera2D"]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = -576.0
+offset_top = -324.0
+offset_right = 576.0
+offset_bottom = 324.0
+
+[node name="GeneratorProgress" type="ProgressBar" parent="World/Camera2D/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -842.0
+offset_bottom = -586.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_4gwsg")
+
+[node name="WorldGen" type="Node" parent="World"]
+script = ExtResource("6_s71n1")
+
+[node name="WorldGenTimer" type="Node" parent="."]
+script = ExtResource("7_8d45b")
+
+[connection signal="gentimer_start" from="World/WorldGen" to="WorldGenTimer" method="_timer_start"]
+[connection signal="gentimer_stop" from="World/WorldGen" to="WorldGenTimer" method="_timer_stop"]

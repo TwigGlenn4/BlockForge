@@ -1,0 +1,139 @@
+https://trello.com/b/nR7499xf/blockheadsrenewedg
+
+
+X Add leaves to trees
+  generate triangle on each side
+  skip if obstructed.
+
+/ parallelize chunk building
+  X make chunk building threaded
+  _ fix threaded chunk gen blocking main thread
+
+X non-blocking serial generation
+  X keep order, just make sure we can still move around while regenerating, so we can update progressbar in final
+
+X world generation progress bar?
+  X figure out godot UI
+  X just completion based on # chunks done and feature progress
+
+_ ocean and lake generation (Low priority, i don't wanna deal with water physics yet)
+  _ find minimums
+  _ check minimums for width at random height
+  _ if width too big, skip
+  _ else, candidate for water
+  _ fill water
+  _ run before tree generation
+
+X make growable tiles list?
+    dirt, grass, snow
+    make is_growable to check
+    only grow trees on growable tiles.
+
+X Make forest density and height a function of humidity
+
+X Implement minimum tree height
+  X clamp tree height with min and max
+
+X Cave generation
+  X Noise caves
+  X Multiple layers of noise?
+  X Bigger caves deeper?
+
+_ Ore generation
+  X parameterized ore gen
+  _ ways to set length and thickness
+  _ also want to use this system for limestone
+  X include replacable system, oil will gen in limestone, ores in stone
+
+/ Refactor world class
+  X pull contents out of save_data dict
+  _ add generate method, allow it to be made non-static for future mainmenu world list
+  X move some world_generator.gd funcs to World ( place_tile(), get_tile(), get_surface() )
+
+_ Add skybox / background
+  _ simple png for now
+
+Longer Roadmap:
+
+_ Redo worldgen: generate only as needed
+	_ Screen size + safe space
+	_ Square chunks (16x16)
+	_ Just keep noise generator referenced while world open, save seed to keep generation conistent through runs
+  _ Can I use offsets on one generator and somehow add scale (mountains, biomes)
+
+_ Data driven blocks & items
+  _ namespace:(block|item|texture|loot_table|recipe|translation)/path/item_name
+  _ Json data, png textures
+  _ block
+    _ Data driven: texture, loot_table
+		_ Static: layer:string(solid, foreground), required_tool_type, hardness(break_time=hardness/tool_speed), luminance, transparency?, on_click_function, on_break_function(break other in multiblock, etc), tick_frequency(int =0:never, 1-99:random_by_percent, >=100:every_tick)(goes into world arrays.)
+  _ item
+		_ Data driven: texture
+		_ Static: item_type(tool|consumable|material|placable|armor), max_stack 
+		_ Optional: tool_data{tool_type, tool_speed, max_durability, attack_damage}, on_click_function, block, wearable_data:{armor_rating, temperature_resist, max_durability, effect?}
+	_ texture
+  	_ png format, square
+		_ detect resolution?
+		_ texture atlas for animated, somehow define animation time.
+	_ loot_table
+		_ block 
+      _ correct_tool:array[item_stack]
+      _ wrong_tool:array[item_stack]
+    _ entity
+      _ weapon:array[{weight:int, items:array[item_stack, item_stack]}]
+      _ bare_hand:array[{weight:int, items:array[item_stack, item_stack]}]
+      _ natural:array[{weight:int, items:array[item_stack, item_stack]}]
+    _ gameplay (fishing, etc)
+      _ array[{weight:int, items:array[item_stack, item_stack]}]
+  _recipe
+    _ workstation
+    _ time
+    _ ingredients:array[item_stack]
+    _ results:array[item_stack]
+  _ translation
+    _ en_us.json
+    _ json array
+    _ "namespace:(block|item)/path/item_name":"Item Name"
+    _ generate translation array with all translations for set lang, default + modded, overwrite when needed
+    _ use key if no match is found in all translation lists, log incident.
+
+_ API for functional blocks
+	_ inspired by minetest: default game has similar api to mods, can be used as examples.
+
+_ Map when zoomed out
+	_ only really needed if rendering the whole world is expensive (likely)
+	_ maybe add map_color to block data?
+  _ Switch world/map view at zoom value
+  _ Map is 1px per block image, world sized, update only when relevant
+  _ Disable world interactions when in map view
+
+_ item_stacks
+  _ item_id(namespace:path/item)
+  _ count
+  _ more data when relevant (chest inventory)
+
+_ Characters
+  _ inventory, location, stats{health, hunger, exhaustion, speed(?)}, queued_jobs:array
+  _ capsule placeholder
+  _ simple model (3d or 2d?)
+
+_ Pathfinding
+  _ how??
+  _ where??
+  _ placeholder direct linear movement from A -> B?
+
+User Interfaces
+
+Save & Load world
+  _ General data
+    _ data_version:int first item in data
+    _ world_data (name, seed, portal_pos, etc)
+    _ worldgen_settings
+    _ gamerules:dict {crafting_time:int_percent(100% default), enemy_damage_percent:int_percent(>=0, percent, don't attack when 0)}
+    _ modlist
+  _ Compressed data
+    _ choose a format! Json? NBT? Keep readable during debugging
+    _ saved_chunks
+    _ characters
+    _ tick_locations_every:array
+    _ tick_locations_random:array

@@ -1,0 +1,11 @@
+WorldGenerator
+	[TIMER]: 10301.501ms.
+	[TIMER]: 9653.456ms.
+	[TIMER]: 10390.478ms.
+	[TIMER]: 10204.071ms.
+	[TIMER]: 9728.047ms.
+
+WorldGenV2
+	[TIMER]: 7424.353ms.
+	[TIMER]: 7363.329ms.
+	[TIMER]: 7384.070ms.
