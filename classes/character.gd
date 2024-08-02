@@ -26,6 +26,6 @@ func _process(delta):
   current_pos = Helpers.pos_pixel_to_block(position)
   
 
-func _go_to_portal(pixel_pos:Vector2):
+func _set_target_pos(pixel_pos:Vector2):
   print("Targeting character to "+str(pixel_pos))
   target_pos = pixel_pos

@@ -88,6 +88,7 @@ z_index = 1
 texture = ExtResource("8_rfaf3")
 offset = Vector2(0, -8)
 
+[connection signal="character_to_portal" from="World/WorldGen" to="World/Character" method="_set_target_pos"]
 [connection signal="character_to_portal" from="World/WorldGen" to="World/Character" method="_go_to_portal"]
 [connection signal="gentimer_start" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_start"]
 [connection signal="gentimer_stop" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_stop"]

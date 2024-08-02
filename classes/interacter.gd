@@ -70,6 +70,13 @@ func _input(event):
     _move_to_block(world.world_portal_pos)
 
   
+  if Input.is_action_just_pressed("click"):
+    var click_pos:Vector2 = get_global_mouse_position()
+    print("click_pos = "+str(click_pos))
+
+    var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
+    print("block_pos = "+str(block_pos))
+    selected_character._set_target_pos(block_pos)
 
 
 func _move_to_block(block_pos:Vector2i):
