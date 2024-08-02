@@ -37,7 +37,7 @@ func _process(delta):
     position = position.lerp(lerp_target, lerp_timer)
     # print("lerped to "+str(position))
     if position == Vector2(lerp_target):
-      print("lerp done, delta = "+str(delta))
+      # print("lerp done, delta = "+str(delta))
       lerp_timer = 0
       lerp_target = Vector2i(-1,-1)
 
@@ -68,14 +68,16 @@ func _input(event):
   
   if Input.is_action_pressed("look_at_portal"): # centers camera on bottom block of portal anim
     _move_to_block(world.world_portal_pos)
-
+  if Input.is_action_pressed("look_at_character"):
+    # print("moving to character")
+    _move_to_block(selected_character.current_pos)
   
   if Input.is_action_just_pressed("click"):
     var click_pos:Vector2 = get_global_mouse_position()
-    print("click_pos = "+str(click_pos))
+    # print("click_pos = "+str(click_pos))
 
     var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
-    print("block_pos = "+str(block_pos))
+    # print("Clicked at "+str(block_pos))
     selected_character._set_target_pos(block_pos)
 
 
