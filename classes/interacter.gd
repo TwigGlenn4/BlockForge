@@ -78,7 +78,7 @@ func _input(event):
 
     var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
     # print("Clicked at "+str(block_pos))
-    selected_character._set_target_pos(block_pos)
+    selected_character._add_job(DataJob.new(block_pos, DataJob.TYPE.GOTO))
 
 
 func _move_to_block(block_pos:Vector2i):
