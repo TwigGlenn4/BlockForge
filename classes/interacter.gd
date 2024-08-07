@@ -2,7 +2,7 @@ extends Camera2D
 
 const PAN_SPEED = 10
 const ZOOM_SPEED = 0.05
-const LERP_TIME = 0.5
+const LERP_TIME = 1
 
 @onready var world = get_node("/root/GameScene/World")
 @onready var selected_character = get_node("/root/GameScene/World/Character")

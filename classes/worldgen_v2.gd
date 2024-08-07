@@ -318,7 +318,7 @@ func _physics_process(delta):
     move_camera.emit(world.world_portal_pos)
     character_to_portal.emit(world.world_portal_pos)
 
-    camera.generating_chunks_enabled = true
+    # camera.generating_chunks_enabled = true
   if chunk_queue.size() == 0 and generation_working:
     gentimer_stop.emit()
     generation_working = false

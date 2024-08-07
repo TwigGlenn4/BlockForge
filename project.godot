@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="BlockheadsRenewedG"
+config/name="BlockForge"
 run/main_scene="res://scenes/GameScene/game_scene.tscn"
 config/features=PackedStringArray("4.2", "GL Compatibility")
 config/icon="res://icon.svg"
