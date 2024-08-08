@@ -8,7 +8,7 @@ enum TYPE {
   CRAFT  # data=recipe   data2=count
 }
 
-var pos: Vector2i = Vector2i(-1,-1)
+var pos: Vector2i = Vector2i(-1,-1) # block position of job
 var type: TYPE
 var data: String
 var data2: int

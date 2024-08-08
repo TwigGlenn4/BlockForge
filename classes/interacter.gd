@@ -55,12 +55,13 @@ func _process(delta):
 
 # Zoom controls in _input to properly accept mouse wheel input
 func _input(event):
+  var new_zoom: Vector2 = zoom
   if event.is_action_pressed("camera_zoom_in"):
-    zoom += Vector2(ZOOM_SPEED, ZOOM_SPEED)
+    new_zoom += Vector2(ZOOM_SPEED, ZOOM_SPEED)
   if event.is_action_pressed("camera_zoom_out"):
-    zoom += Vector2(-ZOOM_SPEED, -ZOOM_SPEED)
+    new_zoom += Vector2(-ZOOM_SPEED, -ZOOM_SPEED)
   
-  zoom = zoom.clamp(Vector2(0.02, 0.02), Vector2(3,3))
+  zoom = new_zoom.clamp(Vector2(0.02, 0.02), Vector2(3,3))
   scale = Vector2(1 / zoom.x, 1 / zoom.y)
 
   if event.is_action_pressed("print_pointer_location"):
@@ -73,6 +74,8 @@ func _input(event):
     _move_to_block(selected_character.current_pos)
   
   if Input.is_action_just_pressed("click"):
+    # print("zoom = "+str(zoom))
+    
     var click_pos:Vector2 = get_global_mouse_position()
     # print("click_pos = "+str(click_pos))
 
