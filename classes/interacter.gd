@@ -81,7 +81,38 @@ func _input(event):
 
     var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
     # print("Clicked at "+str(block_pos))
-    selected_character._add_job(DataJob.new(block_pos, DataJob.TYPE.GOTO))
+
+    # ===== pathfind only works on surface, will be adapted to trees shortly
+    var y:int = world.get_surface(block_pos.x) # pin to surface of earth
+    block_pos.y = y
+    
+    # ===== PATHFIND ==== This method needs to be gathered into pathfinding.gd
+    var method: Path.Movement
+    var current_pos:Vector2i = selected_character.current_pos
+    var dx:int = sign(block_pos.x - current_pos.x)
+    # print("current ",str(current_pos))
+    # print("target ",str(block_pos))
+    var dy:int
+    while(current_pos != block_pos): # and c < 20):
+      current_pos.x += dx
+      y = world.get_surface(current_pos.x)
+      dy = y - current_pos.y
+      current_pos.y += dy
+      
+      if abs(dy) > 1:
+        method = Path.Movement.CLIMB
+      elif abs(dy) == 1:
+        method = Path.Movement.HOP
+      else:
+        method = Path.Movement.WALK 
+        # similar for but lookup blocks for climb in trees, blocks around for CLIMB_RIGHT, blocks above for CRAWL
+      
+      selected_character._add_job(DataJob.new(current_pos, DataJob.TYPE.GOTO))
+      # should add method as another parameter in TYPE.GOTO
+    # ===== END PATHFIND    
+
+    # ===== might want to change above to STEPTO, then have GOTO at end, to activate whatever ???     
+    # selected_character._add_job(DataJob.new(block_pos, DataJob.TYPE.GOTO))
 
 
 func _move_to_block(block_pos:Vector2i):

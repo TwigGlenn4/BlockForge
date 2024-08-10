@@ -129,3 +129,8 @@ static func camera_to( cam: Camera2D, pos: Vector2, zoom=null ):
   cam.position = pos_block_to_pixel(pos)
   if zoom != null and typeof(zoom) == Variant.Type.TYPE_VECTOR2:
     cam.zoom = zoom
+
+
+static func path_to(from: Vector2, to: Vector2):
+  pass
+  
