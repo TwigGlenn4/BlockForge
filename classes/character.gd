@@ -9,7 +9,7 @@ var job_queue: Array[DataJob] = []
 var job_active: DataJob = DataJob.new()
 
 var stats = {
-  speed = 100.0 #   Character speed in blocks per second.
+  speed = 10.0 #   Character speed in blocks per second.
 }
 
 

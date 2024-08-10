@@ -1,8 +1,8 @@
 class_name DataTexture
 
-# var UNDEFINED = DataTexture.new("undefined")
+static var UNDEFINED = DataTexture.new("undefined")
 
-var name:String = ""
+var name:String
 var atlas:int = 0
 var pos:Vector2i = Vector2i(0, 0)
 
