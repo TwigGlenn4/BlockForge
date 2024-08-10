@@ -1,8 +1,9 @@
-[gd_scene load_steps=13 format=3 uid="uid://bkuecm30s0en7"]
+[gd_scene load_steps=15 format=3 uid="uid://bkuecm30s0en7"]
 
 [ext_resource type="Script" path="res://classes/world.gd" id="1_7un8v"]
 [ext_resource type="Texture2D" uid="uid://bcwqxm7o0po3x" path="res://assets/textures/atlas/terrain.png" id="1_r7ng2"]
 [ext_resource type="Texture2D" uid="uid://bwk8f7aw78c6v" path="res://assets/textures/atlas/portal.png" id="2_0q8pn"]
+[ext_resource type="Texture2D" uid="uid://5a1e7ix4mi3b" path="res://assets/textures/atlas/undefined.png" id="2_66lj5"]
 [ext_resource type="Script" path="res://classes/interacter.gd" id="4_ws153"]
 [ext_resource type="Script" path="res://scenes/GameScene/GeneratorProgress.gd" id="5_4gwsg"]
 [ext_resource type="Script" path="res://classes/worldgen_v2.gd" id="6_s71n1"]
@@ -10,12 +11,9 @@
 [ext_resource type="Script" path="res://classes/character.gd" id="8_dcpno"]
 [ext_resource type="Texture2D" uid="uid://c145e8oi1b1dq" path="res://assets/textures/entity/character.png" id="8_rfaf3"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_omqh2"]
-texture = ExtResource("2_0q8pn")
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iv25o"]
+texture = ExtResource("2_66lj5")
 0:0/0 = 0
-1:0/0 = 0
-0:1/0 = 0
-1:1/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_t2i5t"]
 texture = ExtResource("1_r7ng2")
@@ -31,10 +29,18 @@ texture = ExtResource("1_r7ng2")
 9:0/0 = 0
 10:0/0 = 0
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_omqh2"]
+texture = ExtResource("2_0q8pn")
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+
 [sub_resource type="TileSet" id="TileSet_hv4oi"]
 terrain_set_0/mode = 0
-sources/5 = SubResource("TileSetAtlasSource_t2i5t")
-sources/0 = SubResource("TileSetAtlasSource_omqh2")
+sources/2 = SubResource("TileSetAtlasSource_omqh2")
+sources/1 = SubResource("TileSetAtlasSource_t2i5t")
+sources/0 = SubResource("TileSetAtlasSource_iv25o")
 
 [node name="GameScene" type="Node2D"]
 

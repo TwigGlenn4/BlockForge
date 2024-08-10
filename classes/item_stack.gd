@@ -21,7 +21,7 @@ func init( item_name_string:String ):
     tracked = false
 
 
-func add_items( num:int ) -> int:
+func add_items( num:int ) -> int: # adds items and returns remainder to add if stack is full.
   if tracked:
     print("[ItemStack.add_items(%d)]: %s is tracked. Use ItemStack.add_tracked_item( item_name:DataItem )" % [num, item_name])
     return 0
@@ -39,4 +39,23 @@ func add_items( num:int ) -> int:
   var remainder = count + num - stack_max
   count = stack_max
   return remainder
+
+
+func remove_items( num:int ) -> bool: # removes items and returns remainder to remove if stack is empty
+  if tracked:
+    print("[ItemStack.remove_items(%d)]: %s is tracked. Use ItemStack.remove_tracked_item( item_name:DataItem )" % [num, item_name])
+    return 0
+
+  if num < 0:
+    print("[ItemStack.remove_items(%d)]: Can't remove negative items. Use ItemStack.add_items( num:int )" % [num])
+    return 0
+  
+  if count <= num: # not enough items
+    var remainder = num - count
+    count = 0
+    return remainder
+  
+  # count > num
+  count -= num
+  return 0
 

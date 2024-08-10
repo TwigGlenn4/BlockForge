@@ -19,9 +19,9 @@ func has(item_name:String, count:int = 1):
 
 
 # currently assuming items will be referred to with strings, likely to change.
-func add_item( item_name:String, count:int = 1) -> int: 
+func add_items( item_name:String, count:int = 1) -> int: 
   for stack:ItemStack in contents: # for every stack in contents
-    if stack.item == item_name:    # if the item name matches, increment num_found by the number of items in the stack
+    if stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
 
       count = stack.add_items(count)
 
@@ -29,3 +29,25 @@ func add_item( item_name:String, count:int = 1) -> int:
         return 0
 
   return count # return count if there are items that could not fit into the inventory.
+
+
+func remove_items( item_name:String, count:int = 1) -> int: 
+  for stack:ItemStack in contents: # for every stack in contents
+    if stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
+
+      count = stack.remove_items(count)
+
+      if count <= 0: # count should only ever be == 0. <= is safety
+        return 0
+
+  return count # return count if there are items that could not fit into the inventory.
+
+
+func count_items( item_name:String ) -> int:
+  var count = 0;
+  for stack:ItemStack in contents:
+    if stack.item_name == item_name:
+      count += stack.count
+
+  return count
+

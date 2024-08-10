@@ -11,12 +11,12 @@ var surface_level = []
 var humidity = []
 
 static var tiles = {
-  stone = DataTile.tile("bh:stone"),
-  cobblestone = DataTile.tile("bh:cobblestone"),
-  dirt = DataTile.tile("bh:dirt"),
-  grass = DataTile.tile("bh:grass"),
-  snow = DataTile.tile("bh:snow"),
-  sand = DataTile.tile("bh:sand"),
+  stone = DataTile.tile("blockforge:stone"),
+  cobblestone = DataTile.tile("blockforge:cobblestone"),
+  dirt = DataTile.tile("blockforge:dirt"),
+  grass = DataTile.tile("blockforge:grass"),
+  snow = DataTile.tile("blockforge:snow"),
+  sand = DataTile.tile("blockforge:sand"),
 }
 
 # Store chunk generation progress

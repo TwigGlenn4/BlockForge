@@ -12,6 +12,7 @@ var stats = {
   speed = 10.0 #   Character speed in blocks per second.
 }
 
+var inventory: Inventory
 
 # Called when the node enters the scene tree for the first time.
 func _ready():

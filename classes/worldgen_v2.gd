@@ -55,7 +55,7 @@ func queue_chunk( chunk_num:int, target_state:int):
 # feature_tree: build a tree at (x,y)
 func gen_feature_tree(x, y, height):
   # print("Placing tree at ("+str(x)+", "+str(y)+").")
-  var trunk_replacable = [DataTile.UNDEFINED, DataTile.tile("bh:leaves")]
+  var trunk_replacable = [DataTile.UNDEFINED, DataTile.tile("blockforge:leaves")]
   # verify no blockages
   for h in height:
     if world.tile_matches(x, y+h, trunk_replacable) == false:
@@ -63,8 +63,8 @@ func gen_feature_tree(x, y, height):
       return false
   
   # save tiles to prevent repeat hash lookups
-  var tile_log: DataTile = DataTile.tile("bh:log")
-  var tile_leaves: DataTile = DataTile.tile("bh:leaves")
+  var tile_log: DataTile = DataTile.tile("blockforge:log")
+  var tile_leaves: DataTile = DataTile.tile("blockforge:leaves")
 
   # place trunk
   for h in height:
@@ -95,13 +95,13 @@ func gen_feature_portal( x, y, is_natural=false):
 
   #place base
   if is_natural:
-    world.place_tile( x, y, DataTile.tile("bh:portal_base_stone"))
+    world.place_tile( x, y, DataTile.tile("blockforge:portal_base_stone"))
   else:
-    world.place_tile( x, y, DataTile.tile("bh:portal_base_cobble"))
+    world.place_tile( x, y, DataTile.tile("blockforge:portal_base_cobble"))
   
   # place portal
-  world.place_tile( x, y+1, DataTile.tile("bh:portal_btm"))
-  world.place_tile( x, y+2, DataTile.tile("bh:portal_top"))
+  world.place_tile( x, y+1, DataTile.tile("blockforge:portal_btm"))
+  world.place_tile( x, y+2, DataTile.tile("blockforge:portal_top"))
   print("Portal placed at: " + Helpers.coord_string(x, y) )
   return true
 
@@ -264,7 +264,7 @@ func generate_chunk( n: int, target_state: int = 3):
     print("  Chunk %d: Trees done in %.3fms." % [n, (timer_trees-timer_s3)/1000.0])
 
     # Ores
-    var num_ores: int = gen_steps_ores(n, "bh:ore_tin", WG_Settings.CAVE_TUBE_REPLACABLE, 256, -0.5, 0.12, 1.5)
+    var num_ores: int = gen_steps_ores(n, "blockforge:ore_tin", WG_Settings.CAVE_TUBE_REPLACABLE, 256, -0.5, 0.12, 1.5)
 
     var timer_ores = Time.get_ticks_usec()
     print("  Chunk %d: %d ores placed in %.3fms." % [n, num_ores, (timer_ores-timer_trees)/1000.0])
