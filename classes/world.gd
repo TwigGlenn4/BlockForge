@@ -41,6 +41,8 @@ func get_chunk_at_x( gx: int ):
     return 
   return chunks[chunk_num]
 
+func get_tile_v( v: Vector2i ):
+  return get_tile(v.x, v.y)
 
 # get_tile(): returns the tile stored in chunk.grid at given global coordinates.
 func get_tile( gx: int, gy: int ):

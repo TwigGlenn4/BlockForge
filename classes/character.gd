@@ -39,7 +39,7 @@ func _physics_process(_delta):
   if (not job_queue.is_empty()) and job_active.type == DataJob.TYPE.NONE: # if job queue contains job and there is no active job, go to next job
     job_active = job_queue.pop_front()
     target_pos = job_active.pos
-    print("Activating "+job_active._to_string())
+    #print("Activating "+job_active._to_string())
 
   current_pos = Helpers.pos_pixel_to_block(position)
   
@@ -47,7 +47,7 @@ func _physics_process(_delta):
 
 func _add_job(job:DataJob):
   job_queue.push_back(job)
-  print("added "+str(job._to_string()))
+  #print("added "+str(job._to_string()))
 
 
 
