@@ -131,6 +131,4 @@ static func camera_to( cam: Camera2D, pos: Vector2, zoom=null ):
     cam.zoom = zoom
 
 
-static func path_to(from: Vector2, to: Vector2):
-  pass
   

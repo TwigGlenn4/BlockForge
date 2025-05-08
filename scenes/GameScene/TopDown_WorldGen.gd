@@ -14,8 +14,8 @@ var world_seed = 954645
 var random = 0
 
 # Noise arrays
-var altitude = {}
-var biome = {}
+var noise_altitude = {}
+var noise_biome = {}
 
 # Noise Instance
 var noise_generator = FastNoiseLite.new()
@@ -43,9 +43,9 @@ var biomes = {
 # generate_noise( frequency, octaves, seed )
 #	frequency: higher makes more fine details, lower is smoother
 #	octaves: how many layers are used
-#	seed: the numerical seed to use for random generation
-func generate_noise( freq, oct, seed ):
-	noise_generator.seed = seed
+#	noise_seed: the numerical seed to use for random generation
+func generate_noise( freq, oct, noise_seed ):
+	noise_generator.seed = noise_seed
 	noise_generator.frequency = freq
 	noise_generator.fractal_octaves = oct
 	noise_generator.noise_type = FastNoiseLite.TYPE_SIMPLEX
@@ -66,27 +66,27 @@ func choose_tile( data, biome ):
 			return tile
 
 # Generator functions
-func generate_tiles(width, height):
-	for x in range(height):
-		for y in range(width):
+func generate_tiles(rect_width, rect_height):
+	for x in range(rect_height):
+		for y in range(rect_width):
 			var pos = Vector2i(x, y)
 			var pos_float = Vector2(pos.x, pos.y)
-			var alt = altitude[pos_float]
+			var alt = noise_altitude[pos_float]
 			
 			if alt < 0.2:
-				biome[pos_float] = "ocean"
+				noise_biome[pos_float] = "ocean"
 				var tile_pos = tiles[choose_tile(biomes, "ocean")]
 				tilemap.set_cell(0, pos, 5, tile_pos)
 			elif alt < 0.22:
-				biome[pos_float] = "beach"
+				noise_biome[pos_float] = "beach"
 				var tile_pos = tiles[choose_tile(biomes, "beach")]
 				tilemap.set_cell(0, pos, 5, tile_pos)
 			elif alt < 0.7:
-				biome[pos_float] = "forest"
+				noise_biome[pos_float] = "forest"
 				var tile_pos = tiles[choose_tile(biomes, "forest")]
 				tilemap.set_cell(0, pos, 5, tile_pos)
 			elif alt >= 0.7:
-				biome[pos_float] = "mountain"
+				noise_biome[pos_float] = "mountain"
 				var tile_pos = tiles[choose_tile(biomes, "mountain")]
 				tilemap.set_cell(0, pos, 5, tile_pos)
 
@@ -97,13 +97,13 @@ func _input( event ):
 		world_seed = randi_range(0, 9999999)
 		print("Seed is now " + str(world_seed) + ". Regenerating...")
 		#get_tree().reload_current_scene()
-		altitude = generate_noise( 0.00050, 25, world_seed)
+		noise_altitude = generate_noise( 0.00050, 25, world_seed)
 		generate_tiles( width, height )
 
 # Main function START
 func _ready():
 	randomize()
-	altitude = generate_noise( 0.00050, 25, world_seed)
+	noise_altitude = generate_noise( 0.00050, 25, world_seed)
 	generate_tiles( width, height )
 	
 	# Main function END

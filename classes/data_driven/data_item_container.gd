@@ -1,5 +1,5 @@
 extends DataItem
-class_name DataItemPlaceable
+class_name DataItemContainer
 
 
 
