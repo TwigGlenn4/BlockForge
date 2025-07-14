@@ -5,12 +5,12 @@ static var all_items = {}
 static var UNDEFINED = DataItem.new("undefined", DataTexture.UNDEFINED)
 
 enum ITEM_TYPES {
-	MATERIAL = 0,   # Has no functionality of its own, may be a crafting ingredient
-	PLACEABLE = 1,  # Can be placed as a tile
-	CONSUMABLE = 2, # Can be used as an item (food, potions?, etc)
-	ARMOR = 3,      # Is armor
-	TOOL = 4,       # Is a tool
-	CONTAINER = 5,
+	SIMPLE,   # Has no functionality of its own, may be a crafting ingredient
+	PLACEABLE,  # Can be placed as a tile
+	CONSUMABLE, # Can be used as an item (food, potions?, etc)
+	ARMOR,      # Can go in correct armor slot and has durability
+	TOOL,       # Has durability
+	CONTAINER,  # Tracks items inside the container
 }
 
 var name: String
@@ -22,7 +22,7 @@ func _init(item_name:String, item_texture:DataTexture = DataTexture.UNDEFINED, i
 	name = item_name
 	texture = item_texture
 	stack_max = item_stack_max
-	item_type = ITEM_TYPES.MATERIAL
+	item_type = ITEM_TYPES.SIMPLE
 	all_items[name] = self
 
 
