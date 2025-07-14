@@ -13,7 +13,7 @@ var tile: DataTile
 
 
 func _init(item_name:String, item_tile:DataTile, item_texture:DataTexture = DataTexture.UNDEFINED, item_stack_max:int = 99):
-  super(item_name, item_texture, item_stack_max)
-  item_type = ITEM_TYPES.PLACEABLE
+	super(item_name, item_texture, item_stack_max)
+	item_type = ITEM_TYPES.PLACEABLE
 
-  tile = item_tile
+	tile = item_tile

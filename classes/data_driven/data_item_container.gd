@@ -13,7 +13,7 @@ var inventory: Inventory
 
 
 func _init(item_name:String, item_inventory:Inventory, item_texture:DataTexture = DataTexture.UNDEFINED, item_stack_max:int = 99):
-  super(item_name, item_texture, item_stack_max)
-  item_type = ITEM_TYPES.CONTAINER
+	super(item_name, item_texture, item_stack_max)
+	item_type = ITEM_TYPES.CONTAINER
 
-  inventory = item_inventory
+	inventory = item_inventory
