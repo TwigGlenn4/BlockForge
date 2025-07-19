@@ -145,7 +145,8 @@ func gen_steps_trees( chunk_num ):
 	
 	var feature_trees = Helpers.noise_array_1d( noise.trees, Chunk.WIDTH, chunk_num*Chunk.WIDTH )
 	var tree_placement = Helpers.array_local_max(feature_trees)
-	var tree_height = Helpers.array_scale(feature_trees, WG_Settings.TREE_HEIGHT_MAX, WG_Settings.TREE_HEIGHT_MIN)
+	var tree_height = Helpers.array_scale(feature_trees, WG_Settings.TREE_HEIGHT_MAX, WG_Settings.TREE_HEIGHT_MIN) 
+	# need to include noise in the scale, so that the height is smoothish
 
 	
 	for x in Chunk.WIDTH:
