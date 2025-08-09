@@ -36,8 +36,8 @@ func write_to_tilemap( tilemap ):
 			var pos = Vector2i(x, y)
 			if( grid.has(pos) ):
 				var pos_tile = Vector2i(cx*WIDTH + x, -y)
-				# tilemap.set_cell(0, pos_tile, grid[pos].atlas, grid[pos].sprite )
-				tilemap.set_cell(0, pos_tile, grid[pos].texture.atlas, grid[pos].texture.pos )
+				# tilemap.set_cell(pos_tile, grid[pos].atlas, grid[pos].sprite )
+				tilemap.set_cell(pos_tile, grid[pos].texture.atlas, grid[pos].texture.pos )
 
 
 # place_tile_chunk(): Place a tile based on chunk coordinates. Should be slightly more performant than place_tile where chunk is already known.

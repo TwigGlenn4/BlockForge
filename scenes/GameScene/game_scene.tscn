@@ -47,11 +47,10 @@ sources/0 = SubResource("TileSetAtlasSource_iv25o")
 [node name="World" type="Node" parent="."]
 script = ExtResource("1_7un8v")
 
-[node name="TileMap" type="TileMap" parent="World"]
+[node name="Foreground" type="TileMapLayer" parent="World"]
 texture_filter = 1
+use_parent_material = true
 tile_set = SubResource("TileSet_hv4oi")
-format = 2
-layer_0/name = "Foreground"
 
 [node name="Camera2D" type="Camera2D" parent="World"]
 scale = Vector2(0.5, 0.5)

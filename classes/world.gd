@@ -10,14 +10,14 @@ var width: int = 4 # Width of world in chunks
 var width_tiles: int = width * Chunk.WIDTH # Width of world in tiles
 var chunks = [] # Array to be filled with chunks
 var world_portal_pos: Vector2i = Vector2i.ZERO # Location of the base of the World Portal
-var tilemap: TileMap 
+var tilemap: TileMapLayer 
 var worldgen: WorldGenV2
 
 
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	tilemap = get_node("/root/GameScene/World/TileMap")
+	tilemap = get_node("/root/GameScene/World/Foreground")
 	worldgen = get_node("/root/GameScene/World/WorldGen")
 	chunks.resize(width)
 
@@ -86,8 +86,8 @@ func place_tile( x: int, y: int , tile):
 	var pos_tile = Vector2i(chunk.cx*Chunk.WIDTH + lx, -y)
 
 	chunk.grid[pos] = tile
-	# tilemap.set_cell(0, pos_tile, tile.atlas, tile.pos )
-	tilemap.set_cell(0, pos_tile, tile.texture.atlas, tile.texture.pos )
+	# tilemap.set_cell(pos_tile, tile.atlas, tile.pos )
+	tilemap.set_cell(pos_tile, tile.texture.atlas, tile.texture.pos )
 	return true
 
 
@@ -105,5 +105,5 @@ func place_tile_chunk(chunk, x, y, tile):
 	var pos = Vector2i(x, y)
 	var pos_tile = Vector2i(chunk.cx*Chunk.WIDTH + x, -y)
 	chunk.grid[pos] = tile
-	# tilemap.set_cell(0, pos_tile, tile.atlas, tile.sprite )
-	tilemap.set_cell(0, pos_tile, tile.texture.atlas, tile.texture.pos )
+	# tilemap.set_cell(pos_tile, tile.atlas, tile.sprite )
+	tilemap.set_cell(pos_tile, tile.texture.atlas, tile.texture.pos )
