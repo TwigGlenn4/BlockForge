@@ -1,0 +1,9 @@
+// Workspace settings
+{
+    // Hide files from VSCode
+    "files.exclude": {
+        "**/*.gd.uid": true,    // hide Godot UID files for scripts
+        "**/*.import": true,    // hide import setting files for sprites, etc. Use Godot Editor to chnage settings
+        ".godot": true          // the .godot folder under root is auto-generated stuff
+    }
+}
