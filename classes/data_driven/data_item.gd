@@ -1,6 +1,6 @@
 class_name DataItem
 
-static var all_items = {}
+static var all_items: Dictionary[String, DataItem] = {}
 
 static var UNDEFINED = DataItem.new("undefined", DataTexture.UNDEFINED)
 

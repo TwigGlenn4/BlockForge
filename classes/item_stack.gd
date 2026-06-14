@@ -7,7 +7,7 @@ var tracked: bool # determines if item_list should be used.
 var item_list: Array[DataItem] = [] # Needed for TOOL, ARMOR, and CONTAINER items to retain individual data.
 
 
-func init( item_name_string:String ):
+func _init( item_name_string:String ):
 	item_name = item_name_string
 	count = 0
 
@@ -31,6 +31,7 @@ func add_items( num:int ) -> int: # adds items and returns remainder to add if s
 		return 0
 	
 	if count + num <= stack_max: # there is enough space left in the stack to add num items
+		print("[ItemStack.add_items(%d)] adding %d items to stack." % [num, num])
 		count += num
 		return 0
 	
@@ -38,6 +39,7 @@ func add_items( num:int ) -> int: # adds items and returns remainder to add if s
 	# add as many as we can and return number of remaining items
 	var remainder = count + num - stack_max
 	count = stack_max
+	print("[ItemStack.add_items(%d)] adding %d items to stack with %d leftover" % [num, num, remainder])
 	return remainder
 
 
@@ -59,3 +61,5 @@ func remove_items( num:int ) -> bool: # removes items and returns remainder to r
 	count -= num
 	return 0
 
+func _to_string() -> String:
+	return str(item_name, " ", count)

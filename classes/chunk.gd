@@ -6,7 +6,7 @@ const WIDTH: int = 128
 const HEIGHT: int = 512
 
 var cx = 0
-var grid = {}
+var grid: Dictionary[Vector2i, DataTile] = {}
 var surface_level = []
 var humidity = []
 

@@ -8,7 +8,7 @@ var	w_name = "" # name of world to be displayed in menus
 var w_seed: int = 0 # Seed to use for world generation
 var width: int = 4 # Width of world in chunks 
 var width_tiles: int = width * Chunk.WIDTH # Width of world in tiles
-var chunks = [] # Array to be filled with chunks
+var chunks: Array[Chunk] = [] # Array to be filled with chunks
 var world_portal_pos: Vector2i = Vector2i.ZERO # Location of the base of the World Portal
 var tilemap: TileMapLayer 
 var worldgen: WorldGenV2
@@ -34,18 +34,18 @@ func _ready():
 
 
 # get_chunk_at_x(): gets the chunk at a given global x coordinate
-func get_chunk_at_x( gx: int ):
+func get_chunk_at_x( gx: int ) -> Chunk:
 	var chunk_num = gx / Chunk.WIDTH
 	if chunk_num < 0 || chunk_num >= width:
 		print("Failed to access chunk "+str(chunk_num)+" outside world.")
-		return 
+		return null
 	return chunks[chunk_num]
 
-func get_tile_v( v: Vector2i ):
+func get_tile_v( v: Vector2i ) -> DataTile:
 	return get_tile(v.x, v.y)
 
 # get_tile(): returns the tile stored in chunk.grid at given global coordinates.
-func get_tile( gx: int, gy: int ):
+func get_tile( gx: int, gy: int ) -> DataTile:
 	# handle tiles outside world
 	if gx < 0 || gx >= width_tiles || gy < 0 || gy >= Chunk.HEIGHT: # Don't attempt to get tiles outside of the world.
 		return DataTile.UNDEFINED
@@ -70,11 +70,14 @@ func tile_matches( gx: int, gy: int, match_arr ):
 # get_surface(): returns the surface level at given global x coordinate
 func get_surface( gx: int ):
 	var chunk = get_chunk_at_x(gx)
+	if chunk == null:
+		return -1
 	return int( chunk.surface_level[ gx % Chunk.WIDTH ] )
+	
 
 
 # place_tile(): place a tile at given global coordinates
-func place_tile( x: int, y: int , tile):
+func place_tile( x: int, y: int, tile: DataTile) -> bool:
 	if x < 0 || x >= width_tiles || y < 0 || y >= Chunk.HEIGHT:
 		# print("Tile not placed outside world at "+ Helpers.coord_string(x, y))
 		return false
@@ -87,8 +90,14 @@ func place_tile( x: int, y: int , tile):
 
 	chunk.grid[pos] = tile
 	# tilemap.set_cell(pos_tile, tile.atlas, tile.pos )
-	tilemap.set_cell(pos_tile, tile.texture.atlas, tile.texture.pos )
+	if tile == null:
+		tilemap.set_cell(pos_tile)
+	else:
+		tilemap.set_cell(pos_tile, tile.texture.atlas, tile.texture.pos )
 	return true
+
+func place_tile_v(pos: Vector2i, tile: DataTile) -> bool:
+	return place_tile(pos.x, pos.y, tile)
 
 
 # place_tile_overwrite(): place a tile if the exisitng tile is contained in overwrite_tiles array. Returns true if placed.

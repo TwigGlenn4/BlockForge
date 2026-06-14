@@ -53,9 +53,9 @@ func _process(delta):
 				world.worldgen.queue_chunk(chunk_num+1, Chunk.GEN_STATE_MAX)
 
 # ===== PATHFIND ==== This method needs to be gathered into pathfinding.gd
-func surface_path (char:Node, from:Vector2i, dest:Vector2i):
+func surface_path (character:Node, from:Vector2i, dest:Vector2i):
 	print("surface_path ",str(from)," ",str(dest))
-	var method: Path.Movement
+	var _method: Path.Movement
 	var here:Vector2i = from
 	var dx:int = sign(dest.x - here.x)
 	var dy:int
@@ -66,44 +66,45 @@ func surface_path (char:Node, from:Vector2i, dest:Vector2i):
 		here.y += dy
 		
 		if abs(dy) > 1:
-			method = Path.Movement.CLIMB
+			_method = Path.Movement.CLIMB
 		elif abs(dy) == 1:
-			method = Path.Movement.HOP
+			_method = Path.Movement.HOP
 		else:
-			method = Path.Movement.WALK 
+			_method = Path.Movement.WALK 
 			# similar for but lookup blocks for climb in trees, blocks around for CLIMB_RIGHT, blocks above for CRAWL
 		
-		char._add_job(DataJob.new(here, DataJob.TYPE.GOTO))
+		character.add_job(DataJob.new(here, DataJob.TYPE.GOTO))
 		# should add method as another parameter in TYPE.GOTO
 
-func tree_path (char:Node, start:Vector2i, end:Vector2i): # traverse tree
+func tree_path (character:Node, start:Vector2i, end:Vector2i): # traverse tree
 	print("tree_path ",str(start),"",str(end))
 	var here:Vector2i
 	if start.y>end.y: #dir.DOWN
 		here = start
 		for x in g3_range(start.x, end.x):
 			here.x = x
-			char._add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
 		for y in g3_range(start.y, end.y):
 			here.y = y
-			char._add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
 	else: # Dir.UP
 		here = start
 		for y in g3_range(start.y, end.y):
 			here.y = y
-			char._add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
 		for x in g3_range(start.x, end.x):
 			here.x = x
-			char._add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
 	return here 
 
 func g3_range(a:int, b:int):
 	var d:int = sign(b-a)
+	if d == 0: # set step to 1 if sign == 0
+		d = 1
 	return range(a, b+d, d)
 		
 func find_tree_base(place:Vector2i): # find nearest trunk
 	var base:Vector2i
-	var here:Vector2i
 	var y:int
 	var x:int
 	for dx in 20:
@@ -130,7 +131,43 @@ func find_tree_base(place:Vector2i): # find nearest trunk
 
 
 # Zoom controls in _input to properly accept mouse wheel input
-func _input(event):
+func _input(event: InputEvent) -> void:
+	_input_camera_movement(event)
+	_input_character_inventory(event)
+	
+	if Input.is_action_just_pressed("click"):
+		var click_pos:Vector2 = get_global_mouse_position()
+
+		var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
+		print("Clicked at "+str(block_pos))
+
+		if not _input_block_interact(block_pos):
+
+			# ===== PATHFIND GENERAL
+			var start:Vector2i = selected_character.current_pos
+			var end:Vector2i = block_pos
+			var next:Vector2i
+
+			print("\nstart -> end ",str(start)," -> ",str(end))
+			var tile = world.get_tile_v(start)
+			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):
+				next = find_tree_base (start)
+				tree_path(selected_character, start, next)
+				start = next
+			tile = world.get_tile_v(end)
+			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):  
+				next = find_tree_base(end)
+				surface_path(selected_character, start, next)
+				tree_path(selected_character, next, end)
+			else:
+				end.y = world.get_surface(end.x) # pin to surface of earth
+				surface_path (selected_character, start, end)
+			print("path finished")
+			# ===== END PATHFIND GENERAL
+
+
+
+func _input_camera_movement(event: InputEvent) -> void:
 	var new_zoom: Vector2 = zoom
 	if event.is_action_pressed("camera_zoom_in"):
 		new_zoom += Vector2(ZOOM_SPEED, ZOOM_SPEED)
@@ -149,36 +186,20 @@ func _input(event):
 		# print("moving to character")selected_character.current_pos
 		_move_to_block(selected_character.current_pos)
 	
-	if Input.is_action_just_pressed("click"):
-		# print("zoom = "+str(zoom))
-		
-		var click_pos:Vector2 = get_global_mouse_position()
-		# print("click_pos = "+str(click_pos))
+func _input_character_inventory(event: InputEvent) -> void:
+	# open inventory
+	if event.is_action_pressed("inventory_open"):
+		# print("[interactor.gd] open inventory")
+		selected_character.open_inventory()
 
-		var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
-		# print("Clicked at "+str(block_pos))
-
-		# ===== PATHFIND GENERAL
-		var start:Vector2i = selected_character.current_pos
-		var end:Vector2i = block_pos
-		var next:Vector2i
-
-		print("\nstart -> end ",str(start)," -> ",str(end))
-		var tile = world.get_tile_v(start)
-		if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):
-			next = find_tree_base (start)
-			tree_path(selected_character, start, next)
-			start = next
-		tile = world.get_tile_v(end)
-		if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):  
-			next = find_tree_base(end)
-			surface_path(selected_character, start, next)
-			tree_path(selected_character, next, end)
-		else:
-			end.y = world.get_surface(end.x) # pin to surface of earth
-			surface_path (selected_character, start, end)
-		print("path finished")
-		# ===== END PATHFIND GENERAL
+func _input_block_interact(block_pos: Vector2i) -> bool:
+	var tile: DataTile = world.get_tile_v(block_pos)
+	if tile != DataTile.UNDEFINED:
+		var job: DataJob = DataJob.new(block_pos, DataJob.TYPE.BREAK)
+		selected_character.add_job(job)
+		return true
+	return false
+	
 
 
 func _move_to_block(block_pos:Vector2i):

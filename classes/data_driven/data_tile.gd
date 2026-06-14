@@ -9,10 +9,17 @@ var texture:DataTexture
 var drops:String
 
 
-func _init( tile_name:String, tile_texture:DataTexture, drop_item:String="" ):
+func _init( tile_name:String, tile_texture:DataTexture, drop_item:String="undefined" ):
 	name = tile_name
 	texture = tile_texture
-	drops = drop_item
+
+	if drop_item == "undefined": # default to drop itself, only override if drop_item given
+		drops = tile_name
+	else:
+		drops = drop_item
+
+	DataItem.new(tile_name, tile_texture) # make sure an item for this tile exists
+
 	all_tiles[name] = self
 
 
@@ -24,3 +31,6 @@ static func tile(tile_name:String) -> DataTile:
 		return all_tiles[tile_name]
 	else:
 		return UNDEFINED
+
+func _to_string() -> String:
+	return name
