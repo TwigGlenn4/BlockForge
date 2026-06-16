@@ -1,0 +1,58 @@
+[gd_scene format=3 uid="uid://cvwqvrjf6tdsd"]
+
+[ext_resource type="Script" uid="uid://bljh8oyaq86bn" path="res://scenes/GameScene/hotbar_slot.gd" id="1_y0ys2"]
+[ext_resource type="Texture2D" uid="uid://cstlb00ps7s4q" path="res://assets/textures/atlas/inventory_slot.png" id="2_kumi0"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_y0ys2"]
+line_spacing = 0.0
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
+[node name="HotbarSlot" type="Control" unique_id=1975555273 node_paths=PackedStringArray("button_bg", "item_icon", "item_count_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1112.0
+offset_bottom = -608.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_y0ys2")
+button_bg = NodePath("ButtonBG")
+item_icon = NodePath("ItemIcon")
+item_count_label = NodePath("ItemCountLabel")
+
+[node name="ButtonBG" type="TextureButton" parent="." unique_id=590925680]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+action_mode = 0
+texture_normal = ExtResource("2_kumi0")
+stretch_mode = 0
+
+[node name="ItemIcon" type="TextureRect" parent="." unique_id=898182870]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.05
+anchor_right = 0.95
+anchor_bottom = 0.95
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ItemCountLabel" type="Label" parent="." unique_id=731650170]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "0"
+label_settings = SubResource("LabelSettings_y0ys2")
+horizontal_alignment = 2
+
+[connection signal="pressed" from="ButtonBG" to="." method="_on_button_bg_pressed"]

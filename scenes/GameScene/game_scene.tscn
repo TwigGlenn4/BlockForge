@@ -1,9 +1,7 @@
 [gd_scene format=3 uid="uid://bkuecm30s0en7"]
 
 [ext_resource type="Script" uid="uid://d2oedqu2fq7x2" path="res://classes/world.gd" id="1_7un8v"]
-[ext_resource type="Texture2D" uid="uid://bcwqxm7o0po3x" path="res://assets/textures/atlas/terrain.png" id="1_r7ng2"]
-[ext_resource type="Texture2D" uid="uid://bwk8f7aw78c6v" path="res://assets/textures/atlas/portal.png" id="2_0q8pn"]
-[ext_resource type="Texture2D" uid="uid://5a1e7ix4mi3b" path="res://assets/textures/atlas/undefined.png" id="2_66lj5"]
+[ext_resource type="TileSet" uid="uid://dpfjjvmnau73i" path="res://assets/textures/main_tileset.tres" id="2_6vc3a"]
 [ext_resource type="Script" uid="uid://kh2fdue00hth" path="res://classes/interacter.gd" id="4_ws153"]
 [ext_resource type="Script" uid="uid://w6yr38jum6jq" path="res://scenes/GameScene/GeneratorProgress.gd" id="5_4gwsg"]
 [ext_resource type="Script" uid="uid://bvnvk8t0nu8bf" path="res://classes/worldgen_v2.gd" id="6_s71n1"]
@@ -11,37 +9,6 @@
 [ext_resource type="Script" uid="uid://buq3rnhdmjljb" path="res://classes/character.gd" id="8_dcpno"]
 [ext_resource type="Texture2D" uid="uid://c145e8oi1b1dq" path="res://assets/textures/entity/character.png" id="8_rfaf3"]
 [ext_resource type="Script" uid="uid://djij37f0hbxgv" path="res://scenes/GameScene/inventory_ui.gd" id="8_rvax8"]
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iv25o"]
-texture = ExtResource("2_66lj5")
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_t2i5t"]
-texture = ExtResource("1_r7ng2")
-1:0/0 = 0
-2:0/0 = 0
-3:0/0 = 0
-4:0/0 = 0
-0:0/0 = 0
-6:0/0 = 0
-5:0/0 = 0
-7:0/0 = 0
-8:0/0 = 0
-9:0/0 = 0
-10:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_omqh2"]
-texture = ExtResource("2_0q8pn")
-0:0/0 = 0
-1:0/0 = 0
-0:1/0 = 0
-1:1/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_hv4oi"]
-terrain_set_0/mode = 0
-sources/2 = SubResource("TileSetAtlasSource_omqh2")
-sources/1 = SubResource("TileSetAtlasSource_t2i5t")
-sources/0 = SubResource("TileSetAtlasSource_iv25o")
 
 [node name="GameScene" type="Node2D" unique_id=115789075]
 
@@ -51,16 +18,26 @@ script = ExtResource("1_7un8v")
 [node name="Foreground" type="TileMapLayer" parent="World" unique_id=1165209314]
 texture_filter = 1
 use_parent_material = true
-tile_set = SubResource("TileSet_hv4oi")
+tile_set = ExtResource("2_6vc3a")
 
-[node name="Camera2D" type="Camera2D" parent="World" unique_id=1617757319]
+[node name="MainCamera" type="Camera2D" parent="World" unique_id=1617757319 node_paths=PackedStringArray("world_interactor")]
 scale = Vector2(0.5, 0.5)
 zoom = Vector2(0.1, 0.1)
 script = ExtResource("4_ws153")
+world_interactor = NodePath("MainUI/WorldInteractor")
 
-[node name="MainUI" type="CanvasLayer" parent="World/Camera2D" unique_id=1213662016]
+[node name="MainUI" type="CanvasLayer" parent="World/MainCamera" unique_id=1213662016]
+layer = 5
 
-[node name="Control" type="Control" parent="World/Camera2D/MainUI" unique_id=892014576]
+[node name="WorldInteractor" type="Control" parent="World/MainCamera/MainUI" unique_id=1488520241]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Control" type="Control" parent="World/MainCamera/MainUI" unique_id=892014576]
 visible = false
 layout_mode = 3
 anchors_preset = 0
@@ -69,7 +46,7 @@ offset_top = -162.0
 offset_right = 864.0
 offset_bottom = 486.0
 
-[node name="GeneratorProgress" type="ProgressBar" parent="World/Camera2D/MainUI/Control" unique_id=670256938]
+[node name="GeneratorProgress" type="ProgressBar" parent="World/MainCamera/MainUI/Control" unique_id=670256938]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -82,7 +59,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("5_4gwsg")
 
-[node name="InventoryUI" type="Control" parent="World/Camera2D/MainUI" unique_id=872751118]
+[node name="InventoryUI" type="Control" parent="World/MainCamera/MainUI" unique_id=872751118]
 layout_mode = 3
 anchor_left = 0.926
 anchor_right = 1.0
@@ -107,7 +84,9 @@ z_index = 1
 texture = ExtResource("8_rfaf3")
 offset = Vector2(0, -8)
 
+[connection signal="selected_character_changed" from="World/MainCamera" to="World/MainCamera/MainUI/InventoryUI" method="_on_selected_character_changed"]
+[connection signal="gui_input" from="World/MainCamera/MainUI/WorldInteractor" to="World/MainCamera" method="_on_world_interactor_click"]
 [connection signal="character_to_portal" from="World/WorldGen" to="World/Character" method="_teleport_to"]
 [connection signal="gentimer_start" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_start"]
 [connection signal="gentimer_stop" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_stop"]
-[connection signal="move_camera" from="World/WorldGen" to="World/Camera2D" method="_move_to_block"]
+[connection signal="move_camera" from="World/WorldGen" to="World/MainCamera" method="_move_to_block"]

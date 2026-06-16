@@ -1,10 +1,12 @@
 class_name Inventory
 
 var contents: Array[ItemStack]
+var _contents_changed: bool
 
 
 func _init(num_slots:int = 25) -> void:
 	contents.resize(num_slots)
+	_contents_changed = false
 
 
 func has(item_name:String, count:int = 1) -> int:
@@ -20,6 +22,7 @@ func has(item_name:String, count:int = 1) -> int:
 
 # currently assuming items will be referred to with strings, likely to change.
 func add_items( item_name:String, count:int = 1) -> int: 
+	_contents_changed = true
 	print("[Inventory.add_items(%s, %d)]" % [item_name, count])
 	for stack:ItemStack in contents: # for every stack in contents
 		if stack != null and stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
@@ -45,6 +48,7 @@ func add_items( item_name:String, count:int = 1) -> int:
 
 
 func remove_items( item_name:String, count:int = 1) -> int: 
+	_contents_changed = true
 	for stack:ItemStack in contents: # for every stack in contents
 		if stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
 
@@ -76,3 +80,12 @@ func _to_string() -> String:
 	output_string = "Inventory(" + str(num_stacks) + "/" + str(contents.size()) + " slots): " + output_string
 
 	return output_string
+
+
+## Check if inventory contents have changed since last check
+func contents_changed_check() -> bool:
+	if _contents_changed:
+		_contents_changed = false
+		return true
+	
+	return false

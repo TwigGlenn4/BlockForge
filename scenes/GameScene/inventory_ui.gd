@@ -1,28 +1,29 @@
 extends Control
 
 const HOTBAR_SLOTS: int = 8
+static var SLOT_TEXTURE = load("res://assets/textures/atlas/inventory_slot.png")
 
-var SLOT_TEXTURE = load("res://assets/textures/atlas/inventory_slot.png")
+static var HOTBAR_SLOT_SCENE = preload("res://scenes/GameScene/HotbarSlot/HotbarSlot.tscn")
 
-var hotbar: Array[TextureButton]
+var hotbar: Array[HotbarSlot]
+var selected_character: Character
 
 func _ready() -> void:
 	get_tree().get_root().size_changed.connect(_window_resized)
 
-
 	hotbar.resize(HOTBAR_SLOTS)
 	for i: int in HOTBAR_SLOTS:
-		var slot: TextureButton = TextureButton.new()
-		slot.name = "HotbarSlot"+str(i)
-		slot.texture_normal = SLOT_TEXTURE
-		slot.stretch_mode = TextureButton.STRETCH_SCALE
-		slot.set_anchors_preset(Control.LayoutPreset.PRESET_CENTER_RIGHT)
-		self.add_child(slot)
-		hotbar[i] = slot
+		hotbar[i] = _build_hotbar_slot(i)
+		self.add_child(hotbar[i])
 
 	_window_resized()
 
+
+func _process(_delta: float) -> void:
+	if selected_character.inventory.contents_changed_check():
+		_update_inventory_contents()
 	
+
 func _window_resized() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 
@@ -41,19 +42,24 @@ func _window_resized() -> void:
 	anchor_top = (1.0 - height_percent) / 2.0
 	anchor_bottom = 1.0 - ((1.0 - height_percent) / 2.0)
 
-	# position.x = viewport_size.x - target_size.x
-
 	for i: int in hotbar.size():
 		var slot = hotbar[i]
 		slot.position = Vector2(0, i * target_size.x)
 		slot.size = Vector2(target_size.x, target_size.x)
-		
+	# print("[InventoryUI_manual] resized to ", size, " at ", position, " viewport size ", viewport_size)
 
+func _on_selected_character_changed(new_char: Character) -> void:
+	# store the character reference to show it's inventory
+	selected_character = new_char
 
+func _update_inventory_contents() -> void:
+	print("[InventoryUI] updating hotbar contents")
+	var inv := selected_character.inventory
+	for i:int in hotbar.size():
+		hotbar[i].set_stack(inv.contents[i])
+	
 
-	# size = target_size
-	# offset_bottom = 0
-	# offset_top = 0
-	# offset_left = 0
-	# offset_right = 0
-	print("[InventoryUI_manual] resized to ", size, " at ", position, " viewport size ", viewport_size)
+func _build_hotbar_slot(num: int) -> Control:
+	var slot: Control = HOTBAR_SLOT_SCENE.instantiate()
+	slot.setup(num)
+	return slot	

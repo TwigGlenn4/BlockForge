@@ -1,6 +1,12 @@
 https://trello.com/b/nR7499xf/blockheadsrenewedg
 
 
+TO-FIX:
+* fix click/tilemap misalignment
+* * click currently deletes tile at clicked pos, but returned tile does not match clicked pos
+
+
+
 X Add leaves to trees
 	generate triangle on each side
 	skip if obstructed.

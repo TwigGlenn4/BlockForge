@@ -63,3 +63,13 @@ func remove_items( num:int ) -> bool: # removes items and returns remainder to r
 
 func _to_string() -> String:
 	return str(item_name, " ", count)
+
+## Returns a DataItem representing the first available item, or DataItem.UNDEFINED
+func get_item() -> DataItem: 
+	if count <= 0:
+		return DataItem.UNDEFINED
+
+	if tracked:
+		return item_list[0]
+
+	return DataItem.all_items[item_name]

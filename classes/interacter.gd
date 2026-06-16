@@ -7,6 +7,10 @@ const LERP_TIME = 1
 @onready var world = get_node("/root/GameScene/World")
 @onready var selected_character = get_node("/root/GameScene/World/Character")
 
+@export var world_interactor: Control
+
+signal selected_character_changed(new_char: Character)
+
 var generating_chunks_enabled = false
 
 # move camera to position
@@ -15,6 +19,8 @@ var lerp_timer: float = 0.0
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	# select the first character
+	selected_character_changed.emit(selected_character)
 	pass # Replace with function body.
 
 
@@ -136,6 +142,56 @@ func _input(event: InputEvent) -> void:
 	_input_character_inventory(event)
 	_input_click_pos_test(event)
 	
+
+func _input_camera_movement(event: InputEvent) -> void:
+	var new_zoom: Vector2 = zoom
+	if event.is_action_pressed("camera_zoom_in"):
+		new_zoom += Vector2(ZOOM_SPEED, ZOOM_SPEED)
+	if event.is_action_pressed("camera_zoom_out"):
+		new_zoom += Vector2(-ZOOM_SPEED, -ZOOM_SPEED)
+	
+	zoom = new_zoom.clamp(Vector2(0.02, 0.02), Vector2(3,3))
+	scale = Vector2(1 / zoom.x, 1 / zoom.y)
+
+	if event.is_action_pressed("print_pointer_location"):
+		print("Mouse is at: ", get_global_mouse_position()/16)
+	
+	if Input.is_action_pressed("look_at_portal"): # centers camera on bottom block of portal anim
+		_move_to_block(world.world_portal_pos)
+	if Input.is_action_pressed("look_at_character"):
+		# print("moving to character")selected_character.current_pos
+		_move_to_block(selected_character.current_pos)
+	
+func _input_character_inventory(event: InputEvent) -> void:
+	# open inventory
+	if event.is_action_pressed("inventory_open"):
+		# print("[interactor.gd] open inventory")
+		print(selected_character.inventory)
+		
+
+func _input_block_interact(block_pos: Vector2i) -> bool:
+	var tile: DataTile = world.get_tile_v(block_pos)
+	if tile != DataTile.UNDEFINED:
+		var job: DataJob = DataJob.new(block_pos, DataJob.TYPE.BREAK)
+		selected_character.add_job(job)
+		return true
+	return false
+
+func _input_click_pos_test(_event: InputEvent) -> void:
+	if Input.is_action_just_pressed("click_right"):
+		var click_pos:Vector2 = get_global_mouse_position()
+		var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
+		world.place_tile_v(block_pos, DataTile.UNDEFINED)
+		print("[Interactor._input_click_pos_test()] clicked at ", block_pos)
+	
+
+
+func _move_to_block(block_pos:Vector2i):
+	lerp_target = Helpers.pos_block_to_pixel(block_pos)
+	lerp_timer = 0
+
+
+func _on_world_interactor_click(_event: InputEvent) -> void:
 	if Input.is_action_just_pressed("click"):
 		var click_pos:Vector2 = get_global_mouse_position()
 
@@ -166,50 +222,3 @@ func _input(event: InputEvent) -> void:
 			print("path finished")
 			# ===== END PATHFIND GENERAL
 
-
-
-func _input_camera_movement(event: InputEvent) -> void:
-	var new_zoom: Vector2 = zoom
-	if event.is_action_pressed("camera_zoom_in"):
-		new_zoom += Vector2(ZOOM_SPEED, ZOOM_SPEED)
-	if event.is_action_pressed("camera_zoom_out"):
-		new_zoom += Vector2(-ZOOM_SPEED, -ZOOM_SPEED)
-	
-	zoom = new_zoom.clamp(Vector2(0.02, 0.02), Vector2(3,3))
-	scale = Vector2(1 / zoom.x, 1 / zoom.y)
-
-	if event.is_action_pressed("print_pointer_location"):
-		print("Mouse is at: ", get_global_mouse_position()/16)
-	
-	if Input.is_action_pressed("look_at_portal"): # centers camera on bottom block of portal anim
-		_move_to_block(world.world_portal_pos)
-	if Input.is_action_pressed("look_at_character"):
-		# print("moving to character")selected_character.current_pos
-		_move_to_block(selected_character.current_pos)
-	
-func _input_character_inventory(event: InputEvent) -> void:
-	# open inventory
-	if event.is_action_pressed("inventory_open"):
-		# print("[interactor.gd] open inventory")
-		selected_character.open_inventory()
-
-func _input_block_interact(block_pos: Vector2i) -> bool:
-	var tile: DataTile = world.get_tile_v(block_pos)
-	if tile != DataTile.UNDEFINED:
-		var job: DataJob = DataJob.new(block_pos, DataJob.TYPE.BREAK)
-		selected_character.add_job(job)
-		return true
-	return false
-
-func _input_click_pos_test(_event: InputEvent) -> void:
-	if Input.is_action_just_pressed("click_right"):
-		var click_pos:Vector2 = get_global_mouse_position()
-		var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
-		world.place_tile_v(block_pos, DataTile.UNDEFINED)
-		print("[Interactor._input_click_pos_test()] clicked at ", block_pos)
-	
-
-
-func _move_to_block(block_pos:Vector2i):
-	lerp_target = Helpers.pos_block_to_pixel(block_pos)
-	lerp_timer = 0
