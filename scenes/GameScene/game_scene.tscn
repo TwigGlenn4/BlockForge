@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://dlgg06agpm32s" path="res://scenes/GameScene/WorldGenTimer.gd" id="7_8d45b"]
 [ext_resource type="Script" uid="uid://buq3rnhdmjljb" path="res://classes/character.gd" id="8_dcpno"]
 [ext_resource type="Texture2D" uid="uid://c145e8oi1b1dq" path="res://assets/textures/entity/character.png" id="8_rfaf3"]
+[ext_resource type="Script" uid="uid://djij37f0hbxgv" path="res://scenes/GameScene/inventory_ui.gd" id="8_rvax8"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iv25o"]
 texture = ExtResource("2_66lj5")
@@ -57,16 +58,18 @@ scale = Vector2(0.5, 0.5)
 zoom = Vector2(0.1, 0.1)
 script = ExtResource("4_ws153")
 
-[node name="Control" type="Control" parent="World/Camera2D" unique_id=892014576]
+[node name="MainUI" type="CanvasLayer" parent="World/Camera2D" unique_id=1213662016]
+
+[node name="Control" type="Control" parent="World/Camera2D/MainUI" unique_id=892014576]
 visible = false
 layout_mode = 3
 anchors_preset = 0
-offset_left = -576.0
-offset_top = -324.0
-offset_right = 576.0
-offset_bottom = 324.0
+offset_left = -288.0
+offset_top = -162.0
+offset_right = 864.0
+offset_bottom = 486.0
 
-[node name="GeneratorProgress" type="ProgressBar" parent="World/Camera2D/Control" unique_id=670256938]
+[node name="GeneratorProgress" type="ProgressBar" parent="World/Camera2D/MainUI/Control" unique_id=670256938]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -78,6 +81,17 @@ offset_bottom = -586.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("5_4gwsg")
+
+[node name="InventoryUI" type="Control" parent="World/Camera2D/MainUI" unique_id=872751118]
+layout_mode = 3
+anchor_left = 0.926
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("8_rvax8")
 
 [node name="WorldGen" type="Node" parent="World" unique_id=516468895]
 script = ExtResource("6_s71n1")

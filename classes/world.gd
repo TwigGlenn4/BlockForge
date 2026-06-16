@@ -86,7 +86,7 @@ func place_tile( x: int, y: int, tile: DataTile) -> bool:
 	var lx = x % Chunk.WIDTH # local x
 
 	var pos = Vector2i(lx, y)
-	var pos_tile = Vector2i(chunk.cx*Chunk.WIDTH + lx, -y)
+	var pos_tile = Vector2i(chunk.cx*Chunk.WIDTH + lx, -1-y)
 
 	chunk.grid[pos] = tile
 	# tilemap.set_cell(pos_tile, tile.atlas, tile.pos )
@@ -112,7 +112,7 @@ func place_tile_overwrite(x: int, y: int, tile, overwrite_tiles):
 # place_tile_chunk(): Place a tile based on chunk coordinates. Should be slightly more performant than place_tile where chunk is already known.
 func place_tile_chunk(chunk, x, y, tile):
 	var pos = Vector2i(x, y)
-	var pos_tile = Vector2i(chunk.cx*Chunk.WIDTH + x, -y)
+	var pos_tile = Vector2i(chunk.cx*Chunk.WIDTH + x, -1-y)
 	chunk.grid[pos] = tile
 	# tilemap.set_cell(pos_tile, tile.atlas, tile.sprite )
 	tilemap.set_cell(pos_tile, tile.texture.atlas, tile.texture.pos )

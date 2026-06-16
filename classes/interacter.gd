@@ -134,6 +134,7 @@ func find_tree_base(place:Vector2i): # find nearest trunk
 func _input(event: InputEvent) -> void:
 	_input_camera_movement(event)
 	_input_character_inventory(event)
+	_input_click_pos_test(event)
 	
 	if Input.is_action_just_pressed("click"):
 		var click_pos:Vector2 = get_global_mouse_position()
@@ -199,6 +200,13 @@ func _input_block_interact(block_pos: Vector2i) -> bool:
 		selected_character.add_job(job)
 		return true
 	return false
+
+func _input_click_pos_test(_event: InputEvent) -> void:
+	if Input.is_action_just_pressed("click_right"):
+		var click_pos:Vector2 = get_global_mouse_position()
+		var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
+		world.place_tile_v(block_pos, DataTile.UNDEFINED)
+		print("[Interactor._input_click_pos_test()] clicked at ", block_pos)
 	
 
 
