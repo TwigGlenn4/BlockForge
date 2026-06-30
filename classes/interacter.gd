@@ -153,12 +153,9 @@ func _input_camera_movement(event: InputEvent) -> void:
 	zoom = new_zoom.clamp(Vector2(0.02, 0.02), Vector2(3,3))
 	scale = Vector2(1 / zoom.x, 1 / zoom.y)
 
-	if event.is_action_pressed("print_pointer_location"):
-		print("Mouse is at: ", get_global_mouse_position()/16)
-	
-	if Input.is_action_pressed("look_at_portal"): # centers camera on bottom block of portal anim
+	if Input.is_action_just_pressed("look_at_portal"): # centers camera on bottom block of portal anim
 		_move_to_block(world.world_portal_pos)
-	if Input.is_action_pressed("look_at_character"):
+	if Input.is_action_just_pressed("look_at_character"):
 		# print("moving to character")selected_character.current_pos
 		_move_to_block(selected_character.current_pos)
 	

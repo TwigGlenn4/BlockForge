@@ -4,6 +4,7 @@
 [ext_resource type="TileSet" uid="uid://dpfjjvmnau73i" path="res://assets/textures/main_tileset.tres" id="2_6vc3a"]
 [ext_resource type="Script" uid="uid://kh2fdue00hth" path="res://classes/interacter.gd" id="4_ws153"]
 [ext_resource type="Script" uid="uid://w6yr38jum6jq" path="res://scenes/GameScene/GeneratorProgress.gd" id="5_4gwsg"]
+[ext_resource type="PackedScene" uid="uid://c3vqbaps2gav1" path="res://scenes/GameScene/DebugInfo/debug_info.tscn" id="6_2b2ab"]
 [ext_resource type="Script" uid="uid://bvnvk8t0nu8bf" path="res://classes/worldgen_v2.gd" id="6_s71n1"]
 [ext_resource type="Script" uid="uid://dlgg06agpm32s" path="res://scenes/GameScene/WorldGenTimer.gd" id="7_8d45b"]
 [ext_resource type="Script" uid="uid://buq3rnhdmjljb" path="res://classes/character.gd" id="8_dcpno"]
@@ -69,6 +70,8 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("8_rvax8")
+
+[node name="DebugInfo" parent="World/MainCamera/MainUI" unique_id=678135099 instance=ExtResource("6_2b2ab")]
 
 [node name="WorldGen" type="Node" parent="World" unique_id=516468895]
 script = ExtResource("6_s71n1")

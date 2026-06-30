@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://c3vqbaps2gav1"]
+
+[ext_resource type="Script" uid="uid://b3x4drfx4j22m" path="res://scenes/GameScene/DebugInfo/debug_info.gd" id="1_qsfei"]
+[ext_resource type="Script" uid="uid://gce13o5pykoa" path="res://scenes/GameScene/DebugInfo/world_info.gd" id="1_xg8bm"]
+[ext_resource type="Script" uid="uid://cdsmvjgvtpase" path="res://scenes/GameScene/DebugInfo/game_info.gd" id="2_3yfyu"]
+
+[node name="DebugInfo" type="Control" unique_id=678135099]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_qsfei")
+
+[node name="WorldInfo" type="Label" parent="." unique_id=157130281]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.005
+anchor_top = 0.005
+anchor_right = 0.5
+anchor_bottom = 0.995
+script = ExtResource("1_xg8bm")
+
+[node name="GameInfo" type="Label" parent="." unique_id=939031162]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.005
+anchor_right = 0.995
+anchor_bottom = 0.995
+horizontal_alignment = 2
+script = ExtResource("2_3yfyu")

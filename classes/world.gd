@@ -19,6 +19,8 @@ var worldgen: WorldGenV2
 func _ready():
 	tilemap = get_node("/root/GameScene/World/Foreground")
 	worldgen = get_node("/root/GameScene/World/WorldGen")
+
+	tilemap.position.y = -tilemap.rendering_quadrant_size # fix tilemap position seeming to be top-left of bottom-left cell. I think this is because I chose to work in the positive-y quadrant instead of negative-y
 	chunks.resize(width)
 
 	for n in width:
