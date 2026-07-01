@@ -21,7 +21,6 @@ const QUEUE_DELAY:int = 0; # min seconds between chunk generation starts
 var queue_timer:int = 0;
 
 @onready var world = get_node("/root/GameScene/World")
-@onready var camera = get_node("/root/GameScene/World/Camera2D")
 
 
 
@@ -319,7 +318,6 @@ func _physics_process(delta):
 		move_camera.emit(world.world_portal_pos)
 		character_to_portal.emit(world.world_portal_pos)
 
-		# camera.generating_chunks_enabled = true
 	if chunk_queue.size() == 0 and generation_working:
 		gentimer_stop.emit()
 		generation_working = false

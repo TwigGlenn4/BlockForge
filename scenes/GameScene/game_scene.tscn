@@ -60,18 +60,19 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("5_4gwsg")
 
-[node name="InventoryUI" type="Control" parent="World/MainCamera/MainUI" unique_id=872751118]
-layout_mode = 3
-anchor_left = 0.926
+[node name="DebugInfo" parent="World/MainCamera/MainUI" unique_id=678135099 instance=ExtResource("6_2b2ab")]
+
+[node name="InventoryUI" type="VBoxContainer" parent="World/MainCamera/MainUI" unique_id=850813472]
+anchors_preset = -1
+anchor_left = 0.94
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 0
+grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
+theme_override_constants/separation = 0
+alignment = 1
 script = ExtResource("8_rvax8")
-
-[node name="DebugInfo" parent="World/MainCamera/MainUI" unique_id=678135099 instance=ExtResource("6_2b2ab")]
+metadata/_edit_use_anchors_ = true
 
 [node name="WorldGen" type="Node" parent="World" unique_id=516468895]
 script = ExtResource("6_s71n1")

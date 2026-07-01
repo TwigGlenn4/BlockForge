@@ -9,13 +9,9 @@ var hotbar: Array[HotbarSlot]
 var selected_character: Character
 
 func _ready() -> void:
+	_build_hotbar(HOTBAR_SLOTS)
+
 	get_tree().get_root().size_changed.connect(_window_resized)
-
-	hotbar.resize(HOTBAR_SLOTS)
-	for i: int in HOTBAR_SLOTS:
-		hotbar[i] = _build_hotbar_slot(i)
-		self.add_child(hotbar[i])
-
 	_window_resized()
 
 
@@ -27,26 +23,12 @@ func _process(_delta: float) -> void:
 func _window_resized() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 
-	var target_size: Vector2 = Vector2.ZERO
+	var slot_height_px: float = hotbar[0].size.y
+	var slot_width_anchor: float = slot_height_px / viewport_size.x
+	# print("[Hotbar:_window_resized] slot_height_px="+str(slot_height_px)+", slot_width_anchor="+str(slot_width_anchor))
 
-	if viewport_size.y < viewport_size.x / 2.0:
-		target_size.y = viewport_size.y
-	else:
-		target_size.y = viewport_size.y * 0.75
+	anchor_left = ANCHOR_END - slot_width_anchor
 
-
-	target_size.x = target_size.y / float(HOTBAR_SLOTS)
-	anchor_left = 1.0 - (target_size.x/viewport_size.x)
-
-	var height_percent: float = target_size.y / viewport_size.y
-	anchor_top = (1.0 - height_percent) / 2.0
-	anchor_bottom = 1.0 - ((1.0 - height_percent) / 2.0)
-
-	for i: int in hotbar.size():
-		var slot = hotbar[i]
-		slot.position = Vector2(0, i * target_size.x)
-		slot.size = Vector2(target_size.x, target_size.x)
-	# print("[InventoryUI_manual] resized to ", size, " at ", position, " viewport size ", viewport_size)
 
 func _on_selected_character_changed(new_char: Character) -> void:
 	# store the character reference to show it's inventory
@@ -57,7 +39,20 @@ func _update_inventory_contents() -> void:
 	var inv := selected_character.inventory
 	for i:int in hotbar.size():
 		hotbar[i].set_stack(inv.contents[i])
-	
+
+func _build_hotbar( num_slots: int) -> void:
+	var hotbar_slot_size: float = 1.0 / HOTBAR_SLOTS ## Hotbar slot size in anchor units
+
+	hotbar.resize(num_slots)
+	for i: int in num_slots:
+		hotbar[i] = _build_hotbar_slot(i)
+		add_child(hotbar[i])
+		var anchor_from_start: float = hotbar_slot_size * i  ## Anchor value for start of hotbar, this var exists to simplify vertical/horizontal hotbar implementation.
+		var anchor_from_end: float = anchor_from_start + hotbar_slot_size  ## Anchor value for end of hotbar, this var exists to simplify vertical/horizontal hotbar implementation.
+
+		hotbar[i].anchor_top = anchor_from_start
+		hotbar[i].anchor_bottom = anchor_from_end
+		# print("[Hotbar] set slot " + str(i) + " anchored from " + str(anchor_from_start) + " to " + str(anchor_from_end))
 
 func _build_hotbar_slot(num: int) -> Control:
 	var slot: Control = HOTBAR_SLOT_SCENE.instantiate()
