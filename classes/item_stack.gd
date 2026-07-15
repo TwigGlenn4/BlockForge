@@ -72,3 +72,23 @@ func get_item() -> DataItem:
 		return item_list[0]
 
 	return DataItem.all_items[item_name]
+
+## Parse an itemstack string into item and count
+## [codeblock]parse("blockforge:dirt 2") -> {"item": "blockforge:dirt", "count": 2}
+## parse("blockforge:dirt") -> {"item": "blockforge:dirt", "count": 1}
+static func parse(itemstack_string: String) -> Dictionary:
+	assert(itemstack_string, "[ItemStack.parse()] Could not parse null itemstack string.")
+	
+	var itemstack_string_trimmed: String = itemstack_string.strip_edges()
+	assert(itemstack_string_trimmed, "[ItemStack.parse()] Could not parse whitespace itemstack string.")
+	
+	var stack_string_parts: Array[String] = itemstack_string_trimmed.split(" ")
+	var item_string: String = stack_string_parts[0]
+
+	if stack_string_parts.size() == 1:
+		return {"item": item_string, "count": 1}
+	else: # more than one part from split
+		var count_string: String = stack_string_parts[1]
+		assert(count_string.is_valid_int(), "[ItemStack.parse()] Could not parse count \"" + count_string + "\". full itemstack_string: \"" + itemstack_string + "\"")
+		var item_count: int = count_string.to_int()
+		return {"item": item_string, "count": item_count}
