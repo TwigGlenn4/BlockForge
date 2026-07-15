@@ -52,14 +52,13 @@ func remove_items( num:int ) -> bool: # removes items and returns remainder to r
 		print("[ItemStack.remove_items(%d)]: Can't remove negative items. Use ItemStack.add_items( num:int )" % [num])
 		return 0
 	
-	if count <= num: # not enough items
-		var remainder = num - count
+	var new_count = count - num
+	if new_count > 0:
+		count = new_count
+		return 0
+	else:
 		count = 0
-		return remainder
-	
-	# count > num
-	count -= num
-	return 0
+		return -new_count
 
 func _to_string() -> String:
 	return str(item_name, " ", count)

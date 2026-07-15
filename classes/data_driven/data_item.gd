@@ -37,6 +37,10 @@ static func item(tile_name:String) -> DataItem:
 		return UNDEFINED
 
 
+func _to_string() -> String:
+	return str(name)
+
+
 func tracked() -> bool:
 	if item_type == DataItem.ITEM_TYPES.TOOL or item_type == DataItem.ITEM_TYPES.ARMOR or item_type == DataItem.ITEM_TYPES.CONTAINER:
 		return true

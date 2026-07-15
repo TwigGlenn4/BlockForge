@@ -54,7 +54,7 @@ func queue_chunk( chunk_num:int, target_state:int):
 # feature_tree: build a tree at (x,y)
 func gen_feature_tree(x, y, height):
 	# print("Placing tree at ("+str(x)+", "+str(y)+").")
-	var trunk_replacable = [DataTile.UNDEFINED, DataTile.tile("blockforge:leaves")]
+	var trunk_replacable = [Tiles.AIR, DataTile.tile("blockforge:leaves")]
 	# verify no blockages
 	for h in height:
 		if world.tile_matches(x, y+h, trunk_replacable) == false:
@@ -77,8 +77,8 @@ func gen_feature_tree(x, y, height):
 	while width >= 0:
 		var ly = leaf_btm + h
 		for lx in width:
-			world.place_tile_overwrite(x + lx, y + ly, tile_leaves, [DataTile.UNDEFINED] )
-			world.place_tile_overwrite(x - lx, y + ly, tile_leaves, [DataTile.UNDEFINED] )
+			world.place_tile_overwrite(x + lx, y + ly, tile_leaves, [Tiles.AIR] )
+			world.place_tile_overwrite(x - lx, y + ly, tile_leaves, [Tiles.AIR] )
 		width -= 0.5
 		h += 1
 
@@ -88,7 +88,7 @@ func gen_feature_tree(x, y, height):
 # Place a portal. If is_natural is true, use a stone base, otherwise use cobble base.
 func gen_feature_portal( x, y, is_natural=false):
 	# Test for blockages
-	if world.get_tile( x, y+1 ) != DataTile.UNDEFINED || world.get_tile( x, y+2 ) != DataTile.UNDEFINED:
+	if world.get_tile( x, y+1 ) != Tiles.AIR || world.get_tile( x, y+2 ) != Tiles.AIR:
 		print("Portal at obstructed at "+Helpers.coord_string(x, y))
 		return false
 

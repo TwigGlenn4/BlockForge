@@ -20,7 +20,7 @@ static var TERRAIN = {
 	# SAND = {atlas=5, sprite=Vector2i(5,0), id="blockforge:sand"},
 	SAND = DataTile.new("blockforge:sand", DataTexture.new("blockforge:sand", TERRAIN_ATLAS, Vector2i(5,0))),
 	# SNOW = {atlas=5, sprite=Vector2i(6,0), id="blockforge:snow"},
-	SNOW = DataTile.new("blockforge:snow", DataTexture.new("blockforge:snow", TERRAIN_ATLAS, Vector2i(6,0))),
+	SNOW = DataTile.new("blockforge:snow", DataTexture.new("blockforge:snow", TERRAIN_ATLAS, Vector2i(6,0)), "blockforge:grass"),
 	# GRASS = {atlas=5, sprite=Vector2i(7,0), id="blockforge:grass"},
 	GRASS = DataTile.new("blockforge:grass", DataTexture.new("blockforge:grass", TERRAIN_ATLAS, Vector2i(7,0))),
 	# LOG = {atlas=5, sprite=Vector2i(8,0), id="blockforge:log"},

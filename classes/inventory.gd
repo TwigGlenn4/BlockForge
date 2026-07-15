@@ -12,7 +12,7 @@ func _init(num_slots:int = 25) -> void:
 func has(item_name:String, count:int = 1) -> int:
 	var num_found = 0
 	for stack:ItemStack in contents: # for every stack in contents
-		if stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
+		if stack && stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
 			num_found += stack.count
 			if num_found >= count:       # if enough items have been found, return num found
 				return num_found
@@ -49,12 +49,15 @@ func add_items( item_name:String, count:int = 1) -> int:
 
 func remove_items( item_name:String, count:int = 1) -> int: 
 	_contents_changed = true
-	for stack:ItemStack in contents: # for every stack in contents
-		if stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
+	for i in contents.size(): # for every stack in contents
+		var stack: ItemStack = contents[i]
+		if stack && stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
 
 			count = stack.remove_items(count)
-
-			if count <= 0: # count should only ever be == 0. <= is safety
+			if stack.count <= 0: # this stack has been emptied, remove it
+				contents[i] = null # remove this stack of 0 items
+			
+			if count <= 0: # enough items have been removed, can safely return
 				return 0
 
 	return count # return count if there are items that could not fit into the inventory.

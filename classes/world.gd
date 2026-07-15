@@ -49,14 +49,14 @@ func get_tile_v( v: Vector2i ) -> DataTile:
 # get_tile(): returns the tile stored in chunk.grid at given global coordinates.
 func get_tile( gx: int, gy: int ) -> DataTile:
 	# handle tiles outside world
-	if gx < 0 || gx >= width_tiles || gy < 0 || gy >= Chunk.HEIGHT: # Don't attempt to get tiles outside of the world.
-		return DataTile.UNDEFINED
+	if gx < 0 || gx >= width_tiles || gy < 0 || gy >= Chunk.HEIGHT: # Tiles outside the world are null
+		return null
 
 	var chunk = get_chunk_at_x(gx)
 	var pos_local = Vector2i(gx % Chunk.WIDTH, gy)
 
-	if !chunk.grid.has(pos_local): # If the pos does not exist in the grid, don't error.
-		return DataTile.UNDEFINED
+	if !chunk.grid.has(pos_local): # If the pos does not exist in the grid, it's air (null)
+		return Tiles.AIR
 	return chunk.grid[pos_local]
 
 

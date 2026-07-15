@@ -6,6 +6,7 @@ const LERP_TIME = 1
 
 @onready var world = get_node("/root/GameScene/World")
 @onready var selected_character = get_node("/root/GameScene/World/Character")
+@onready var inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
 
 @export var world_interactor: Control
 
@@ -79,7 +80,7 @@ func surface_path (character:Node, from:Vector2i, dest:Vector2i):
 			_method = Path.Movement.WALK 
 			# similar for but lookup blocks for climb in trees, blocks around for CLIMB_RIGHT, blocks above for CRAWL
 		
-		character.add_job(DataJob.new(here, DataJob.TYPE.GOTO))
+		character.add_job(DataJob.new(DataJob.TYPE.GOTO, here))
 		# should add method as another parameter in TYPE.GOTO
 
 func tree_path (character:Node, start:Vector2i, end:Vector2i): # traverse tree
@@ -89,18 +90,18 @@ func tree_path (character:Node, start:Vector2i, end:Vector2i): # traverse tree
 		here = start
 		for x in g3_range(start.x, end.x):
 			here.x = x
-			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
 		for y in g3_range(start.y, end.y):
 			here.y = y
-			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
 	else: # Dir.UP
 		here = start
 		for y in g3_range(start.y, end.y):
 			here.y = y
-			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
 		for x in g3_range(start.x, end.x):
 			here.x = x
-			character.add_job(DataJob.new(here, DataJob.TYPE.GOTO)) #method = CLIMB
+			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
 	return here 
 
 func g3_range(a:int, b:int):
@@ -168,10 +169,18 @@ func _input_character_inventory(event: InputEvent) -> void:
 
 func _input_block_interact(block_pos: Vector2i) -> bool:
 	var tile: DataTile = world.get_tile_v(block_pos)
-	if tile != DataTile.UNDEFINED:
-		var job: DataJob = DataJob.new(block_pos, DataJob.TYPE.BREAK)
+	if tile != Tiles.AIR:
+		var job: DataJob = DataJob.new(DataJob.TYPE.BREAK, block_pos)
 		selected_character.add_job(job)
 		return true
+	else:
+		var held_item_stack: ItemStack = inventory_ui.get_held_item_stack()
+		if held_item_stack:
+			print("[Interacter] Held item is " + str(held_item_stack) + ", item string is " + str(held_item_stack.get_item()))
+			var job: DataJob = DataJob.new(DataJob.TYPE.PLACE, block_pos, str(held_item_stack.get_item()))
+			selected_character.add_job(job)
+			return true
+
 	return false
 
 func _input_click_pos_test(_event: InputEvent) -> void:
@@ -218,4 +227,3 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 				surface_path (selected_character, start, end)
 			print("path finished")
 			# ===== END PATHFIND GENERAL
-

@@ -1,10 +1,24 @@
 https://trello.com/b/nR7499xf/blockheadsrenewedg
 
+* Implement Crafting Recipes
+* * Add Recipe class
+* * * see below for class members / methods
+* * Static file for recipe lists like tiles.gd
+* * Add workbench tile
+* * Somehow tag interactable tiles
+* * Create Recipe selection UI
+* * Create Crafting progress UI?
+* * Implement Craft Job
 
-TO-FIX:
-* fix click/tilemap misalignment
-* * click currently deletes tile at clicked pos, but returned tile does not match clicked pos
+* Add more hotkeys
+* * numbers for hotbar
 
+* Convert custom tile atlas to Godot texture atlas
+
+* JSON data parsing
+* * Tiles
+* * Recipe lists
+* * Textures? surely texture atlas is scriptable
 
 
 X Add leaves to trees

@@ -8,7 +8,7 @@ var target_pos: Vector2i = Vector2i(-1,-1)  # block pos Vector
 var lerp_timer: float = 0.0
 
 var job_queue: Array[DataJob] = []
-var job_active: DataJob = DataJob.new()
+var job_active: DataJob = DataJob.NONE
 
 var stats = {
 	speed = 10.0 #   Character speed in blocks per second.
@@ -27,24 +27,7 @@ func _process(delta):
 
 	if target_pos != Vector2i(-1,-1):
 		var target_pixels: Vector2i = Helpers.pos_block_to_pixel(target_pos)
-
 		position = position.move_toward(target_pixels, delta*(stats.speed*16))
-
-		if position == Vector2(target_pixels):
-			if target_pos == job_active.pos:
-				# if a BREAK job, break the block.
-				if job_active.type == DataJob.TYPE.BREAK:
-					var tile: DataTile = world.get_tile_v(job_active.pos)
-					if tile == null:
-						print("Tried to break null tile at ", str(job_active.pos), ", character at ", str(current_pos))
-					else:
-						inventory.add_items(tile.drops, 1)
-						world.place_tile_v(job_active.pos, null)
-						print("broke tile ", tile, " at ", job_active.pos)
-
-				job_active = DataJob.new() # reset to NONE job
-			target_pos = Vector2i(-1,-1)
-			
 
 
 func _physics_process(_delta):
@@ -52,8 +35,10 @@ func _physics_process(_delta):
 		job_active = job_queue.pop_front()
 		target_pos = job_active.pos
 		#print("Activating "+job_active._to_string())
-
+	
 	current_pos = Helpers.pos_pixel_to_block(position)
+	_process_jobs()
+
 	
 
 
@@ -64,7 +49,7 @@ func add_job(job:DataJob) -> void:
 
 
 func _set_target_pos(block_pos:Vector2):
-	var goto_job = DataJob.new(block_pos, DataJob.TYPE.GOTO)
+	var goto_job = DataJob.new(DataJob.TYPE.GOTO, block_pos)
 	print("Prepending "+goto_job._to_string())
 	job_queue.push_front(goto_job)
 
@@ -76,3 +61,44 @@ func _teleport_to(block_pos:Vector2):
 
 func open_inventory():
 	print(inventory)
+
+
+func _process_jobs():
+	if position == Vector2(Helpers.pos_block_to_pixel(target_pos)):
+		if target_pos == job_active.pos:
+			if job_active.type == DataJob.TYPE.BREAK:
+				_job_break(job_active)
+			elif job_active.type == DataJob.TYPE.PLACE:
+				_job_place(job_active)
+
+			job_active = DataJob.NONE # reset to NONE job
+		target_pos = Vector2i(-1,-1)
+		
+
+func _job_break(job) -> bool:
+	var tile: DataTile = world.get_tile_v(job.pos)
+	if tile == Tiles.AIR:
+		print("Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
+		return false
+	else:
+		inventory.add_items(tile.drops, 1)
+		# TODO: drop items if inventory full
+		world.place_tile_v(job.pos, Tiles.AIR)
+		print("broke tile ", tile, " at ", job.pos)
+	return true
+
+func _job_place(job) -> bool:
+	var tile_string: String = job.data
+	var tile: DataTile = DataTile.tile(tile_string)
+	if tile:
+		if inventory.has(tile_string):
+			inventory.remove_items(tile_string)
+			world.place_tile_v(job.pos, tile)
+			print("Placed tile ", tile, " at ", job.pos)
+			return true
+		else:
+			print("[Character:_job_place] Inventory is missing item: ", tile_string)
+			return false
+	else:
+		print("[Character:_job_place] Tile does not exist: ", tile_string)
+		return false
