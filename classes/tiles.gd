@@ -28,6 +28,7 @@ static var TERRAIN = {
 	# LEAVES = {atlas=5, sprite=Vector2i(9,0), id="blockforge:leaves"},
 	LEAVES = DataTile.new("blockforge:leaves", DataTexture.new("blockforge:leaves", TERRAIN_ATLAS, Vector2i(9,0))),
 	ORE_TIN = DataTile.new("blockforge:ore_tin", DataTexture.new("blockforge:ore_tin", TERRAIN_ATLAS, Vector2i(10,0))),
+	LIMESTONE = DataTile.new("blockforge:limestone", DataTexture.new("blockforge:limestone", TERRAIN_ATLAS, Vector2i(11,0))),
 }
 
 static var PORTAL_ATLAS = 2

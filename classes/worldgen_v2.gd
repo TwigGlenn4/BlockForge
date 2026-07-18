@@ -157,9 +157,9 @@ func gen_steps_trees( chunk_num ):
 
 
 ### gen_steps_ores
-func gen_steps_ores( chunk_num:int, ore_name:String, ore_replacable, max_height:int, rarity:float, width:float, depth_factor:float ):
+func gen_steps_ores( chunk_num:int, ore_name:String, ore_replacable, max_height:int, rarity:float, width:float, depth_factor:float, freq:float = 0.04 ):
 	print("  Generating ores...")
-	var ore_noisegen = Helpers.create_noise( world.w_seed + ore_name.hash(), 0.04, 2 )
+	var ore_noisegen = Helpers.create_noise( world.w_seed + ore_name.hash(), freq, 2 )
 	var ore_noise = Helpers.noise_array_2d_offset(ore_noisegen, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(chunk_num*Chunk.WIDTH, 0) )
 	
 	# var chunk: Chunk = world.chunks[chunk_num]
@@ -206,10 +206,16 @@ func generate_chunk( n: int, target_state: int = 3):
 		var timer_terrain = Time.get_ticks_usec()
 		print("  Chunk %d: Terrain done in %.3fms." % [n, (timer_terrain-timer_start)/1000.0])
 
+		# Limestone veins before caves so noodles/tubes can cut through them
+		world.chunks[n] = chunk
+		var num_limestone: int = gen_steps_ores(n, "blockforge:limestone", WG_Settings.STONE_REPLACABLE, Chunk.HEIGHT, 0.45, 0.224, -0.5, 0.028)
+		var timer_limestone = Time.get_ticks_usec()
+		print("  Chunk %d: %d limestone placed in %.3fms." % [n, num_limestone, (timer_limestone-timer_terrain)/1000.0])
+
 		# Digging Caves
 		dig_caves(chunk)
 		var timer_caves = Time.get_ticks_usec()
-		print("  Chunk %d: Caves done in %.3fms." % [n, (timer_caves-timer_terrain)/1000.0])
+		print("  Chunk %d: Caves done in %.3fms." % [n, (timer_caves-timer_limestone)/1000.0])
 
 
 		world.chunks[n] = chunk
@@ -263,8 +269,8 @@ func generate_chunk( n: int, target_state: int = 3):
 		var timer_trees = Time.get_ticks_usec()
 		print("  Chunk %d: Trees done in %.3fms." % [n, (timer_trees-timer_s3)/1000.0])
 
-		# Ores
-		var num_ores: int = gen_steps_ores(n, "blockforge:ore_tin", WG_Settings.CAVE_TUBE_REPLACABLE, 256, -0.5, 0.12, 1.5)
+		# Ores (stone only — limestone is a separate soft-stone pass)
+		var num_ores: int = gen_steps_ores(n, "blockforge:ore_tin", WG_Settings.STONE_REPLACABLE, 256, -0.5, 0.12, 1.5)
 
 		var timer_ores = Time.get_ticks_usec()
 		print("  Chunk %d: %d ores placed in %.3fms." % [n, num_ores, (timer_ores-timer_trees)/1000.0])

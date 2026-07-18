@@ -26,7 +26,8 @@ tiles = [
   "grass",
   "log",
   "leaves",
-  "ore_tin"
+  "ore_tin",
+  "limestone"
 ]
 
 TILE_SIZE = 16 # edge length of a sprite
