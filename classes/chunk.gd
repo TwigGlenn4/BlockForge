@@ -9,6 +9,11 @@ var cx = 0
 var grid: Dictionary[Vector2i, DataTile] = {}
 var surface_level = []
 var humidity = []
+var rock_top = [] # y where soil starts (above lava/stone/cobble)
+var lava_top = [] # y where stone starts (above lava)
+var stone_top = [] # y where cobble starts (above stone/mountain)
+var mountain_height = [] # used for snow topsoil check
+var depth_dirt = [] # soil thickness per column
 
 static var tiles = {
 	stone = DataTile.tile("blockforge:stone"),
@@ -17,6 +22,7 @@ static var tiles = {
 	grass = DataTile.tile("blockforge:grass"),
 	snow = DataTile.tile("blockforge:snow"),
 	sand = DataTile.tile("blockforge:sand"),
+	lava = DataTile.tile("blockforge:lava"),
 }
 
 # Store chunk generation progress
@@ -58,32 +64,41 @@ func place_tile_chunk_overwrite( x:int, y:int, tile,  overwrite_tiles):
 	return false
 
 
-# using Chunk x and a dict of generators, return a chunk generated to the terrain step.
+# using Chunk x and a dict of generators, return a chunk with base terrain (lava/stone/cobble).
+# Soil, topsoil, trees, and portal are applied later by WorldGenV2.surface_dressing().
 static func generate_chunk_threadsafe( chunk_x: int, gen ):
 	# print("Generating chunk " + str(chunk_x) + "...")
 	var chunk = Chunk.new(chunk_x)
 
 	var x_offset = WIDTH * chunk_x
 	var depth_stone = Helpers.noise_array_1d( gen.stone, WIDTH, x_offset)
-	var depth_dirt = Helpers.noise_array_1d( gen.dirt, WIDTH, x_offset)
+	var depth_dirt_noise = Helpers.noise_array_1d( gen.dirt, WIDTH, x_offset)
+	var depth_lava = Helpers.noise_array_1d( gen.lava, WIDTH, x_offset)
 	var mountain = Helpers.noise_array_1d( gen.mountain, WIDTH, x_offset)
 	chunk.humidity = Helpers.noise_array_1d( gen.humidity, WIDTH, x_offset )
-	# var feature_trees = Helpers.noise_array_1d( tree_gen, Chunk.WIDTH, x_offset )
 
 	# scale the arrays
 	mountain = Helpers.array_scale(mountain, WG_Settings.MOUNTAIN_HEIGHT_SCALE, WG_Settings.MOUNTAIN_HEIGHT_OFFSET)
 	depth_stone = Helpers.array_scale(depth_stone, WG_Settings.LAYER_COBBLESTONE_SCALE, WG_Settings.LAYER_COBBLESTONE_OFFSET) # 32 + (0 to 64)
-	depth_dirt = Helpers.array_scale(depth_dirt, 3, 4) # should make the depth 3 + (0 to 4)
-	
-	# var tree_placement = array_local_max(feature_trees)
-	# var tree_height = array_scale(feature_trees, 8, 3)
+	depth_dirt_noise = Helpers.array_scale(depth_dirt_noise, 3, 4) # should make the depth 3 + (0 to 4)
+	depth_lava = Helpers.array_scale(depth_lava, 8, 2) # bottom lava layer 2 + (0 to 8) = 2..10
 
 	chunk.surface_level.resize(WIDTH)
-	
+	chunk.rock_top.resize(WIDTH)
+	chunk.lava_top.resize(WIDTH)
+	chunk.stone_top.resize(WIDTH)
+	chunk.mountain_height.resize(WIDTH)
+	chunk.depth_dirt.resize(WIDTH)
+
 
 	for x in range(WIDTH):
 
-		chunk.surface_level[x] = mountain[x] + depth_stone[x] + depth_dirt[x] 
+		chunk.lava_top[x] = depth_lava[x]
+		chunk.stone_top[x] = depth_lava[x] + mountain[x]
+		chunk.rock_top[x] = depth_lava[x] + mountain[x] + depth_stone[x]
+		chunk.depth_dirt[x] = depth_dirt_noise[x]
+		chunk.mountain_height[x] = mountain[x]
+		chunk.surface_level[x] = chunk.rock_top[x] + chunk.depth_dirt[x]
 		var diff = chunk.surface_level[x] - HEIGHT - 16
 		if( diff > 0 ): # minimum 16 blocks between surface and chunk ceiling
 			
@@ -92,35 +107,35 @@ static func generate_chunk_threadsafe( chunk_x: int, gen ):
 				mountain[x] = 0
 			else:
 				mountain[x] = mountain[x] - diff
-			
-			chunk.surface_level[x] = chunk.surface_level[x] - diff
+
+			chunk.mountain_height[x] = mountain[x]
+			chunk.lava_top[x] = depth_lava[x]
+			chunk.stone_top[x] = depth_lava[x] + mountain[x]
+			chunk.rock_top[x] = depth_lava[x] + mountain[x] + depth_stone[x]
+			chunk.surface_level[x] = chunk.rock_top[x] + chunk.depth_dirt[x]
 			
 			# print("Reducing height by "+ str(diff) + " at x=" + str(x))
 			print("surface at x="+ str(x) + " is reduced to y=" + str(chunk.surface_level[x]))
 		
-		# truncate surface_level to int
+		# truncate to int
 		chunk.surface_level[x] = int(chunk.surface_level[x])
+		chunk.rock_top[x] = int(chunk.rock_top[x])
+		chunk.lava_top[x] = int(chunk.lava_top[x])
+		chunk.stone_top[x] = int(chunk.stone_top[x])
+		chunk.depth_dirt[x] = int(chunk.depth_dirt[x])
+		chunk.mountain_height[x] = int(chunk.mountain_height[x])
 
-		for y in range( 0, chunk.surface_level[x]):
+		# Base layers only — soil/topsoil applied in surface_dressing
+		for y in range( 0, chunk.rock_top[x]):
 
-			if y < mountain[x]:	# Mountain layer
+			if y < depth_lava[x]: # Lava layer (bottom of world)
+				chunk.place_tile_chunk( x, y, tiles.lava)
+
+			elif y < depth_lava[x]+mountain[x]:	# Mountain layer
 				chunk.place_tile_chunk( x, y, tiles.stone)
 			
-			elif y < mountain[x]+depth_stone[x]:	# Stone layer
+			elif y < depth_lava[x]+mountain[x]+depth_stone[x]:	# Stone layer
 				chunk.place_tile_chunk( x, y, tiles.cobblestone)
-
-			elif y < mountain[x]+depth_stone[x]+depth_dirt[x]:	# Soil layer
-				if( chunk.humidity[x] < WG_Settings.DESERT_HUMIDITY_MAX ):
-					chunk.place_tile_chunk( x, y, tiles.sand)
-				else:
-					chunk.place_tile_chunk( x, y, tiles.dirt)
-			
-			if( chunk.humidity[x] < WG_Settings.DESERT_HUMIDITY_MAX ): # Topsoil
-				chunk.place_tile_chunk( x, mountain[x]+depth_stone[x]+depth_dirt[x], tiles.sand )
-			elif( mountain[x] > WG_Settings.MOUNTAIN_SNOW_ALTITUDE ):
-				chunk.place_tile_chunk( x, mountain[x]+depth_stone[x]+depth_dirt[x], tiles.snow )
-			else:
-				chunk.place_tile_chunk( x, mountain[x]+depth_stone[x]+depth_dirt[x], tiles.grass )
 
 	# print("Done generating chunk " + str(chunk_x) + "...")
 	return chunk

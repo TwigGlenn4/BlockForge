@@ -15,5 +15,5 @@ const TREE_HEIGHT_MIN = 4
 const TREE_HEIGHT_MAX = 25
 
 
-static var CAVE_TUBE_REPLACABLE = [ DataTile.tile("blockforge:stone") ]
-static var CAVE_NOODLE_REPLACABLE = [ DataTile.tile("blockforge:stone"), DataTile.tile("blockforge:cobblestone") ]
+static var CAVE_TUBE_REPLACABLE = [ DataTile.tile("blockforge:stone"), DataTile.tile("blockforge:limestone"), DataTile.tile("blockforge:marble") ]
+static var CAVE_NOODLE_REPLACABLE = [ DataTile.tile("blockforge:stone"), DataTile.tile("blockforge:cobblestone"), DataTile.tile("blockforge:limestone"), DataTile.tile("blockforge:marble") ]

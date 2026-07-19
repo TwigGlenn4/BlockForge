@@ -31,6 +31,7 @@ func setup():
 	noise.dirt = Helpers.create_noise( world.w_seed + 2, 0.001, 3 )
 	noise.mountain = Helpers.create_noise( world.w_seed + 3, 0.002, 3 )
 	noise.humidity = Helpers.create_noise( world.w_seed + 10, 0.002, 3 )
+	noise.lava = Helpers.create_noise( world.w_seed + 4, 0.005, 2 )
 
 	noise.cave = {}
 	noise.cave.noodle = Helpers.create_noise( world.w_seed + 20, 0.02, 2 )
@@ -39,6 +40,11 @@ func setup():
 	noise.cave.occlusion = Helpers.create_noise( world.w_seed + 29, 0.03, 2 ) # Occlude caves at top and bottom
 
 	noise.trees = Helpers.create_noise( world.w_seed + 10, 0.02, 5 )
+	noise.layers = Helpers.create_noise( world.w_seed + 40, 0.008, 2 )
+
+	ChunkyFillingConfig.load_config("res://data/chunky_filling.yaml")
+	# Ensure underground tiles are registered
+	var _ug = Tiles.UNDERGROUND
 
 
 func queue_chunk( chunk_num:int, target_state:int):
@@ -155,36 +161,236 @@ func gen_steps_trees( chunk_num ):
 			gen_feature_tree( world_x, surface+1, clamp( tree_height[x], WG_Settings.TREE_HEIGHT_MIN, WG_Settings.TREE_HEIGHT_MAX ) )
 
 
+# surface_dressing: soil, topsoil, trees, and portal for a finished base-terrain chunk
+func surface_dressing( chunk_num: int ):
+	var chunk: Chunk = world.chunks[chunk_num]
+	print("  Surface dressing chunk %d..." % chunk_num)
 
-### gen_steps_ores
-func gen_steps_ores( chunk_num:int, ore_name:String, ore_replacable, max_height:int, rarity:float, width:float, depth_factor:float ):
-	print("  Generating ores...")
-	var ore_noisegen = Helpers.create_noise( world.w_seed + ore_name.hash(), 0.04, 2 )
-	var ore_noise = Helpers.noise_array_2d_offset(ore_noisegen, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(chunk_num*Chunk.WIDTH, 0) )
-	
-	# var chunk: Chunk = world.chunks[chunk_num]
-	var ore_tile: DataTile = DataTile.tile(ore_name)
-	if ore_tile == DataTile.UNDEFINED:
-		return false
-	
-	var y_max: int = max_height
-	if y_max > Chunk.HEIGHT:
-		y_max = Chunk.HEIGHT
-	var num_ores_placed: int = 0
+	# Dirt/sand + topsoil
+	for x in Chunk.WIDTH:
+		var rock_top: int = chunk.rock_top[x]
+		var surface: int = chunk.surface_level[x]
+		var world_x: int = chunk_num*Chunk.WIDTH + x
 
-	# generate ores
-	for y in y_max:
-		var y_width: float = width + (float(y_max-y)/y_max)*width*depth_factor
+		for y in range(rock_top, surface):
+			if chunk.humidity[x] < WG_Settings.DESERT_HUMIDITY_MAX:
+				world.place_tile( world_x, y, Chunk.tiles.sand )
+			else:
+				world.place_tile( world_x, y, Chunk.tiles.dirt )
+
+		if chunk.humidity[x] < WG_Settings.DESERT_HUMIDITY_MAX:
+			world.place_tile( world_x, surface, Chunk.tiles.sand )
+		elif chunk.mountain_height[x] > WG_Settings.MOUNTAIN_SNOW_ALTITUDE:
+			world.place_tile( world_x, surface, Chunk.tiles.snow )
+		else:
+			world.place_tile( world_x, surface, Chunk.tiles.grass )
+
+	# Portal (once), if this chunk holds the portal column — before trees
+	if world.world_portal_pos.y == 0:
+		var portal_chunk: int = world.world_portal_pos.x / Chunk.WIDTH
+		if chunk_num == portal_chunk:
+			world.world_portal_pos.y = world.get_surface(world.world_portal_pos.x)
+			gen_feature_portal( world.world_portal_pos.x, world.world_portal_pos.y, true )
+			move_camera.emit(world.world_portal_pos)
+			character_to_portal.emit(world.world_portal_pos)
+
+	# Trees
+	gen_steps_trees(chunk_num)
+
+	# Surface inclusions (flint/clay in dirt, black sand in sand)
+	generate_inclusions(chunk_num, false)
+
+
+### host tiles from config string array
+func _hosts_from_cfg( host_names: Array ) -> Array:
+	var out: Array = []
+	for n in host_names:
+		out.append(DataTile.tile(str(n)))
+	return out
+
+
+# generate_layers: multiple tapered horizontal lenses at random depths within height_min..height_max
+# Layer inclusions (oil/sandstone/red marble/lapis) are placed while writing the layer.
+# Process limestone before marble so marble can overwrite limestone on overlap.
+func generate_layers( chunk_num: int ):
+	var chunk: Chunk = world.chunks[chunk_num]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = world.w_seed + chunk_num * 7919 + 17
+	var all_incl: Dictionary = ChunkyFillingConfig.inclusions()
+
+	for layer_name in ChunkyFillingConfig.layers():
+		var cfg: Dictionary = ChunkyFillingConfig.layers()[layer_name]
+		var layer_tile: DataTile = DataTile.tile(str(cfg.get("tile", "")))
+		if layer_tile == DataTile.UNDEFINED:
+			continue
+		var hosts: Array = _hosts_from_cfg(cfg.get("host", []))
+		# Prefer height_min/max; fall back to legacy min/max_depth_fraction
+		var min_f: float = float(cfg.get("height_min", cfg.get("min_depth_fraction", 0.0)))
+		var max_f: float = float(cfg.get("height_max", cfg.get("max_depth_fraction", 1.0)))
+		if min_f > max_f:
+			var tmp := min_f
+			min_f = max_f
+			max_f = tmp
+		var num_lenses: int = int(cfg.get("number_of_lenses", 1))
+		var thick_min: int = int(cfg.get("thickness_min", 2))
+		var thick_max: int = int(cfg.get("thickness_max", 6))
+		var boost: float = float(cfg.get("band_center_boost", 1.0))
+		var rarity: float = float(cfg.get("rarity", 0.5))
+		var seg_min: int = int(cfg.get("segment_length_min", 30))
+		var seg_max: int = int(cfg.get("segment_length_max", 200))
+		var gap_min: int = int(cfg.get("gap_min", 8))
+		var gap_max: int = int(cfg.get("gap_max", 40))
+		var warp: float = float(cfg.get("noise_warp", 0.1))
+		var incl_names: Array = cfg.get("inclusions", [])
+
+		for _lens in num_lenses:
+			var x := 0
+			while x < Chunk.WIDTH:
+				if rng.randf() > rarity:
+					x += rng.randi_range(4, 16)
+					continue
+				var seg_len: int = rng.randi_range(seg_min, seg_max)
+				var base_thick: float = rng.randf_range(thick_min, thick_max)
+				# Per-lens random depth within [height_min, height_max]
+				var lens_center_f: float = rng.randf_range(min_f, max_f)
+				for lx in seg_len:
+					var cx: int = x + lx
+					if cx >= Chunk.WIDTH:
+						break
+					var lava_top: int = chunk.lava_top[cx]
+					var rock_top: int = chunk.rock_top[cx]
+					var rock_h: int = rock_top - lava_top
+					if rock_h <= 1:
+						continue
+					# taper: 0 at ends, 1 at center
+					var t: float = float(lx) / float(maxi(seg_len - 1, 1))
+					var taper: float = 1.0 - absf(2.0 * t - 1.0)
+					var gauss: float = exp(-pow((t - 0.5) * 3.0, 2.0))
+					var thickness: int = int(round(base_thick * taper * (1.0 + (boost - 1.0) * gauss)))
+					thickness = clampi(thickness, 1, thick_max)
+
+					var nwarp: float = noise.layers.get_noise_2d(chunk_num * Chunk.WIDTH + cx, lens_center_f * 100.0 + float(_lens) * 17.0) * warp
+					var center_f: float = clampf(lens_center_f + nwarp, min_f, max_f)
+					var center_y: int = lava_top + int(center_f * rock_h)
+					var half: int = thickness / 2
+					for dy in range(-half, thickness - half):
+						var gy: int = center_y + dy
+						if gy < lava_top or gy >= rock_top:
+							continue
+						var world_x: int = chunk_num * Chunk.WIDTH + cx
+						if world.place_tile_overwrite(world_x, gy, layer_tile, hosts):
+							for iname in incl_names:
+								if not all_incl.has(iname):
+									continue
+								var icfg: Dictionary = all_incl[iname]
+								if not bool(icfg.get("during_layer", true)):
+									continue
+								if rng.randf() > float(icfg.get("rarity", 0.05)):
+									continue
+								var itile: DataTile = DataTile.tile(str(icfg.get("tile", "")))
+								if itile != DataTile.UNDEFINED:
+									world.place_tile(world_x, gy, itile)
+				x += seg_len + rng.randi_range(gap_min, gap_max)
+
+
+# generate_ores: noise clumps constrained to host layer depth bands (config-driven)
+func generate_ores( chunk_num: int ):
+	var chunk: Chunk = world.chunks[chunk_num]
+	for ore_name in ChunkyFillingConfig.ores():
+		var cfg: Dictionary = ChunkyFillingConfig.ores()[ore_name]
+		var ore_tile: DataTile = DataTile.tile(str(cfg.get("tile", "")))
+		if ore_tile == DataTile.UNDEFINED:
+			continue
+		var hosts: Array = _hosts_from_cfg(cfg.get("host", []))
+		var host_layer: String = str(cfg.get("host_layer", "stone"))
+		var min_f: float = float(cfg.get("min_depth_fraction", 0.0))
+		var max_f: float = float(cfg.get("max_depth_fraction", 1.0))
+		var width: float = float(cfg.get("clump_size", cfg.get("width", 0.1)))
+		var freq: float = float(cfg.get("freq", 0.04))
+
+		var ore_noisegen = Helpers.create_noise(world.w_seed + str(cfg.get("tile", ore_name)).hash(), freq, 2)
+		var ore_noise = Helpers.noise_array_2d_offset(ore_noisegen, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(chunk_num * Chunk.WIDTH, 0))
+		var placed := 0
+
 		for x in Chunk.WIDTH:
-			var pos:Vector2i = Vector2i(x,y)
-			var noise_val: float = ore_noise[pos] 
-			if noise_val >= rarity-y_width and noise_val <= rarity+y_width:
-				if world.place_tile_overwrite(x+(chunk_num*Chunk.WIDTH), y, ore_tile, ore_replacable):
-					num_ores_placed += 1
-	return num_ores_placed
-	
+			var bands: Array = _ore_y_bands(chunk, x, host_layer)
+			for band in bands:
+				var y0: int = band[0]
+				var y1: int = band[1]
+				var band_h: int = y1 - y0
+				if band_h <= 0:
+					continue
+				for y in range(y0, y1):
+					var local_f: float = float(y - y0) / float(band_h)
+					if local_f < min_f or local_f > max_f:
+						continue
+					# Fixed noise center 0.5; abundance via freq + clump_size only
+					var noise_val: float = ore_noise[Vector2i(x, y)]
+					if absf(noise_val - 0.5) <= width:
+						if world.place_tile_overwrite(x + chunk_num * Chunk.WIDTH, y, ore_tile, hosts):
+							placed += 1
+		print("  Chunk %d: %s placed %d" % [chunk_num, ore_name, placed])
 
 
+func _ore_y_bands( chunk: Chunk, x: int, host_layer: String ) -> Array:
+	# returns array of [y_min, y_max) bands in chunk-local coords
+	var bands: Array = []
+	match host_layer:
+		"cobble":
+			bands.append([chunk.stone_top[x], chunk.rock_top[x]])
+		"stone":
+			bands.append([chunk.lava_top[x], chunk.stone_top[x]])
+		"cobble_and_stone":
+			bands.append([chunk.lava_top[x], chunk.stone_top[x]])
+			bands.append([chunk.stone_top[x], chunk.rock_top[x]])
+		_:
+			bands.append([chunk.lava_top[x], chunk.rock_top[x]])
+	return bands
+
+
+# generate_inclusions: non-layer inclusions (dirt/sand). Layer inclusions happen in generate_layers.
+func generate_inclusions( chunk_num: int, during_layer_only: bool = false ):
+	var chunk: Chunk = world.chunks[chunk_num]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = world.w_seed + chunk_num * 4999 + 91
+
+	for iname in ChunkyFillingConfig.inclusions():
+		var cfg: Dictionary = ChunkyFillingConfig.inclusions()[iname]
+		var during: bool = bool(cfg.get("during_layer", false))
+		if during_layer_only and not during:
+			continue
+		if not during_layer_only and during:
+			continue
+		var itile: DataTile = DataTile.tile(str(cfg.get("tile", "")))
+		if itile == DataTile.UNDEFINED:
+			continue
+		var hosts: Array = _hosts_from_cfg(cfg.get("host", []))
+		var rarity: float = float(cfg.get("rarity", 0.05))
+		var clump: float = float(cfg.get("clump_size", 0.1))
+		var incl_noise = Helpers.create_noise(world.w_seed + str(cfg.get("tile", iname)).hash(), 0.06, 2)
+		var noise_map = Helpers.noise_array_2d_offset(incl_noise, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(chunk_num * Chunk.WIDTH, 0))
+
+		var placed := 0
+		for x in Chunk.WIDTH:
+			var y_hi: int = chunk.surface_level[x] + 1
+			for y in y_hi:
+				var nv: float = noise_map[Vector2i(x, y)]
+				# clump around low noise values
+				if nv < rarity and absf(nv - rarity * 0.5) < clump:
+					if world.place_tile_overwrite(x + chunk_num * Chunk.WIDTH, y, itile, hosts):
+						placed += 1
+		if placed > 0:
+			print("  Chunk %d: inclusion %s placed %d" % [chunk_num, iname, placed])
+
+
+# chunky_filling: sedimentary lenses, caves, then ore clumps
+func chunky_filling( chunk_num: int ):
+	print("  Chunky filling chunk %d..." % chunk_num)
+	var chunk: Chunk = world.chunks[chunk_num]
+
+	generate_layers(chunk_num)
+	# dig_caves(chunk)
+	generate_ores(chunk_num)
 
 
 # Overall chunk generation.
@@ -206,19 +412,17 @@ func generate_chunk( n: int, target_state: int = 3):
 		var timer_terrain = Time.get_ticks_usec()
 		print("  Chunk %d: Terrain done in %.3fms." % [n, (timer_terrain-timer_start)/1000.0])
 
-		# Digging Caves
-		dig_caves(chunk)
-		var timer_caves = Time.get_ticks_usec()
-		print("  Chunk %d: Caves done in %.3fms." % [n, (timer_caves-timer_terrain)/1000.0])
-
-
 		world.chunks[n] = chunk
+		chunky_filling(n)
+		var timer_filling = Time.get_ticks_usec()
+		print("  Chunk %d: Chunky filling done in %.3fms." % [n, (timer_filling-timer_terrain)/1000.0])
+
 		chunk.write_to_tilemap(world.tilemap)
 
 		chunk.gen_state = 1
 
 		var timer_end = Time.get_ticks_usec()
-		print("  Chunk %d: Tilemap done in %.3fms." % [n, (timer_end-timer_caves)/1000.0])
+		print("  Chunk %d: Tilemap done in %.3fms." % [n, (timer_end-timer_filling)/1000.0])
 		print("  Chunk %d: gen_state = 1 in %.3fms." % [n, (timer_end-timer_start)/1000.0])
 	
 	if chunk.gen_state >= target_state: # Target exists and is now (or was) at or above it's target state
@@ -252,22 +456,15 @@ func generate_chunk( n: int, target_state: int = 3):
 		if requeue:
 			return false
 
-	# gen_state 3: Features( trees, ores, more ). Here we use world place_tile to cross chunk borders
+	# gen_state 3: Surface dressing (soil, topsoil, trees, portal) and ores
 	if chunk.gen_state == 2 and target_state >= 3:
-		print("Generating Chunk "+str(n)+" state 3: Features.")
+		print("Generating Chunk "+str(n)+" state 3: Surface dressing.")
 		var timer_s3 = Time.get_ticks_usec()
 
-		# Trees
-		gen_steps_trees(n)
+		surface_dressing(n)
 
-		var timer_trees = Time.get_ticks_usec()
-		print("  Chunk %d: Trees done in %.3fms." % [n, (timer_trees-timer_s3)/1000.0])
-
-		# Ores
-		var num_ores: int = gen_steps_ores(n, "blockforge:ore_tin", WG_Settings.CAVE_TUBE_REPLACABLE, 256, -0.5, 0.12, 1.5)
-
-		var timer_ores = Time.get_ticks_usec()
-		print("  Chunk %d: %d ores placed in %.3fms." % [n, num_ores, (timer_ores-timer_trees)/1000.0])
+		var timer_dressing = Time.get_ticks_usec()
+		print("  Chunk %d: Surface dressing done in %.3fms." % [n, (timer_dressing-timer_s3)/1000.0])
 
 		# Stage 3 done
 		chunk.gen_state = 3
@@ -290,16 +487,7 @@ func _ready():
 
 
 func _physics_process(delta):
-	if queue_timer > 0:
-		queue_timer -= delta
-	if queue_timer <= 0 and len(chunk_queue) > 0:
-		queue_timer = QUEUE_DELAY
-		print("\nchunk_queue: "+str(chunk_queue))
-		var next = chunk_queue.pop_front()
-		generate_chunk( next[0], next[1] )
-
-	# Portal generation
-	# Select world portal x
+	# Portal X selection (placement happens in surface_dressing)
 	if world.world_portal_pos == Vector2i.ZERO: # World portal not set, 
 		world.world_portal_pos.x = rand_from_seed( world.w_seed )[0] % ( world.width_tiles / 2 )
 		world.world_portal_pos.x += world.width_tiles * 0.25 # keep portal in middle half.
@@ -311,15 +499,15 @@ func _physics_process(delta):
 		move_camera.emit(Vector2i(world.world_portal_pos.x, Chunk.HEIGHT/2))
 		print("camera moved to "+ str(Vector2(world.world_portal_pos.x, Chunk.HEIGHT/2)))
 
-		# generate portal if y not set AND the chunk is generated.
-	if world.world_portal_pos.y == 0 and world.chunks[world.world_portal_pos.x/Chunk.WIDTH].gen_state == 2:
-		world.world_portal_pos.y = world.get_surface(world.world_portal_pos.x )
-		gen_feature_portal( world.world_portal_pos.x, world.world_portal_pos.y, true )
-		move_camera.emit(world.world_portal_pos)
-		character_to_portal.emit(world.world_portal_pos)
+	if queue_timer > 0:
+		queue_timer -= delta
+	if queue_timer <= 0 and len(chunk_queue) > 0:
+		queue_timer = QUEUE_DELAY
+		print("\nchunk_queue: "+str(chunk_queue))
+		var next = chunk_queue.pop_front()
+		generate_chunk( next[0], next[1] )
 
 	if chunk_queue.size() == 0 and generation_working:
 		gentimer_stop.emit()
 		generation_working = false
 	
-
