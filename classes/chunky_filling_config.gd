@@ -37,6 +37,10 @@ static func inclusions() -> Dictionary:
 	return get_config().get("inclusions", {})
 
 
+static func caves() -> Dictionary:
+	return get_config().get("caves", {})
+
+
 static func _parse_yaml(text: String) -> Dictionary:
 	var root: Dictionary = {}
 	var stack: Array = [{"indent": -1, "container": root}]

@@ -1,5 +1,4 @@
-# Chunky filling / surface inclusion tuning
-# Depth fractions: 0 = bottom of measured band, 1 = top.
+# Depth fractions: 0.0=bottom of measured band, 1.0=top.
 # Layers measure the rock body (above lava, below soil).
 # Ores measure their host_layer column (cobble / stone).
 
@@ -164,3 +163,17 @@ inclusions:
     rarity: 0.07
     clump_size: 0.12
     during_layer: false
+
+caves:
+  cave:
+    type: cave
+    min_depth_fraction: 0.05
+    max_depth_fraction: 0.99
+    freq: 0.04
+    clump_size: 0.08
+    chamber_core: 0.02 
+    chamber_radius_min: 3
+    chamber_radius_max: 5
+    chamber_min_branches: 3
+    chamber_jitter: 0.35
+    chamber_chance: 0.03

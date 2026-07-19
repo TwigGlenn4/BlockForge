@@ -33,16 +33,11 @@ func setup():
 	noise.humidity = Helpers.create_noise( world.w_seed + 10, 0.002, 3 )
 	noise.lava = Helpers.create_noise( world.w_seed + 4, 0.005, 2 )
 
-	noise.cave = {}
-	noise.cave.noodle = Helpers.create_noise( world.w_seed + 20, 0.02, 2 )
-	noise.cave.tube = Helpers.create_noise( world.w_seed + 21, 0.025, 2 )
-	noise.cave.backfill = Helpers.create_noise( world.w_seed + 28, 0.03, 2 )
-	noise.cave.occlusion = Helpers.create_noise( world.w_seed + 29, 0.03, 2 ) # Occlude caves at top and bottom
+	ChunkyFillingConfig.load_config("res://data/chunky_filling.yaml")
 
 	noise.trees = Helpers.create_noise( world.w_seed + 10, 0.02, 5 )
 	noise.layers = Helpers.create_noise( world.w_seed + 40, 0.008, 2 )
 
-	ChunkyFillingConfig.load_config("res://data/chunky_filling.yaml")
 	# Ensure underground tiles are registered
 	var _ug = Tiles.UNDERGROUND
 
@@ -116,32 +111,135 @@ func gen_feature_portal( x, y, is_natural=false):
 #    WORLDGEN STEPS
 #  ------------------
 
-# Dig out caves in one chunk
-func dig_caves( chunk ):
-	var n = chunk.cx
-	var noodle_noise = Helpers.noise_array_2d_offset( noise.cave.noodle, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(n*Chunk.WIDTH, 0), true )
-	var tube_noise = Helpers.noise_array_2d_offset( noise.cave.tube, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(n*Chunk.WIDTH, 0) )
-	var backfill_noise = Helpers.noise_array_2d_offset( noise.cave.backfill, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(n*Chunk.WIDTH, 0) )
-	var occlusion_noise = Helpers.noise_array_2d_offset( noise.cave.occlusion, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(n*Chunk.WIDTH, 0) )
+# Dig caves: tin-style stringy clumps, then irregular ~10-block caverns at junctions (same noise).
+func dig_caves( chunk_num: int ):
+	var chunk: Chunk = world.chunks[chunk_num]
+	var air: DataTile = Tiles.AIR
 
-	# print(tube_noise)
+	for cave_name in ChunkyFillingConfig.caves():
+		var cfg: Dictionary = ChunkyFillingConfig.caves()[cave_name]
+		var min_f: float = float(cfg.get("min_depth_fraction", 0.01))
+		var max_f: float = float(cfg.get("max_depth_fraction", 0.99))
+		var width: float = float(cfg.get("clump_size", 0.08))
+		var freq: float = float(cfg.get("freq", 0.04))
+		var chamber_core: float = float(cfg.get("chamber_core", width * 0.25))
+		var chamber_r_min: float = float(cfg.get("chamber_radius_min", 4.0))
+		var chamber_r_max: float = float(cfg.get("chamber_radius_max", 6.0))
+		var chamber_min_branches: int = int(cfg.get("chamber_min_branches", 3))
+		var chamber_jitter: float = float(cfg.get("chamber_jitter", 0.35))
+		var chamber_chance: float = float(cfg.get("chamber_chance", 0.05))
 
-	# var start_x = n*Chunk.WIDTH
-	var bh_air = DataTile.tile("air")
+		var cave_noisegen = Helpers.create_noise(world.w_seed + ("cave_" + cave_name).hash(), freq, 2)
+		var cave_noise = Helpers.noise_array_2d_offset(cave_noisegen, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(chunk_num * Chunk.WIDTH, 0))
+		var jitter_gen = Helpers.create_noise(world.w_seed + ("cave_jitter_" + cave_name).hash(), freq * 2.5, 2)
+		var jitter_noise = Helpers.noise_array_2d_offset(jitter_gen, Vector2i(Chunk.WIDTH, Chunk.HEIGHT), Vector2i(chunk_num * Chunk.WIDTH, 0))
+		var chamber_rng := RandomNumberGenerator.new()
+		chamber_rng.seed = world.w_seed + chunk_num * 9176 + cave_name.hash()
 
-	for x in Chunk.WIDTH:
-		for y in chunk.surface_level[x]:
-			var depth_factor = pow(1.02, y) / y * ( 1000 / chunk.surface_level[x])
-			var cave_blocked = occlusion_noise[Vector2i(x, y)] * depth_factor > 0.6 || backfill_noise[Vector2i(x, y)] > 0.8
+		var tunnel_mask: Dictionary = {} # Vector2i -> true
+		var carved := 0
+		var chambers := 0
 
-			
-			if noodle_noise[Vector2i(x, y)] < 0.05 && backfill_noise[Vector2i(x, y)] < 0.7 && !cave_blocked: 
-				chunk.place_tile_chunk_overwrite(x, y, bh_air, WG_Settings.CAVE_NOODLE_REPLACABLE)
-				# print("noodle")
+		# Pass 1: stringy tunnels (same as tin ore clumps)
+		for x in Chunk.WIDTH:
+			var y0: int = chunk.lava_top[x]
+			var y1: int = chunk.rock_top[x]
+			var band_h: int = y1 - y0
+			if band_h <= 0:
+				continue
+			for y in range(y0, y1):
+				var local_f: float = float(y - y0) / float(band_h)
+				if local_f < min_f or local_f > max_f:
+					continue
+				var pos := Vector2i(x, y)
+				var dist: float = absf(cave_noise[pos] - 0.5)
+				if dist <= width:
+					chunk.place_tile_chunk(x, y, air)
+					tunnel_mask[pos] = true
+					carved += 1
 
-			if tube_noise[Vector2i(x, y)] < 0.02 && backfill_noise[Vector2i(x, y)] < 0.8 && !cave_blocked: 
-				chunk.place_tile_chunk_overwrite(x, y, bh_air, WG_Settings.CAVE_TUBE_REPLACABLE)
-				# print("tube")
+		# Pass 2: caverns at vein cores that look like junctions
+		var seeds: Array[Vector2i] = []
+		for pos in tunnel_mask:
+			var dist: float = absf(cave_noise[pos] - 0.5)
+			if dist > chamber_core:
+				continue
+			if _cave_tunnel_branches(tunnel_mask, pos) < chamber_min_branches:
+				continue
+			# Prefer local core of the vein so one junction → one chamber
+			if not _cave_is_local_core(cave_noise, tunnel_mask, pos):
+				continue
+			seeds.append(pos)
+
+		var used_seeds: Array[Vector2i] = []
+		for seed_pos in seeds:
+			if chamber_rng.randf() > chamber_chance:
+				continue
+			var too_close := false
+			for prev in used_seeds:
+				if seed_pos.distance_squared_to(prev) < 64: # ~8 blocks apart
+					too_close = true
+					break
+			if too_close:
+				continue
+			var t: float = clampf(jitter_noise[seed_pos], 0.0, 1.0)
+			var base_r: float = lerpf(chamber_r_min, chamber_r_max, t)
+			var carved_here: int = _cave_carve_irregular(chunk, seed_pos, base_r, chamber_jitter, jitter_noise, air, tunnel_mask)
+			if carved_here > 0:
+				used_seeds.append(seed_pos)
+				chambers += 1
+				carved += carved_here
+
+		print("  Chunk %d: cave %s carved %d (%d chambers)" % [chunk_num, cave_name, carved, chambers])
+
+
+func _cave_is_local_core( cave_noise: Dictionary, tunnel_mask: Dictionary, pos: Vector2i ) -> bool:
+	var v: float = absf(cave_noise[pos] - 0.5)
+	for d in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+		var npos: Vector2i = pos + d
+		if not tunnel_mask.has(npos):
+			continue
+		if absf(cave_noise[npos] - 0.5) < v - 0.0001:
+			return false
+	return true
+
+
+func _cave_tunnel_branches( tunnel_mask: Dictionary, pos: Vector2i ) -> int:
+	# Count cardinal directions that have tunnel cells a few steps out (junction-ish).
+	var branches := 0
+	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var hit := false
+		for step in range(1, 5):
+			if tunnel_mask.has(pos + dir * step):
+				hit = true
+				break
+		if hit:
+			branches += 1
+	return branches
+
+
+func _cave_carve_irregular( chunk: Chunk, center: Vector2i, radius: float, jitter: float, jitter_noise: Dictionary, air: DataTile, tunnel_mask: Dictionary ) -> int:
+	var carved := 0
+	var r_ceil: int = ceili(radius + jitter * radius)
+	for dx in range(-r_ceil, r_ceil + 1):
+		for dy in range(-r_ceil, r_ceil + 1):
+			var px: int = center.x + dx
+			var py: int = center.y + dy
+			if px < 0 or px >= Chunk.WIDTH:
+				continue
+			if py < chunk.lava_top[px] or py >= chunk.rock_top[px]:
+				continue
+			var pos := Vector2i(px, py)
+			var j: float = jitter_noise.get(pos, 0.5)
+			var local_r: float = radius * (1.0 + (j - 0.5) * 2.0 * jitter)
+			if float(dx * dx + dy * dy) > local_r * local_r:
+				continue
+			if tunnel_mask.has(pos):
+				continue
+			chunk.place_tile_chunk(px, py, air)
+			tunnel_mask[pos] = true
+			carved += 1
+	return carved
 
 
 
@@ -380,10 +478,9 @@ func generate_inclusions( chunk_num: int, during_layer_only: bool = false ):
 # chunky_filling: sedimentary lenses, caves, then ore clumps
 func chunky_filling( chunk_num: int ):
 	print("  Chunky filling chunk %d..." % chunk_num)
-	var chunk: Chunk = world.chunks[chunk_num]
 
 	generate_layers(chunk_num)
-	# dig_caves(chunk)
+	dig_caves(chunk_num)
 	generate_ores(chunk_num)
 
 
