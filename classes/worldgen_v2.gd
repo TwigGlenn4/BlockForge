@@ -234,8 +234,6 @@ func generate_layers( chunk_num: int ):
 		var num_lenses: int = int(cfg.get("number_of_lenses", 1))
 		var thick_min: int = int(cfg.get("thickness_min", 2))
 		var thick_max: int = int(cfg.get("thickness_max", 6))
-		var boost: float = float(cfg.get("band_center_boost", 1.0))
-		var rarity: float = float(cfg.get("rarity", 0.5))
 		var seg_min: int = int(cfg.get("segment_length_min", 30))
 		var seg_max: int = int(cfg.get("segment_length_max", 200))
 		var gap_min: int = int(cfg.get("gap_min", 8))
@@ -246,9 +244,6 @@ func generate_layers( chunk_num: int ):
 		for _lens in num_lenses:
 			var x := 0
 			while x < Chunk.WIDTH:
-				if rng.randf() > rarity:
-					x += rng.randi_range(4, 16)
-					continue
 				var seg_len: int = rng.randi_range(seg_min, seg_max)
 				var base_thick: float = rng.randf_range(thick_min, thick_max)
 				# Per-lens random depth within [height_min, height_max]
@@ -265,8 +260,7 @@ func generate_layers( chunk_num: int ):
 					# taper: 0 at ends, 1 at center
 					var t: float = float(lx) / float(maxi(seg_len - 1, 1))
 					var taper: float = 1.0 - absf(2.0 * t - 1.0)
-					var gauss: float = exp(-pow((t - 0.5) * 3.0, 2.0))
-					var thickness: int = int(round(base_thick * taper * (1.0 + (boost - 1.0) * gauss)))
+					var thickness: int = int(round(base_thick * taper))
 					thickness = clampi(thickness, 1, thick_max)
 
 					var nwarp: float = noise.layers.get_noise_2d(chunk_num * Chunk.WIDTH + cx, lens_center_f * 100.0 + float(_lens) * 17.0) * warp

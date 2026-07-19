@@ -13,8 +13,6 @@ layers:
     number_of_lenses: 5
     thickness_min: 2
     thickness_max: 10
-    band_center_boost: 1.4
-    rarity: 0.4
     segment_length_min: 30
     segment_length_max: 90
     gap_min: 20
@@ -29,11 +27,9 @@ layers:
     host: [blockforge:stone, blockforge:cobblestone, blockforge:limestone]
     height_min: 0.1
     height_max: 0.7
-    number_of_lenses: 3
+    number_of_lenses: 5
     thickness_min: 2
     thickness_max: 10
-    band_center_boost: 1.3
-    rarity: 0.35
     segment_length_min: 30
     segment_length_max: 80
     gap_min: 24
@@ -60,7 +56,7 @@ ores:
     min_depth_fraction: 0.0
     max_depth_fraction: 0.8
     freq: 0.04
-    clump_size: 0.
+    clump_size: 0.08
 
   ore_copper:
     type: ore
@@ -79,8 +75,8 @@ ores:
     host_layer: stone
     min_depth_fraction: 0.0
     max_depth_fraction: 0.5
-    freq: 0.04
-    clump_size: 0.03
+    freq: 0.02
+    clump_size: 0.05
 
   ore_gold:
     type: ore
@@ -89,7 +85,7 @@ ores:
     host_layer: stone
     min_depth_fraction: 0.0
     max_depth_fraction: 0.25
-    freq: 0.035
+    freq: 0.01
     clump_size: 0.07
 
   ore_titanium:
@@ -100,7 +96,7 @@ ores:
     min_depth_fraction: 0.0
     max_depth_fraction: 0.125
     freq: 0.03
-    clump_size: 0.011
+    clump_size: 0.01
 
   ore_platinum:
     type: ore
@@ -109,7 +105,7 @@ ores:
     host_layer: stone
     min_depth_fraction: 0.0
     max_depth_fraction: 0.125
-    freq: 0.03
+    freq: 0.02
     clump_size: 0.01
 
 inclusions:
