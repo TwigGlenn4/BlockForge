@@ -3,8 +3,6 @@
 addons/
 builds/
 export_presets.cfg
-*.import
-*/*.import
 
 # Local/personal utilities
 utilities_glenn/
