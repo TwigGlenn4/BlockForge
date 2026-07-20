@@ -3,5 +3,3 @@
 addons/
 builds/
 export_presets.cfg
-*.import
-*/*.import
