@@ -1,12 +1,12 @@
 https://trello.com/b/nR7499xf/blockheadsrenewedg
 
-* Remake scraped ore textures before publishing.
+* !!! Remake scraped ore textures before publishing.
 	_ underground.png currently uses placeholders (wiki scrape blocked) + tin from old terrain art
 
 * Implement Crafting Recipes
 * * Add Recipe class
 * * * see below for class members / methods
-* * Static file for recipe lists like tiles.gd
+* / Static file for recipe lists like tiles.gd
 * * Add workbench tile
 * * Somehow tag interactable tiles
 * * Create Recipe selection UI
@@ -22,6 +22,7 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * Tiles
 * * Recipe lists
 * * Textures? surely texture atlas is scriptable
+  _ Convert to TOML
 
 
 X Add leaves to trees
@@ -62,10 +63,10 @@ X Cave generation
 	X Multiple layers of noise?
 	X Bigger caves deeper?
 
-_ Ore generation
+X Ore generation
 	X parameterized ore gen
-	_ ways to set length and thickness
-	_ also want to use this system for limestone
+	X ways to set length and thickness
+	X also want to use this system for limestone
 	X include replacable system, oil will gen in limestone, ores in stone
 
 / Refactor world class
@@ -75,6 +76,8 @@ _ Ore generation
 
 _ Add skybox / background
 	_ simple png for now
+	_ day / night cycle
+	_ animate
 
 Longer Roadmap:
 
@@ -108,11 +111,12 @@ _ Data driven blocks & items
 			_ natural:array[{weight:int, items:array[item_stack, item_stack]}]
 		_ gameplay (fishing, etc)
 			_ array[{weight:int, items:array[item_stack, item_stack]}]
-	_recipe
+	_ recipe
 		_ workstation
 		_ time
 		_ ingredients:array[item_stack]
 		_ results:array[item_stack]
+	
 	_ translation
 		_ en_us.json
 		_ json array
@@ -154,6 +158,7 @@ Save & Load world
 		_ worldgen_settings
 		_ gamerules:dict {crafting_time:int_percent(100% default), enemy_damage_percent:int_percent(>=0, percent, don't attack when 0)}
 		_ modlist
+
 	_ Compressed data
 		_ choose a format! Json? NBT? Keep readable during debugging
 		_ saved_chunks
