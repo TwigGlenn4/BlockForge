@@ -1,0 +1,179 @@
+# Depth fractions: 0.0=bottom of measured band, 1.0=top.
+# Layers measure the rock body (above lava, below soil).
+# Ores measure their host_layer column (cobble / stone).
+
+layers:
+  limestone:
+    type: layer
+    tile: blockforge:limestone
+    host: [blockforge:stone, blockforge:cobblestone]
+    height_min: 0.5
+    height_max: 1.0
+    number_of_lenses: 5
+    thickness_min: 2
+    thickness_max: 10
+    segment_length_min: 30
+    segment_length_max: 90
+    gap_min: 20
+    gap_max: 60
+    noise_warp: 0.08
+    inclusions: [oil, sandstone]
+
+  marble:
+    type: layer
+    tile: blockforge:marble
+    # limestone listed so marble overwrites limestone on overlap
+    host: [blockforge:stone, blockforge:cobblestone, blockforge:limestone]
+    height_min: 0.1
+    height_max: 0.7
+    number_of_lenses: 5
+    thickness_min: 2
+    thickness_max: 10
+    segment_length_min: 30
+    segment_length_max: 80
+    gap_min: 24
+    gap_max: 70
+    noise_warp: 0.08
+    inclusions: [red_marble, lapis_lazuli]
+
+ores:
+  ore_coal:
+    type: ore
+    tile: blockforge:ore_coal
+    host: [blockforge:cobblestone]
+    host_layer: cobble
+    min_depth_fraction: 0.0
+    max_depth_fraction: 0.666
+    freq: 0.045
+    clump_size: 0.14
+
+  ore_tin:
+    type: ore
+    tile: blockforge:ore_tin
+    host: [blockforge:cobblestone, blockforge:stone]
+    host_layer: cobble_and_stone
+    min_depth_fraction: 0.0
+    max_depth_fraction: 0.8
+    freq: 0.04
+    clump_size: 0.08
+
+  ore_copper:
+    type: ore
+    tile: blockforge:ore_copper
+    host: [blockforge:stone]
+    host_layer: stone
+    min_depth_fraction: 0.5
+    max_depth_fraction: 1.0
+    freq: 0.01
+    clump_size: 0.05
+
+  ore_iron:
+    type: ore
+    tile: blockforge:ore_iron
+    host: [blockforge:stone]
+    host_layer: stone
+    min_depth_fraction: 0.0
+    max_depth_fraction: 0.5
+    freq: 0.02
+    clump_size: 0.05
+
+  ore_gold:
+    type: ore
+    tile: blockforge:ore_gold
+    host: [blockforge:stone]
+    host_layer: stone
+    min_depth_fraction: 0.0
+    max_depth_fraction: 0.25
+    freq: 0.01
+    clump_size: 0.07
+
+  ore_titanium:
+    type: ore
+    tile: blockforge:ore_titanium
+    host: [blockforge:stone]
+    host_layer: stone
+    min_depth_fraction: 0.0
+    max_depth_fraction: 0.125
+    freq: 0.03
+    clump_size: 0.01
+
+  ore_platinum:
+    type: ore
+    tile: blockforge:ore_platinum
+    host: [blockforge:stone]
+    host_layer: stone
+    min_depth_fraction: 0.0
+    max_depth_fraction: 0.125
+    freq: 0.02
+    clump_size: 0.01
+
+inclusions:
+  oil:
+    type: inclusion
+    tile: blockforge:oil
+    host: [blockforge:limestone]
+    rarity: 0.08
+    clump_size: 0.12
+    during_layer: true
+
+  sandstone:
+    type: inclusion
+    tile: blockforge:sandstone
+    host: [blockforge:limestone]
+    rarity: 0.03
+    clump_size: 0.1
+    during_layer: true
+
+  red_marble:
+    type: inclusion
+    tile: blockforge:red_marble
+    host: [blockforge:marble]
+    rarity: 0.015
+    clump_size: 0.08
+    during_layer: true
+
+  lapis_lazuli:
+    type: inclusion
+    tile: blockforge:lapis_lazuli
+    host: [blockforge:marble]
+    rarity: 0.015
+    clump_size: 0.08
+    during_layer: true
+
+  black_sand:
+    type: inclusion
+    tile: blockforge:black_sand
+    host: [blockforge:sand]
+    rarity: 0.04
+    clump_size: 0.1
+    during_layer: false
+
+  flint:
+    type: inclusion
+    tile: blockforge:flint
+    host: [blockforge:dirt]
+    rarity: 0.06
+    clump_size: 0.1
+    during_layer: false
+
+  clay:
+    type: inclusion
+    tile: blockforge:clay
+    host: [blockforge:dirt]
+    rarity: 0.07
+    clump_size: 0.12
+    during_layer: false
+
+caves:
+  cave:
+    type: cave
+    min_depth_fraction: 0.05
+    max_depth_fraction: 0.99
+    freq: 0.04
+    clump_size: 0.08
+    chamber_core: 0.02 
+    chamber_radius_min: 3
+    chamber_radius_max: 5
+    chamber_min_branches: 3
+    chamber_jitter: 0.35
+    chamber_chance: 0.03
