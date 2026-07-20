@@ -4,11 +4,11 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 	_ underground.png currently uses placeholders (wiki scrape blocked) + tin from old terrain art
 
 * Implement Crafting Recipes
-* * Add Recipe class
-* * * see below for class members / methods
+* X Add Recipe class
+* X X see below for class members / methods
 * * Static file for recipe lists like tiles.gd
 * * Add workbench tile
-* * Somehow tag interactable tiles
+* X Somehow tag interactable tiles
 * * Create Recipe selection UI
 * * Create Crafting progress UI?
 * * Implement Craft Job
@@ -22,6 +22,12 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * Tiles
 * * Recipe lists
 * * Textures? surely texture atlas is scriptable
+
+* Refactor and Optimize
+* * chunk.gd: check if static var tiles is actually saving time
+* * worldgen_v2.gd: stop using world.place_tile, terrain gen should be contained to the chunk until after write_to_tilemap
+
+
 
 
 X Add leaves to trees

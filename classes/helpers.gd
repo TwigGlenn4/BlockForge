@@ -16,8 +16,8 @@ static func create_noise( nseed, freq, oct ):
 
 
 # noise_array_1d(): Returns an array of length containing values from 0.0 to 1.0 according to noise
-static func noise_array_1d( generator, length, offset=0):
-	var array = []
+static func noise_array_1d( generator, length, offset=0) -> Array[float]:
+	var array: Array[float] = []
 	array.resize(length)
 	for i in range(length):
 		array[i] = generator.get_noise_1d(offset + i) + 0.5
