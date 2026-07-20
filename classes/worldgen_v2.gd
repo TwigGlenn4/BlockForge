@@ -33,7 +33,7 @@ func setup():
 	noise.humidity = Helpers.create_noise( world.w_seed + 10, 0.002, 3 )
 	noise.lava = Helpers.create_noise( world.w_seed + 4, 0.005, 2 )
 
-	ChunkyFillingConfig.load_config("res://data/chunky_filling.yaml")
+	Yaml.chunky()
 
 	noise.trees = Helpers.create_noise( world.w_seed + 10, 0.02, 5 )
 	noise.layers = Helpers.create_noise( world.w_seed + 40, 0.008, 2 )
@@ -116,8 +116,9 @@ func dig_caves( chunk_num: int ):
 	var chunk: Chunk = world.chunks[chunk_num]
 	var air: DataTile = Tiles.AIR
 
-	for cave_name in ChunkyFillingConfig.caves():
-		var cfg: Dictionary = ChunkyFillingConfig.caves()[cave_name]
+	var caves: Dictionary = Yaml.chunky("caves")
+	for cave_name in caves:
+		var cfg: Dictionary = caves[cave_name]
 		var min_f: float = float(cfg.get("min_depth_fraction", 0.01))
 		var max_f: float = float(cfg.get("max_depth_fraction", 0.99))
 		var width: float = float(cfg.get("clump_size", 0.08))
@@ -314,10 +315,11 @@ func generate_layers( chunk_num: int ):
 	var chunk: Chunk = world.chunks[chunk_num]
 	var rng := RandomNumberGenerator.new()
 	rng.seed = world.w_seed + chunk_num * 7919 + 17
-	var all_incl: Dictionary = ChunkyFillingConfig.inclusions()
+	var all_incl: Dictionary = Yaml.chunky("inclusions")
+	var layers: Dictionary = Yaml.chunky("layers")
 
-	for layer_name in ChunkyFillingConfig.layers():
-		var cfg: Dictionary = ChunkyFillingConfig.layers()[layer_name]
+	for layer_name in layers:
+		var cfg: Dictionary = layers[layer_name]
 		var layer_tile: DataTile = DataTile.tile(str(cfg.get("tile", "")))
 		if layer_tile == DataTile.UNDEFINED:
 			continue
@@ -388,8 +390,9 @@ func generate_layers( chunk_num: int ):
 # generate_ores: noise clumps constrained to host layer depth bands (config-driven)
 func generate_ores( chunk_num: int ):
 	var chunk: Chunk = world.chunks[chunk_num]
-	for ore_name in ChunkyFillingConfig.ores():
-		var cfg: Dictionary = ChunkyFillingConfig.ores()[ore_name]
+	var ores: Dictionary = Yaml.chunky("ores")
+	for ore_name in ores:
+		var cfg: Dictionary = ores[ore_name]
 		var ore_tile: DataTile = DataTile.tile(str(cfg.get("tile", "")))
 		if ore_tile == DataTile.UNDEFINED:
 			continue
@@ -446,8 +449,9 @@ func generate_inclusions( chunk_num: int, during_layer_only: bool = false ):
 	var rng := RandomNumberGenerator.new()
 	rng.seed = world.w_seed + chunk_num * 4999 + 91
 
-	for iname in ChunkyFillingConfig.inclusions():
-		var cfg: Dictionary = ChunkyFillingConfig.inclusions()[iname]
+	var inclusions: Dictionary = Yaml.chunky("inclusions")
+	for iname in inclusions:
+		var cfg: Dictionary = inclusions[iname]
 		var during: bool = bool(cfg.get("during_layer", false))
 		if during_layer_only and not during:
 			continue

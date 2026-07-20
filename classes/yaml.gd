@@ -1,44 +1,28 @@
-# Minimal YAML loader for chunky_filling.yaml (maps + inline lists + scalars).
-class_name ChunkyFillingConfig
+# Minimal YAML loader (maps + inline lists + scalars).
+class_name Yaml
 
-static var _data: Dictionary = {}
-static var _loaded: bool = false
-
-static func get_config() -> Dictionary:
-	if not _loaded:
-		load_config("res://data/chunky_filling.yaml")
-	return _data
+const CHUNKY_PATH := "res://data/chunky_filling.yaml"
+static var _chunky: Dictionary = {}
 
 
-static func load_config(path: String) -> Dictionary:
-	var file := FileAccess.open(path, FileAccess.READ)
+static func load_yaml(filename: String) -> Dictionary:
+	var file := FileAccess.open(filename, FileAccess.READ)
 	if file == null:
-		push_error("ChunkyFillingConfig: failed to open %s" % path)
-		_data = {}
-		_loaded = true
-		return _data
+		push_error("Yaml.load_yaml: failed to open %s" % filename)
+		return {}
 	var text := file.get_as_text()
 	file.close()
-	_data = _parse_yaml(text)
-	_loaded = true
-	print("ChunkyFillingConfig: loaded %s" % path)
-	return _data
+	return _parse_yaml(text)
 
 
-static func layers() -> Dictionary:
-	return get_config().get("layers", {})
-
-
-static func ores() -> Dictionary:
-	return get_config().get("ores", {})
-
-
-static func inclusions() -> Dictionary:
-	return get_config().get("inclusions", {})
-
-
-static func caves() -> Dictionary:
-	return get_config().get("caves", {})
+# Cached chunky_filling.yaml. Pass section ("layers", "ores", …) or "" for the full root.
+static func chunky(section: String = "") -> Dictionary:
+	if _chunky.is_empty():
+		_chunky = load_yaml(CHUNKY_PATH)
+		print("Yaml: loaded %s" % CHUNKY_PATH)
+	if section.is_empty():
+		return _chunky
+	return _chunky.get(section, {})
 
 
 static func _parse_yaml(text: String) -> Dictionary:
