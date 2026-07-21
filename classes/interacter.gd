@@ -9,6 +9,7 @@ const LERP_TIME = 1
 @onready var inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
 
 @export var world_interactor: Control
+@export var RECIPE_SELECTOR_SCENE: Resource
 
 signal selected_character_changed(new_char: Character)
 
@@ -233,4 +234,8 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
 	match tile.interactable:
 		DataTile.INTERACTION.CRAFT:
+			var _grassify_dirt = Recipes.PORTAL.GRASSIFY_DIRT
 			print("Interacting with crafting block ", tile.name, " at ", block_pos)
+			var recipe_selector: Control = RECIPE_SELECTOR_SCENE.instantiate()
+			recipe_selector.setup(tile.name, self)
+			add_child(recipe_selector)

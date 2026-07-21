@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://bxac7pet8gcew"]
 
-[ext_resource type="Script" uid="uid://41xn71vawave" path="res://scenes/GameScene/RecipeSelector/RecipeTab.gd" id="1_0u7k0"]
+[ext_resource type="Script" uid="uid://41xn71vawave" path="res://scenes/GameScene/RecipeSelector/recipe_tab.gd" id="1_0u7k0"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_0u7k0"]
+font_size = 20
 
 [node name="RecipeTab" type="Control" unique_id=1670575623 node_paths=PackedStringArray("title", "result", "ingredients")]
 layout_mode = 3
@@ -24,9 +27,17 @@ grow_vertical = 2
 
 [node name="Title" type="Label" parent="VBoxContainer" unique_id=1384985617]
 layout_mode = 2
+label_settings = SubResource("LabelSettings_0u7k0")
 
 [node name="Result" type="Label" parent="VBoxContainer" unique_id=783842511]
 layout_mode = 2
 
 [node name="Ingredients" type="RichTextLabel" parent="VBoxContainer" unique_id=1355171613]
 layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Button" type="Button" parent="VBoxContainer" unique_id=1291885675]
+custom_minimum_size = Vector2(100, 25)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Craft"
