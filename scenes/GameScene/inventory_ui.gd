@@ -14,13 +14,8 @@ func _ready() -> void:
 	_on_hotbar_slot_selected(0)
 
 	get_tree().get_root().size_changed.connect(_window_resized)
-	_window_resized()
+	_window_resized()		
 
-
-func _process(_delta: float) -> void:
-	if selected_character.inventory.contents_changed_check():
-		_update_inventory_contents()
-	
 
 func _window_resized() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
@@ -32,8 +27,16 @@ func _window_resized() -> void:
 
 
 func _on_selected_character_changed(new_char: Character) -> void:
+	# disconnect inventory changed signal from old character
+	if selected_character && selected_character.inventory_changed.is_connected(_on_character_inventory_changed):
+		selected_character.inventory_changed.disconnect(_on_character_inventory_changed)
 	# store the character reference to show it's inventory
 	selected_character = new_char
+	# connect the new character's inventory changed signal
+	selected_character.inventory_changed.connect(_on_character_inventory_changed)
+
+func _on_character_inventory_changed() -> void:
+	_update_inventory_contents()
 
 func _update_inventory_contents() -> void:
 	print("[InventoryUI] updating hotbar contents")

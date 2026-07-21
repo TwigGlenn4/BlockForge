@@ -1,6 +1,8 @@
 extends Node2D
 class_name Character
 
+signal inventory_changed
+
 @onready var world = get_node("/root/GameScene/World")
 
 var current_pos: Vector2i = Vector2i(0,0)   # block pos Vector
@@ -28,6 +30,9 @@ func _process(delta):
 	if target_pos != Vector2i(-1,-1):
 		var target_pixels: Vector2i = Helpers.pos_block_to_pixel(target_pos)
 		position = position.move_toward(target_pixels, delta*(stats.speed*16))
+	
+	if inventory.contents_changed_check():
+		inventory_changed.emit()
 
 
 func _physics_process(_delta):

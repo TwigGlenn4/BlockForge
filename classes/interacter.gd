@@ -1,15 +1,20 @@
 extends Camera2D
 
+class_name Interactor
+
 const PAN_SPEED = 10
 const ZOOM_SPEED = 0.05
 const LERP_TIME = 1
 
 @onready var world = get_node("/root/GameScene/World")
-@onready var selected_character = get_node("/root/GameScene/World/Character")
+static var selected_character: Character
+@onready var main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
 @onready var inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
 
 @export var world_interactor: Control
 @export var RECIPE_SELECTOR_SCENE: Resource
+
+var active_recipe_selector: Control
 
 signal selected_character_changed(new_char: Character)
 
@@ -22,6 +27,7 @@ var lerp_timer: float = 0.0
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	# select the first character
+	selected_character = get_node("/root/GameScene/World/Character")
 	selected_character_changed.emit(selected_character)
 	pass # Replace with function body.
 
@@ -236,6 +242,10 @@ func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
 		DataTile.INTERACTION.CRAFT:
 			var _grassify_dirt = Recipes.PORTAL.GRASSIFY_DIRT
 			print("Interacting with crafting block ", tile.name, " at ", block_pos)
-			var recipe_selector: Control = RECIPE_SELECTOR_SCENE.instantiate()
-			recipe_selector.setup(tile.name, self)
-			add_child(recipe_selector)
+
+			if active_recipe_selector:
+				active_recipe_selector.queue_free()
+
+			active_recipe_selector = RECIPE_SELECTOR_SCENE.instantiate()
+			active_recipe_selector.setup(tile.name, self)
+			main_ui.add_child(active_recipe_selector)

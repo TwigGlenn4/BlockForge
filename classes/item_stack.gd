@@ -7,9 +7,9 @@ var tracked: bool # determines if item_list should be used.
 var item_list: Array[DataItem] = [] # Needed for TOOL, ARMOR, and CONTAINER items to retain individual data.
 
 
-func _init( item_name_string:String ):
+func _init( item_name_string:String, count: int = 0):
 	item_name = item_name_string
-	count = 0
+	self.count = count
 
 	var data_item = DataItem.item(item_name)
 	stack_max = data_item.stack_max
@@ -83,7 +83,7 @@ static func parse(itemstack_string: String) -> ItemStack:
 	var stack_string_parts: PackedStringArray = itemstack_string_trimmed.split(" ")
 	var item_string: String = stack_string_parts[0]
 
-	var stack: ItemStack = ItemStack.new(item_string)
+	var stack: ItemStack = ItemStack.new(item_string, 1)
 
 	if stack_string_parts.size() == 1:
 		return stack

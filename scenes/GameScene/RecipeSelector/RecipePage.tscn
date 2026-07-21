@@ -1,21 +1,23 @@
 [gd_scene format=3 uid="uid://bxac7pet8gcew"]
 
-[ext_resource type="Script" uid="uid://41xn71vawave" path="res://scenes/GameScene/RecipeSelector/recipe_tab.gd" id="1_0u7k0"]
+[ext_resource type="Script" uid="uid://41xn71vawave" path="res://scenes/GameScene/RecipeSelector/recipe_page.gd" id="1_a73at"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_0u7k0"]
 font_size = 20
 
-[node name="RecipeTab" type="Control" unique_id=1670575623 node_paths=PackedStringArray("title", "result", "ingredients")]
+[node name="RecipePage" type="Control" unique_id=1670575623 node_paths=PackedStringArray("title", "description", "result", "ingredients", "craft_button")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_0u7k0")
+script = ExtResource("1_a73at")
 title = NodePath("VBoxContainer/Title")
+description = NodePath("VBoxContainer/Description")
 result = NodePath("VBoxContainer/Result")
 ingredients = NodePath("VBoxContainer/Ingredients")
+craft_button = NodePath("VBoxContainer/CraftButton")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1431490591]
 layout_mode = 1
@@ -28,6 +30,11 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="VBoxContainer" unique_id=1384985617]
 layout_mode = 2
 label_settings = SubResource("LabelSettings_0u7k0")
+horizontal_alignment = 1
+
+[node name="Description" type="Label" parent="VBoxContainer" unique_id=426422931]
+layout_mode = 2
+horizontal_alignment = 1
 
 [node name="Result" type="Label" parent="VBoxContainer" unique_id=783842511]
 layout_mode = 2
@@ -36,8 +43,10 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Button" type="Button" parent="VBoxContainer" unique_id=1291885675]
+[node name="CraftButton" type="Button" parent="VBoxContainer" unique_id=1291885675]
 custom_minimum_size = Vector2(100, 25)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Craft"
+
+[connection signal="pressed" from="VBoxContainer/CraftButton" to="." method="_on_craft_button_pressed"]

@@ -1,5 +1,9 @@
 https://trello.com/b/nR7499xf/blockheadsrenewedg
 
+* Move various _on_selected_character_inventory_changed signals to Interactor
+* * Interactor should relay signals, and can properly handle disconnecting when selected_character changes
+* * Known usages: inventory_ui.gd, recipe_selector.gd, recipe_page.gd
+
 * Remake scraped ore textures before publishing.
 	_ underground.png currently uses placeholders (wiki scrape blocked) + tin from old terrain art
 
@@ -9,7 +13,7 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * Static file for recipe lists like tiles.gd
 * * Add workbench tile
 * X Somehow tag interactable tiles
-* * Create Recipe selection UI
+* X Create Recipe selection UI
 * * Create Crafting progress UI?
 * * Implement Craft Job
 
