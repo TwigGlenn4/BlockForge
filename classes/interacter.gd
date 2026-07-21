@@ -169,7 +169,9 @@ func _input_character_inventory(event: InputEvent) -> void:
 
 func _input_block_interact(block_pos: Vector2i) -> bool:
 	var tile: DataTile = world.get_tile_v(block_pos)
-	if tile != Tiles.AIR:
+	if tile.interactable:
+		_tile_interacion(block_pos, tile)
+	elif tile != Tiles.AIR:
 		var job: DataJob = DataJob.new(DataJob.TYPE.BREAK, block_pos)
 		selected_character.add_job(job)
 		return true
@@ -227,3 +229,8 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 				surface_path (selected_character, start, end)
 			print("path finished")
 			# ===== END PATHFIND GENERAL
+
+func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
+	match tile.interactable:
+		DataTile.INTERACTION.CRAFT:
+			print("Interacting with crafting block ", tile.name, " at ", block_pos)

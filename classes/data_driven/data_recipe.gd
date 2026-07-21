@@ -1,7 +1,9 @@
 class_name DataRecipe
 
-## List of all registered recipes keyed by id
-static var registered = {}
+## List of all _registered recipes keyed by id
+static var _registered: Dictionary[String, DataRecipe] = {}
+## Arrays of every recipe made by a workstation, indexed by workstation.
+static var workstation_recipe_ids: Dictionary[String, Array] = {}
 
 static var UNDEFINED = DataRecipe.new("undefined", "", 0)
 
@@ -22,7 +24,7 @@ func _init(id: String, workstation: String, duration: float = 1.0, ingredients: 
 	assert(!has(id), "[DataRecipe (id:\""+id+"\")] Recipe id already in use: \""+id+"\"")
 	self.id = id
 
-	assert(DataTile.exists(workstation), "[DataRecipe (id:\""+id+"\")] Workstation does not exist: \""+workstation+"\"")
+	assert(DataTile.has(workstation), "[DataRecipe (id:\""+id+"\")] Workstation does not exist: \""+workstation+"\"")
 	self.workstation = workstation
 
 	assert(duration >= 0.0, "[DataRecipe (id:\""+id+"\")] Duration must not be negative: \""+str(duration)+"\"")
@@ -37,16 +39,18 @@ func _init(id: String, workstation: String, duration: float = 1.0, ingredients: 
 	self.name = name
 	self.description = description
 
-	registered[id] = self
+	workstation_recipe_ids[workstation].append(self)
+
+	_registered[id] = self
 
 
 
 
 static func has(recipe_id:String) -> bool:
-	return registered.has(recipe_id)
+	return _registered.has(recipe_id)
 
 static func find(recipe_id:String) -> DataTile:
-	return registered.get(recipe_id, UNDEFINED)
+	return _registered.get(recipe_id, UNDEFINED)
 
 func _to_string() -> String:
 	return "DataRecipe("+id+")"

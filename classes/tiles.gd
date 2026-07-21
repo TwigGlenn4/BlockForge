@@ -50,7 +50,7 @@ static var PORTAL = {
 	BASE_STONE = DataTile.new("blockforge:portal_base_stone", DataTexture.new("blockforge:portal_base_stone", PORTAL_ATLAS, Vector2i(0,0))),
 	BASE_COBBLE = DataTile.new("blockforge:portal_base_cobble", DataTexture.new("blockforge:portal_base_cobble", PORTAL_ATLAS, Vector2i(0,1))),
 	F1_TOP = DataTile.new("blockforge:portal_top", DataTexture.new("blockforge:portal_top", PORTAL_ATLAS, Vector2i(1,0))),
-	F1_BTM = DataTile.new("blockforge:portal_btm", DataTexture.new("blockforge:portal_btm", PORTAL_ATLAS, Vector2i(1,1)))
+	F1_BTM = DataTile.new("blockforge:portal_btm", DataTexture.new("blockforge:portal_btm", PORTAL_ATLAS, Vector2i(1,1)), "self", DataTile.INTERACTION.CRAFT)
 }
 
 static var GROWABLE = [
