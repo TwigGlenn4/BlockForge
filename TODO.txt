@@ -18,7 +18,7 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 
 * Convert custom tile atlas to Godot texture atlas
 
-* JSON data parsing
+* Parsing data-driven classes
 * * Tiles
 * * Recipe lists
 * * Textures? surely texture atlas is scriptable
@@ -68,10 +68,10 @@ X Cave generation
 	X Multiple layers of noise?
 	X Bigger caves deeper?
 
-_ Ore generation
+X Ore generation
 	X parameterized ore gen
-	_ ways to set length and thickness
-	_ also want to use this system for limestone
+	X ways to set length and thickness
+	X also want to use this system for limestone
 	X include replacable system, oil will gen in limestone, ores in stone
 
 / Refactor world class
@@ -81,6 +81,9 @@ _ Ore generation
 
 _ Add skybox / background
 	_ simple png for now
+	_ day, night, twilight
+	_ animated
+
 
 Longer Roadmap:
 

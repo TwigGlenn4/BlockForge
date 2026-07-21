@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://cvwqvrjf6tdsd"]
 
 [ext_resource type="Script" uid="uid://bljh8oyaq86bn" path="res://scenes/GameScene/hotbar_slot.gd" id="1_y0ys2"]
-[ext_resource type="Texture2D" uid="uid://cstlb00ps7s4q" path="res://assets/textures/atlas/inventory_slot.png" id="2_kumi0"]
-[ext_resource type="Texture2D" uid="uid://b0pafl6ycmg2a" path="res://assets/textures/atlas/inventory_slot_selected.png" id="3_kumi0"]
+[ext_resource type="Texture2D" uid="uid://bvun1qq5o0d58" path="res://assets/textures/atlas/inventory_slot.png" id="2_kumi0"]
+[ext_resource type="Texture2D" uid="uid://calvmioev1lrw" path="res://assets/textures/atlas/inventory_slot_selected.png" id="3_kumi0"]
+[ext_resource type="ButtonGroup" uid="uid://df83lbcmb6rs2" path="res://scenes/GameScene/HotbarSlot/hotbar_button_group.tres" id="4_u2wll"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_y0ys2"]
 line_spacing = 0.0
@@ -22,8 +23,6 @@ script = ExtResource("1_y0ys2")
 button_bg = NodePath("ButtonBG")
 item_icon = NodePath("ItemIcon")
 item_count_label = NodePath("ItemCountLabel")
-bg_texture_unselected = ExtResource("2_kumi0")
-bg_texture_selected = ExtResource("3_kumi0")
 
 [node name="ButtonBG" type="TextureButton" parent="." unique_id=590925680]
 layout_mode = 1
@@ -32,7 +31,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+toggle_mode = true
 action_mode = 0
+button_group = ExtResource("4_u2wll")
 texture_normal = ExtResource("2_kumi0")
 texture_pressed = ExtResource("3_kumi0")
 stretch_mode = 0

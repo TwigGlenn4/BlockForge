@@ -27,7 +27,6 @@ func _window_resized() -> void:
 
 	var slot_height_px: float = hotbar[0].size.y
 	var slot_width_anchor: float = slot_height_px / viewport_size.x
-	# print("[Hotbar:_window_resized] slot_height_px="+str(slot_height_px)+", slot_width_anchor="+str(slot_width_anchor))
 
 	anchor_left = ANCHOR_END - slot_width_anchor
 
@@ -67,11 +66,6 @@ func _build_hotbar_slot(num: int) -> Control:
 
 func _on_hotbar_slot_selected(selected_slot_num: int) -> void:
 	selected_slot = selected_slot_num
-	for slot_num in HOTBAR_NUM_SLOTS:
-		if slot_num == selected_slot_num: # mark the selected slot as selected
-			hotbar[slot_num].selected = true
-		else:                             # mark all other slots as unselected
-			hotbar[slot_num].selected = false
 
 
 func get_held_item_stack() -> ItemStack:
