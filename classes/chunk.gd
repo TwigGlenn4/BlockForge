@@ -5,18 +5,19 @@ class_name Chunk
 const WIDTH: int = 128
 const HEIGHT: int = 512
 
-var cx = 0
+var cx: int = 0
 var grid: Dictionary[Vector2i, DataTile] = {}
-var surface_level = []
-var humidity = []
-var rock_top = [] # y where soil starts (above lava/stone/cobble)
-var lava_top = [] # y where stone starts (above lava)
-var stone_top = [] # y where cobble starts (above stone/mountain)
-var mountain_height = [] # used for snow topsoil check
-var depth_dirt = [] # soil thickness per column
+var humidity: Array[float] = []
 
-# ===== this is redundant definition ?
-static var tiles = {
+var surface_level: Array[int] = []
+var rock_top: Array[int] = [] # y where soil starts (above lava/stone/cobble)
+var lava_top: Array[int] = [] # y where stone starts (above lava)
+var stone_top: Array[int] = [] # y where cobble starts (above stone/mountain)
+var mountain_height: Array[int] = [] # used for snow topsoil check
+var depth_dirt: Array[int] = [] # soil thickness per column
+
+# TODO: Test if caching tiles here is actually useful
+static var tiles: Dictionary[String, DataTile] = {
 	stone = DataTile.tile("blockforge:stone"),
 	cobblestone = DataTile.tile("blockforge:cobblestone"),
 	dirt = DataTile.tile("blockforge:dirt"),
@@ -52,7 +53,6 @@ func place_tile_chunk( x:int, y:int, tile):
 	var pos = Vector2i(x, y)
 	grid[pos] = tile
 
-# ===== this is not used anywhere?
 # place_tile_chunk_overwrite(): Place a tile based on chunk coordinates IF the existing tile is in overwrite_tiles
 func place_tile_chunk_overwrite( x:int, y:int, tile,  overwrite_tiles):
 	var pos = Vector2i(x, y)
@@ -72,11 +72,11 @@ static func generate_chunk_threadsafe( chunk_x: int, gen ):
 	# print("Generating chunk " + str(chunk_x) + "...")
 	var chunk = Chunk.new(chunk_x)
 
-	var x_offset = WIDTH * chunk_x
-	var depth_stone = Helpers.noise_array_1d( gen.stone, WIDTH, x_offset)
-	var depth_dirt_noise = Helpers.noise_array_1d( gen.dirt, WIDTH, x_offset)
-	var depth_lava = Helpers.noise_array_1d( gen.lava, WIDTH, x_offset)
-	var mountain = Helpers.noise_array_1d( gen.mountain, WIDTH, x_offset)
+	var x_offset: int = WIDTH * chunk_x
+	var depth_stone: Array[float] = Helpers.noise_array_1d( gen.stone, WIDTH, x_offset)
+	var depth_dirt_noise: Array[float] = Helpers.noise_array_1d( gen.dirt, WIDTH, x_offset)
+	var depth_lava: Array[float] = Helpers.noise_array_1d( gen.lava, WIDTH, x_offset)
+	var mountain: Array[float] = Helpers.noise_array_1d( gen.mountain, WIDTH, x_offset)
 	chunk.humidity = Helpers.noise_array_1d( gen.humidity, WIDTH, x_offset )
 
 	# scale the arrays
@@ -94,44 +94,41 @@ static func generate_chunk_threadsafe( chunk_x: int, gen ):
 
 
 	for x in range(WIDTH):
-		chunk.depth_dirt[x] = depth_dirt_noise[x]
-		_set_column_heights(chunk, x, depth_lava[x], mountain[x], depth_stone[x])
 
+		chunk.lava_top[x] = depth_lava[x]
+		chunk.stone_top[x] = depth_lava[x] + mountain[x]
+		chunk.rock_top[x] = depth_lava[x] + mountain[x] + depth_stone[x]
+		chunk.depth_dirt[x] = depth_dirt_noise[x]
+		chunk.mountain_height[x] = mountain[x]
+		chunk.surface_level[x] = chunk.rock_top[x] + chunk.depth_dirt[x]
 		var diff = chunk.surface_level[x] - HEIGHT - 16
 		if( diff > 0 ): # minimum 16 blocks between surface and chunk ceiling
+			
 			if mountain[x] < diff:
 				depth_stone[x] = depth_stone[x] - (diff - mountain[x])
 				mountain[x] = 0
 			else:
 				mountain[x] = mountain[x] - diff
 
-			_set_column_heights(chunk, x, depth_lava[x], mountain[x], depth_stone[x])
+			chunk.mountain_height[x] = mountain[x]
+			chunk.stone_top[x] = depth_lava[x] + mountain[x]
+			chunk.rock_top[x] = depth_lava[x] + mountain[x] + depth_stone[x]
+			chunk.surface_level[x] = chunk.rock_top[x] + chunk.depth_dirt[x]
+			
 			# print("Reducing height by "+ str(diff) + " at x=" + str(x))
 			print("surface at x="+ str(x) + " is reduced to y=" + str(chunk.surface_level[x]))
-
-		# truncate to int
-		for arr in [chunk.surface_level, chunk.rock_top, chunk.lava_top, chunk.stone_top, chunk.depth_dirt, chunk.mountain_height]:
-			arr[x] = int(arr[x])
-
+		
 		# Base layers only — soil/topsoil applied in surface_dressing
-		var lava_top: int = chunk.lava_top[x]
-		var stone_top: int = chunk.stone_top[x]
-		var rock_top: int = chunk.rock_top[x]
-		for y in range(0, rock_top):
-			if y < lava_top: # Lava layer (bottom of world)
+		for y in range( 0, chunk.rock_top[x]):
+
+			if y < chunk.lava_top[x]: 		# Lava layer (bottom of world)
 				chunk.place_tile_chunk( x, y, tiles.lava)
-			elif y < stone_top: # Mountain layer
+
+			elif y < chunk.stone_top[x]:	# Mountain layer
 				chunk.place_tile_chunk( x, y, tiles.stone)
-			else: # Stone layer (cobble)
+			
+			elif y < chunk.rock_top[x]:		# Stone layer
 				chunk.place_tile_chunk( x, y, tiles.cobblestone)
 
 	# print("Done generating chunk " + str(chunk_x) + "...")
 	return chunk
-
-
-static func _set_column_heights( chunk: Chunk, x: int, lava: float, mountain: float, stone: float ) -> void:
-	chunk.lava_top[x] = lava
-	chunk.mountain_height[x] = mountain
-	chunk.stone_top[x] = lava + mountain
-	chunk.rock_top[x] = lava + mountain + stone
-	chunk.surface_level[x] = chunk.rock_top[x] + chunk.depth_dirt[x]
