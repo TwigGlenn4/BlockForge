@@ -89,7 +89,8 @@ func _to_string() -> String:
 
 
 ## Check if inventory contents have changed since last check
-## ONLY CALL THIS ONCE PER FRAME! This is only safe with one caller, so Character manages this and sends `inventory_changed` signal 
+## ONLY CALL THIS ONCE PER FRAME! This is only safe with one caller, so Character manages this and sends `inventory_changed` signal. [br]
+## Use `Interactor.selected_character_inventory_changed` where possible, it handles reconnecting when `Interactor.selected_character` changes.
 func contents_changed_check() -> bool:
 	if _contents_changed:
 		_contents_changed = false

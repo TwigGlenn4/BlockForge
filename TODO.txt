@@ -1,8 +1,5 @@
 https://trello.com/b/nR7499xf/blockheadsrenewedg
 
-* Move various _on_selected_character_inventory_changed signals to Interactor
-* * Interactor should relay signals, and can properly handle disconnecting when selected_character changes
-* * Known usages: inventory_ui.gd, recipe_selector.gd, recipe_page.gd
 
 * Remake scraped ore textures before publishing.
 	_ underground.png currently uses placeholders (wiki scrape blocked) + tin from old terrain art
@@ -27,10 +24,18 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * Recipe lists
 * * Textures? surely texture atlas is scriptable
 
+* Fix overlapping place jobs.
+* * When two place jobs are created at the same position before the character reaches it, the second job still places and effectively deletes an item.
+* * Fix this with a check that the place job is still valid when the character arrives.
+
 * Refactor and Optimize
 * * chunk.gd: check if static var tiles is actually saving time
 * * worldgen_v2.gd: stop using world.place_tile, terrain gen should be contained to the chunk until after write_to_tilemap
 
+
+X Move various _on_selected_character_inventory_changed signals to Interactor
+X X Interactor should relay signals, and can properly handle disconnecting when selected_character changes
+X X Known usages: inventory_ui.gd, recipe_selector.gd, recipe_page.gd
 
 
 

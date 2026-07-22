@@ -7,7 +7,6 @@ extends Control
 var interacter: Camera2D
 var workstation: String
 var recipe_id_list: PackedStringArray
-var selected_character: Character
 
 func setup(workstation: String, interacter: Camera2D) -> void:
 	print("[RecipeSelector] Setting up selector for workstation " + workstation)
@@ -22,8 +21,7 @@ func setup(workstation: String, interacter: Camera2D) -> void:
 	_populate_recipe_tab_container(recipe_ids)
 	
 	# connect to selected_character_changed signal
-	selected_character = Interactor.selected_character
-	selected_character.inventory_changed.connect(_on_character_inventory_changed)
+	Interactor.selected_character_inventory_changed.connect(_on_character_inventory_changed)
 
 	if recipe_id_list.size() >= 0:
 		recipe_list.select(0)
@@ -65,7 +63,7 @@ func _enable_recipes_by_character_inventory() -> void:
 		var has_all_ingredients: bool = true
 
 		for ingredient: ItemStack in recipe.ingredients: # for each item in ingredients, disable this recipe if any ingredient is missing
-			if not selected_character.inventory.has(ingredient.item_name, ingredient.count):
+			if not Interactor.selected_character.inventory.has(ingredient.item_name, ingredient.count):
 				print("[RecipeSelector] recipe ", recipe_id, " is missing ingredient ", ingredient)
 				has_all_ingredients = false
 		

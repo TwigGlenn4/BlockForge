@@ -6,8 +6,26 @@ const PAN_SPEED = 10
 const ZOOM_SPEED = 0.05
 const LERP_TIME = 1
 
+static var selected_character: Character:
+	set(new_char):
+		if new_char != selected_character: 
+			# disconnect inventory_changed signal from selected_character
+			if selected_character && selected_character.inventory_changed.is_connected(_on_selected_character_inventory_changed_internal):
+				selected_character.inventory_changed.disconnect(_on_selected_character_inventory_changed_internal)
+			# update selected character
+			selected_character = new_char
+			# reconnect inventory_changed signal to new character
+			selected_character.inventory_changed.connect(_on_selected_character_inventory_changed_internal)
+			# emit signals that selected_character and inventory have changed
+			selected_character_changed.emit(selected_character)
+			selected_character_inventory_changed.emit()
+
+## This signal emits when `Interactor.selected_character` changes
+static var selected_character_changed: Signal = _create_static_signal("selected_character_changed", ["new_char", typeof(Character)])
+## This signal emits when `Interactor.selected_character`'s inventory changes, or when `Interactor.selected_character` itself changes
+static var selected_character_inventory_changed: Signal = _create_static_signal("selected_character_inventory_changed")
+
 @onready var world = get_node("/root/GameScene/World")
-static var selected_character: Character
 @onready var main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
 @onready var inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
 
@@ -15,8 +33,6 @@ static var selected_character: Character
 @export var RECIPE_SELECTOR_SCENE: Resource
 
 var active_recipe_selector: Control
-
-signal selected_character_changed(new_char: Character)
 
 var generating_chunks_enabled = false
 
@@ -28,8 +44,7 @@ var lerp_timer: float = 0.0
 func _ready():
 	# select the first character
 	selected_character = get_node("/root/GameScene/World/Character")
-	selected_character_changed.emit(selected_character)
-	pass # Replace with function body.
+	# selected_character_changed.emit(selected_character)
 
 
 func _process(delta):
@@ -65,6 +80,20 @@ func _process(delta):
 				world.worldgen.queue_chunk(chunk_num-1, Chunk.GEN_STATE_MAX)
 			if world.chunks[chunk_num+1].gen_state != Chunk.GEN_STATE_MAX:
 				world.worldgen.queue_chunk(chunk_num+1, Chunk.GEN_STATE_MAX)
+
+
+# signal functions
+## Create a static signal on Interactor and return the signal
+## Usage: `static var signal_name: Signal = _create_static_signal("signal_name")`.
+## `arg_array` contains params for the signal in the format `{ "name": "arg_name", "type": TYPE_INT }`
+static func _create_static_signal(signal_name: String, arg_array: Array = []) -> Signal:
+	(Interactor as Object).add_user_signal(signal_name, arg_array)
+	return Signal(Interactor, signal_name)
+
+## forward inventory_changed signals from the selected character onwards.
+## This listeners to only need Interacter
+static func _on_selected_character_inventory_changed_internal() -> void:
+	selected_character_inventory_changed.emit()
 
 # ===== PATHFIND ==== This method needs to be gathered into pathfinding.gd
 func surface_path (character:Node, from:Vector2i, dest:Vector2i):

@@ -6,7 +6,6 @@ static var SLOT_TEXTURE = load("res://assets/textures/atlas/inventory_slot.png")
 static var HOTBAR_SLOT_SCENE = preload("res://scenes/GameScene/HotbarSlot/HotbarSlot.tscn")
 
 var hotbar: Array[HotbarSlot]
-var selected_character: Character
 var selected_slot: int = 0
 
 func _ready() -> void:
@@ -14,7 +13,8 @@ func _ready() -> void:
 	_on_hotbar_slot_selected(0)
 
 	get_tree().get_root().size_changed.connect(_window_resized)
-	_window_resized()		
+	_window_resized()
+	Interactor.selected_character_inventory_changed.connect(_on_character_inventory_changed)
 
 
 func _window_resized() -> void:
@@ -26,21 +26,12 @@ func _window_resized() -> void:
 	anchor_left = ANCHOR_END - slot_width_anchor
 
 
-func _on_selected_character_changed(new_char: Character) -> void:
-	# disconnect inventory changed signal from old character
-	if selected_character && selected_character.inventory_changed.is_connected(_on_character_inventory_changed):
-		selected_character.inventory_changed.disconnect(_on_character_inventory_changed)
-	# store the character reference to show it's inventory
-	selected_character = new_char
-	# connect the new character's inventory changed signal
-	selected_character.inventory_changed.connect(_on_character_inventory_changed)
-
 func _on_character_inventory_changed() -> void:
 	_update_inventory_contents()
 
 func _update_inventory_contents() -> void:
 	print("[InventoryUI] updating hotbar contents")
-	var inv := selected_character.inventory
+	var inv := Interactor.selected_character.inventory
 	for i:int in hotbar.size():
 		hotbar[i].set_stack(inv.contents[i])
 
@@ -72,4 +63,4 @@ func _on_hotbar_slot_selected(selected_slot_num: int) -> void:
 
 
 func get_held_item_stack() -> ItemStack:
-	return selected_character.inventory.contents[selected_slot]
+	return Interactor.selected_character.inventory.contents[selected_slot]

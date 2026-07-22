@@ -1,6 +1,7 @@
 extends Node2D
 class_name Character
 
+## Use `Interactor.selected_character_inventory_changed` where possible, it handles reconnecting when `Interactor.selected_character` changes.
 signal inventory_changed
 
 @onready var world = get_node("/root/GameScene/World")
