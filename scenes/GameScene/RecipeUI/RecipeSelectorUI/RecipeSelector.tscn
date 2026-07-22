@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cecal6g038m22"]
 
-[ext_resource type="Script" uid="uid://bksurm2hk7cwn" path="res://scenes/GameScene/RecipeSelector/recipe_selector.gd" id="1_wpsuw"]
-[ext_resource type="PackedScene" uid="uid://bxac7pet8gcew" path="res://scenes/GameScene/RecipeSelector/RecipePage.tscn" id="2_lqi0y"]
+[ext_resource type="Script" uid="uid://bksurm2hk7cwn" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/recipe_selector.gd" id="1_wpsuw"]
+[ext_resource type="PackedScene" uid="uid://bxac7pet8gcew" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/RecipePage.tscn" id="2_lqi0y"]
 [ext_resource type="Theme" uid="uid://ir1cbapcow7p" path="res://assets/main_theme.tres" id="2_tni5x"]
 
 [node name="RecipeSelector" type="Control" unique_id=1725802307 node_paths=PackedStringArray("recipe_page", "recipe_list")]

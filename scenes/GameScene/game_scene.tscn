@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://d2oedqu2fq7x2" path="res://classes/world.gd" id="1_7un8v"]
 [ext_resource type="TileSet" uid="uid://dpfjjvmnau73i" path="res://assets/textures/main_tileset.tres" id="2_6vc3a"]
 [ext_resource type="Script" uid="uid://kh2fdue00hth" path="res://classes/interacter.gd" id="4_ws153"]
-[ext_resource type="PackedScene" uid="uid://cecal6g038m22" path="res://scenes/GameScene/RecipeSelector/RecipeSelector.tscn" id="4_yxywe"]
+[ext_resource type="PackedScene" uid="uid://cecal6g038m22" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/RecipeSelector.tscn" id="4_yxywe"]
 [ext_resource type="Script" uid="uid://w6yr38jum6jq" path="res://scenes/GameScene/GeneratorProgress.gd" id="5_4gwsg"]
 [ext_resource type="PackedScene" uid="uid://c3vqbaps2gav1" path="res://scenes/GameScene/DebugInfo/debug_info.tscn" id="6_2b2ab"]
 [ext_resource type="Script" uid="uid://bvnvk8t0nu8bf" path="res://classes/worldgen_v2.gd" id="6_s71n1"]
@@ -92,7 +92,6 @@ z_index = 1
 texture = ExtResource("8_rfaf3")
 offset = Vector2(0, -8)
 
-[connection signal="selected_character_changed" from="World/MainCamera" to="World/MainCamera/MainUI/InventoryUI" method="_on_selected_character_changed"]
 [connection signal="gui_input" from="World/MainCamera/MainUI/WorldInteractor" to="World/MainCamera" method="_on_world_interactor_click"]
 [connection signal="character_to_portal" from="World/WorldGen" to="World/Character" method="_teleport_to"]
 [connection signal="gentimer_start" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_start"]

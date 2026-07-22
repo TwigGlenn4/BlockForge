@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bxac7pet8gcew"]
 
-[ext_resource type="Script" uid="uid://41xn71vawave" path="res://scenes/GameScene/RecipeSelector/recipe_page.gd" id="1_a73at"]
+[ext_resource type="Script" uid="uid://41xn71vawave" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/recipe_page.gd" id="1_a73at"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_0u7k0"]
 font_size = 20

@@ -25,9 +25,9 @@ static var selected_character_changed: Signal = _create_static_signal("selected_
 ## This signal emits when `Interactor.selected_character`'s inventory changes, or when `Interactor.selected_character` itself changes
 static var selected_character_inventory_changed: Signal = _create_static_signal("selected_character_inventory_changed")
 
-@onready var world = get_node("/root/GameScene/World")
-@onready var main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
-@onready var inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
+static var world: World
+static var main_ui: CanvasLayer
+static var inventory_ui: Control
 
 @export var world_interactor: Control
 @export var RECIPE_SELECTOR_SCENE: Resource
@@ -42,9 +42,11 @@ var lerp_timer: float = 0.0
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	# select the first character
+	# set static references
 	selected_character = get_node("/root/GameScene/World/Character")
-	# selected_character_changed.emit(selected_character)
+	world = get_node("/root/GameScene/World")
+	main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
+	inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
 
 
 func _process(delta):

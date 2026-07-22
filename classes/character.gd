@@ -4,7 +4,6 @@ class_name Character
 ## Use `Interactor.selected_character_inventory_changed` where possible, it handles reconnecting when `Interactor.selected_character` changes.
 signal inventory_changed
 
-@onready var world = get_node("/root/GameScene/World")
 
 var current_pos: Vector2i = Vector2i(0,0)   # block pos Vector
 var target_pos: Vector2i = Vector2i(-1,-1)  # block pos Vector
@@ -82,14 +81,14 @@ func _process_jobs():
 		
 
 func _job_break(job) -> bool:
-	var tile: DataTile = world.get_tile_v(job.pos)
+	var tile: DataTile = Interactor.world.get_tile_v(job.pos)
 	if tile == Tiles.AIR:
 		print("Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
 		return false
 	else:
 		inventory.add_items(tile.drops, 1)
 		# TODO: drop items if inventory full
-		world.place_tile_v(job.pos, Tiles.AIR)
+		Interactor.world.place_tile_v(job.pos, Tiles.AIR)
 		print("broke tile ", tile, " at ", job.pos)
 	return true
 
@@ -99,7 +98,7 @@ func _job_place(job) -> bool:
 	if tile:
 		if inventory.has(tile_string):
 			inventory.remove_items(tile_string)
-			world.place_tile_v(job.pos, tile)
+			Interactor.world.place_tile_v(job.pos, tile)
 			print("Placed tile ", tile, " at ", job.pos)
 			return true
 		else:
