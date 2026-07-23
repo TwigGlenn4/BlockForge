@@ -107,3 +107,12 @@ func _job_place(job) -> bool:
 	else:
 		print("[Character:_job_place] Tile does not exist: ", tile_string)
 		return false
+
+## Cancel the current job. TODO: cancel job by jobID
+func cancel_job() -> bool:
+	if job_active && job_active.type != DataJob.TYPE.NONE:
+		job_active = DataJob.NONE
+		return true
+	else:
+		print("[Character] Can't cancel DataJob.NONE")
+		return false

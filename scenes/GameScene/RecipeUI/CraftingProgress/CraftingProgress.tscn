@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://ctttbkmhtit7g"]
+
+[ext_resource type="Script" uid="uid://dxhj2ynu8qgw3" path="res://scenes/GameScene/RecipeUI/CraftingProgress/crafting_progress.gd" id="1_08hyh"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_2ydak"]
+font_size = 20
+
+[node name="CraftingProgress" type="Control" unique_id=509064505 node_paths=PackedStringArray("recipe_name_label", "result_label", "progress_bar", "time_left_label", "cancel_button")]
+layout_mode = 3
+anchor_left = 0.3
+anchor_top = 0.35
+anchor_right = 0.7
+anchor_bottom = 0.65
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_08hyh")
+recipe_name_label = NodePath("Panel/Control/RecipeNameLabel")
+result_label = NodePath("Panel/Control/ResultLabel")
+progress_bar = NodePath("Panel/Control/ProgressBar")
+time_left_label = NodePath("Panel/Control/TimeLeftLabel")
+cancel_button = NodePath("Panel/Control/CancelButton")
+
+[node name="Panel" type="Panel" parent="." unique_id=636807849]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Control" type="Control" parent="Panel" unique_id=1389415834]
+layout_mode = 1
+anchor_left = 0.05
+anchor_top = 0.02
+anchor_right = 0.95
+anchor_bottom = 0.98
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RecipeNameLabel" type="Label" parent="Panel/Control" unique_id=870445224]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.2
+label_settings = SubResource("LabelSettings_2ydak")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ResultLabel" type="Label" parent="Panel/Control" unique_id=176113228]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.2
+anchor_right = 1.0
+anchor_bottom = 0.43
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="Panel/Control" unique_id=610391861]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.45
+anchor_right = 1.0
+anchor_bottom = 0.55
+show_percentage = false
+
+[node name="TimeLeftLabel" type="Label" parent="Panel/Control" unique_id=44500335]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.6
+anchor_right = 1.0
+anchor_bottom = 0.8
+horizontal_alignment = 1
+
+[node name="CancelButton" type="Button" parent="Panel/Control" unique_id=1609260605]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.3
+anchor_top = 0.8
+anchor_right = 0.7
+anchor_bottom = 1.0
+text = "Cancel"

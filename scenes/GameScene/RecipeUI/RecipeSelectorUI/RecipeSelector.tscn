@@ -3,6 +3,10 @@
 [ext_resource type="Script" uid="uid://bksurm2hk7cwn" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/recipe_selector.gd" id="1_wpsuw"]
 [ext_resource type="PackedScene" uid="uid://bxac7pet8gcew" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/RecipePage.tscn" id="2_lqi0y"]
 [ext_resource type="Theme" uid="uid://ir1cbapcow7p" path="res://assets/main_theme.tres" id="2_tni5x"]
+[ext_resource type="PackedScene" uid="uid://ctttbkmhtit7g" path="res://scenes/GameScene/RecipeUI/CraftingProgress/CraftingProgress.tscn" id="3_o7uhx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o7uhx"]
+draw_center = false
 
 [node name="RecipeSelector" type="Control" unique_id=1725802307 node_paths=PackedStringArray("recipe_page", "recipe_list")]
 z_index = 10
@@ -17,6 +21,7 @@ script = ExtResource("1_wpsuw")
 recipe_page = NodePath("Panel/RecipePage")
 recipe_list = NodePath("Panel/RecipeList")
 main_theme = ExtResource("2_tni5x")
+CRAFTING_PROGRESS_SCENE = ExtResource("3_o7uhx")
 
 [node name="Panel" type="Panel" parent="." unique_id=1944177844]
 layout_mode = 1
@@ -34,6 +39,7 @@ anchor_right = 0.5
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_o7uhx")
 wraparound_items = false
 
 [node name="RecipePage" parent="Panel" unique_id=1670575623 instance=ExtResource("2_lqi0y")]

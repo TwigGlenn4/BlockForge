@@ -130,5 +130,25 @@ static func camera_to( cam: Camera2D, pos: Vector2, zoom=null ):
 	if zoom != null and typeof(zoom) == Variant.Type.TYPE_VECTOR2:
 		cam.zoom = zoom
 
+## Return a string formatted as `[MM]m:[SS]s` or `[SS]s`. Rounds to the nearest second
+static func time_str_sec(seconds: float) -> String:
+	return time_str_sec_int(int(roundf(seconds)))
 
+## Return a string formatted as `[MM]m:[SS]s` or `[SS]s`.
+static func time_str_sec_int(seconds: int) -> String:
+	# seconds only
+	if seconds < 60:
+		return str(seconds) + "s"
+
+	# minutes and seconds
+	return "%dm:%2ds" % [seconds / 60, seconds % 60]
+
+
+## Return a string formatted as `[MM]m:[SS]s` or `[SS]s`, including up to `decimals` decimal points for seconds
+static func time_str_sec_fixed_precision(seconds: float, decimals: int) -> String:
+	# seconds only
+	if seconds < 60.0:
+		return "%2.*f" % [decimals, seconds]
+	# minutes and seconds
+	return "%dm:%2.*f" % [seconds / 60, decimals, fmod(seconds, 60)]
 	

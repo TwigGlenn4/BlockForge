@@ -4,6 +4,8 @@ extends Control
 @export var recipe_list: ItemList
 @export var main_theme: Theme
 
+@export var CRAFTING_PROGRESS_SCENE: Resource
+
 var interacter: Camera2D
 var workstation: String
 var recipe_id_list: PackedStringArray
@@ -28,6 +30,8 @@ func setup(workstation: String, interacter: Camera2D) -> void:
 		_on_recipe_list_item_selected(0)
 	
 	_enable_recipes_by_character_inventory()
+
+	recipe_page.start_craft.connect(_on_start_craft)
 	
 	
 
@@ -73,3 +77,10 @@ func _enable_recipes_by_character_inventory() -> void:
 func _on_character_inventory_changed() -> void:
 	print("[RecipeSelector] Inventory changed, updating enabled recipes")
 	_enable_recipes_by_character_inventory()
+
+func _on_start_craft(recipe_id: String, quantity: int) -> void:
+	self.visible = false
+	var crafting_progress: Control = CRAFTING_PROGRESS_SCENE.instantiate()
+	crafting_progress.setup(recipe_id, quantity)
+	self.get_parent().add_child(crafting_progress)
+	self.queue_free()
