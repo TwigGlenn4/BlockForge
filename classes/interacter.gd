@@ -118,7 +118,7 @@ func surface_path (character:Node, from:Vector2i, dest:Vector2i):
 			_method = Path.Movement.WALK 
 			# similar for but lookup blocks for climb in trees, blocks around for CLIMB_RIGHT, blocks above for CRAWL
 		
-		character.add_job(DataJob.new(DataJob.TYPE.GOTO, here))
+		character.add_job(Job.new(Job.TYPE.GOTO, here))
 		# should add method as another parameter in TYPE.GOTO
 
 func tree_path (character:Node, start:Vector2i, end:Vector2i): # traverse tree
@@ -128,18 +128,18 @@ func tree_path (character:Node, start:Vector2i, end:Vector2i): # traverse tree
 		here = start
 		for x in g3_range(start.x, end.x):
 			here.x = x
-			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
+			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
 		for y in g3_range(start.y, end.y):
 			here.y = y
-			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
+			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
 	else: # Dir.UP
 		here = start
 		for y in g3_range(start.y, end.y):
 			here.y = y
-			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
+			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
 		for x in g3_range(start.x, end.x):
 			here.x = x
-			character.add_job(DataJob.new(DataJob.TYPE.GOTO, here)) #method = CLIMB
+			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
 	return here 
 
 func g3_range(a:int, b:int):
@@ -210,14 +210,14 @@ func _input_block_interact(block_pos: Vector2i) -> bool:
 	if tile.interactable:
 		_tile_interacion(block_pos, tile)
 	elif tile != Tiles.AIR:
-		var job: DataJob = DataJob.new(DataJob.TYPE.BREAK, block_pos)
+		var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
 		selected_character.add_job(job)
 		return true
 	else:
 		var held_item_stack: ItemStack = inventory_ui.get_held_item_stack()
 		if held_item_stack:
 			print("[Interacter] Held item is " + str(held_item_stack) + ", item string is " + str(held_item_stack.get_item()))
-			var job: DataJob = DataJob.new(DataJob.TYPE.PLACE, block_pos, str(held_item_stack.get_item()))
+			var job: Job = Job.new(Job.TYPE.PLACE, block_pos, str(held_item_stack.get_item()))
 			selected_character.add_job(job)
 			return true
 

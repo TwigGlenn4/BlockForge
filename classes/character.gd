@@ -9,8 +9,8 @@ var current_pos: Vector2i = Vector2i(0,0)   # block pos Vector
 var target_pos: Vector2i = Vector2i(-1,-1)  # block pos Vector
 var lerp_timer: float = 0.0
 
-var job_queue: Array[DataJob] = []
-var job_active: DataJob = DataJob.NONE
+var job_queue: Array[Job] = []
+var job_active: Job = Job.NONE
 
 var stats = {
 	speed = 10.0 #   Character speed in blocks per second.
@@ -36,25 +36,26 @@ func _process(delta):
 
 
 func _physics_process(_delta):
-	if (not job_queue.is_empty()) and job_active.type == DataJob.TYPE.NONE: # if job queue contains job and there is no active job, go to next job
-		job_active = job_queue.pop_front()
-		target_pos = job_active.pos
-		#print("Activating "+job_active._to_string())
+	_try_queue_next_job()
 	
 	current_pos = Helpers.pos_pixel_to_block(position)
 	_process_jobs()
 
-	
 
+func _try_queue_next_job() -> void:
+	if (not job_queue.is_empty()) and job_active.type == Job.TYPE.NONE: # if job queue contains job and there is no active job, go to next job
+		job_active = job_queue.pop_front()
+		target_pos = job_active.pos
+		print("Activating "+job_active._to_string())
 
-func add_job(job:DataJob) -> void:
+func add_job(job:Job) -> void:
 	job_queue.push_back(job)
 	#print("added "+str(job._to_string()))
 
 
 
 func _set_target_pos(block_pos:Vector2):
-	var goto_job = DataJob.new(DataJob.TYPE.GOTO, block_pos)
+	var goto_job = Job.new(Job.TYPE.GOTO, block_pos)
 	print("Prepending "+goto_job._to_string())
 	job_queue.push_front(goto_job)
 
@@ -71,12 +72,12 @@ func open_inventory():
 func _process_jobs():
 	if position == Vector2(Helpers.pos_block_to_pixel(target_pos)):
 		if target_pos == job_active.pos:
-			if job_active.type == DataJob.TYPE.BREAK:
+			if job_active.type == Job.TYPE.BREAK:
 				_job_break(job_active)
-			elif job_active.type == DataJob.TYPE.PLACE:
+			elif job_active.type == Job.TYPE.PLACE:
 				_job_place(job_active)
 
-			job_active = DataJob.NONE # reset to NONE job
+			job_active = Job.NONE # reset to NONE job
 		target_pos = Vector2i(-1,-1)
 		
 
@@ -110,9 +111,9 @@ func _job_place(job) -> bool:
 
 ## Cancel the current job. TODO: cancel job by jobID
 func cancel_job() -> bool:
-	if job_active && job_active.type != DataJob.TYPE.NONE:
-		job_active = DataJob.NONE
+	if job_active && job_active.type != Job.TYPE.NONE:
+		job_active = Job.NONE
 		return true
 	else:
-		print("[Character] Can't cancel DataJob.NONE")
+		print("[Character] Can't cancel Job.NONE")
 		return false
