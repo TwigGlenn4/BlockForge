@@ -4,11 +4,12 @@
 [ext_resource type="PackedScene" uid="uid://bxac7pet8gcew" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/RecipePage.tscn" id="2_lqi0y"]
 [ext_resource type="Theme" uid="uid://ir1cbapcow7p" path="res://assets/main_theme.tres" id="2_tni5x"]
 [ext_resource type="PackedScene" uid="uid://ctttbkmhtit7g" path="res://scenes/GameScene/RecipeUI/CraftingProgress/CraftingProgress.tscn" id="3_o7uhx"]
+[ext_resource type="Texture2D" uid="uid://kbw0fm15o802" path="res://assets/textures/UI/close.png" id="5_txs1k"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o7uhx"]
 draw_center = false
 
-[node name="RecipeSelector" type="Control" unique_id=1725802307 node_paths=PackedStringArray("recipe_page", "recipe_list")]
+[node name="RecipeSelector" type="Control" unique_id=1725802307 node_paths=PackedStringArray("recipe_page", "recipe_list", "close_button")]
 z_index = 10
 layout_mode = 3
 anchor_left = 0.3
@@ -20,6 +21,7 @@ grow_vertical = 2
 script = ExtResource("1_wpsuw")
 recipe_page = NodePath("Panel/RecipePage")
 recipe_list = NodePath("Panel/RecipeList")
+close_button = NodePath("Panel/CloseButton")
 main_theme = ExtResource("2_tni5x")
 CRAFTING_PROGRESS_SCENE = ExtResource("3_o7uhx")
 
@@ -50,4 +52,16 @@ anchor_top = 0.02
 anchor_right = 0.98
 anchor_bottom = 0.98
 
+[node name="CloseButton" type="Button" parent="Panel" unique_id=751725748]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 0.1
+grow_horizontal = 0
+icon = ExtResource("5_txs1k")
+icon_alignment = 1
+
 [connection signal="item_selected" from="Panel/RecipeList" to="." method="_on_recipe_list_item_selected"]
+[connection signal="pressed" from="Panel/CloseButton" to="." method="_on_close_button_pressed"]

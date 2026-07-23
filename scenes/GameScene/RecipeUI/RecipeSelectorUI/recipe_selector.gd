@@ -2,8 +2,9 @@ extends Control
 
 @export var recipe_page: Control
 @export var recipe_list: ItemList
-@export var main_theme: Theme
+@export var close_button: Button
 
+@export var main_theme: Theme
 @export var CRAFTING_PROGRESS_SCENE: Resource
 
 var interacter: Camera2D
@@ -52,6 +53,8 @@ func _on_recipe_list_item_selected(index: int) -> void:
 	print("[RecipeSelector] Item clicked: " + str(index))
 	_set_active_recipe(recipe_id_list.get(index))
 
+func _on_close_button_pressed() -> void:
+	queue_free()
 
 func _set_recipe_enabled(index: int, is_enabled: bool) -> void:
 	if is_enabled:
