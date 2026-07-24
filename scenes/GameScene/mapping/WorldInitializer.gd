@@ -75,6 +75,14 @@ func _boot() -> void:
 		var cx: int = chunk_manager.wrap_column(center_col + dx)
 		await visibility.ensure_column(cx)
 
+	# Ensure portal column exists so crafting station is reachable after boot
+	if worldgen and worldgen.has_method("ensure_mapped_portal_x"):
+		worldgen.ensure_mapped_portal_x()
+	if world and "world_portal_pos" in world:
+		var portal_col: int = int(world.world_portal_pos.x) / WorldConfig.chunk_size()
+		portal_col = chunk_manager.wrap_column(portal_col)
+		await visibility.ensure_column(portal_col)
+
 	var spawn := _find_spawn(center_col)
 	# Match Helpers.pos_block_to_pixel so camera/character align with tiles
 	player.global_position = Helpers.pos_block_to_pixel(spawn)
@@ -98,22 +106,10 @@ func _boot() -> void:
 func _find_spawn(center_col: int) -> Vector2i:
 	var cs: int = WorldConfig.chunk_size()
 	var gx: int = center_col * cs + cs / 2
-	var lx: int = cs / 2
-	# Skip canopy so we stand on ground, not treetops
-	var id_log: int = TileIdRegistry.id_from_name("blockforge:log")
-	var id_leaves: int = TileIdRegistry.id_from_name("blockforge:leaves")
-	var tall: int = WorldConfig.world_chunks_tall_max()
-	for cy in range(tall - 1, -1, -1):
-		var data: ChunkData = chunk_manager.get_chunk(center_col, cy)
-		if data == null:
-			continue
-		for ly in range(cs - 1, -1, -1):
-			var tid: int = ChunkData.unpack_terrain(data.get_cell(lx, ly))
-			if tid == 0 or tid == id_log or tid == id_leaves:
-				continue
-			var gy: int = cy * cs + ly
-			var spawn := Vector2i(gx, gy + 1) # stand in air cell above surface
-			WorldConfig.logv("[Init] Surface at gy=%d → spawn %s" % [gy, str(spawn)])
-			return spawn
-	push_warning("[Init] No surface found at column %d; using fallback" % center_col)
-	return Vector2i(gx, cs)
+	var gy: int = chunk_manager.find_surface_height(gx)
+	if gy < 0:
+		push_warning("[Init] No surface found at column %d; using fallback" % center_col)
+		return Vector2i(gx, cs)
+	var spawn := Vector2i(gx, gy + 1) # stand in air cell above surface
+	WorldConfig.logv("[Init] Surface at gy=%d → spawn %s" % [gy, str(spawn)])
+	return spawn

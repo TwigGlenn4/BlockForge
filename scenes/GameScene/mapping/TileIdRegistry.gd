@@ -53,3 +53,11 @@ static func id_from_name(tile_name: String) -> int:
 static func atlas_for_id(terrain_id: int) -> Dictionary:
 	ensure_ready()
 	return _id_to_atlas.get(terrain_id, {})
+
+
+static func name_for_id(terrain_id: int) -> String:
+	ensure_ready()
+	if terrain_id <= 0:
+		return "air"
+	var info: Dictionary = _id_to_atlas.get(terrain_id, {})
+	return str(info.get("name", ""))

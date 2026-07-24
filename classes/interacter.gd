@@ -111,11 +111,25 @@ func surface_path (character:Node, from:Vector2i, dest:Vector2i):
 	print("surface_path ",str(from)," ",str(dest))
 	var _method: Path.Movement
 	var here:Vector2i = from
-	var dx:int = sign(dest.x - here.x)
+	var dest_x: int = Helpers.wrap_block_x(dest.x)
+	here.x = Helpers.wrap_block_x(here.x)
+	var dx:int = sign(dest_x - here.x)
+	# Prefer shorter arc on the cylinder
+	var w: int = WorldConfig.world_width_tiles()
+	if w > 0:
+		var direct: int = dest_x - here.x
+		if abs(direct) > w / 2:
+			if direct != 0:
+				dx = -sign(direct)
 	var dy:int
-	while(here.x != dest.x):
-		here.x += dx
+	var guard: int = w + 2
+	while(here.x != dest_x and guard > 0):
+		guard -= 1
+		here.x = Helpers.wrap_block_x(here.x + dx)
 		var y = world.get_surface(here.x)
+		if y < 0:
+			continue
+		y += 1 # stand in air above surface (matches WorldInitializer spawn)
 		dy = y - here.y
 		here.y += dy
 		
@@ -216,6 +230,8 @@ func _input_character_inventory(event: InputEvent) -> void:
 
 func _input_block_interact(block_pos: Vector2i) -> bool:
 	var tile: DataTile = world.get_tile_v(block_pos)
+	if tile == null:
+		return false
 	if tile.interactable:
 		_tile_interacion(block_pos, tile)
 		return true
@@ -258,24 +274,37 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 
 			# ===== PATHFIND GENERAL
 			var start:Vector2i = selected_character.current_pos
-			var end:Vector2i = block_pos
-			var next:Vector2i
+			var end:Vector2i = Vector2i(Helpers.wrap_block_x(block_pos.x), block_pos.y)
 
 			print("\nstart -> end ",str(start)," -> ",str(end))
-			var tile = world.get_tile_v(start)
-			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):
-				next = find_tree_base (start)
-				tree_path(selected_character, start, next)
-				start = next
-			tile = world.get_tile_v(end)
-			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):  
-				next = find_tree_base(end)
-				surface_path(selected_character, start, next)
-				tree_path(selected_character, next, end)
+
+			# Superman: fly/walk straight to the clicked cell (no surface follow / tree path)
+			if WorldConfig.superman():
+				selected_character.job_queue.clear()
+				selected_character.job_active = Job.NONE
+				selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
+				print("path finished (superman direct)")
 			else:
-				end.y = world.get_surface(end.x) # pin to surface of earth
-				surface_path (selected_character, start, end)
-			print("path finished")
+				var next:Vector2i
+				var tile = world.get_tile_v(start)
+				if tile != null and (tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves")):
+					next = find_tree_base (start)
+					tree_path(selected_character, start, next)
+					start = next
+				tile = world.get_tile_v(end)
+				if tile != null and (tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves")):
+					next = find_tree_base(end)
+					surface_path(selected_character, start, next)
+					tree_path(selected_character, next, end)
+				else:
+					var surface_y: int = world.get_surface(end.x) # pin to surface of earth
+					if surface_y < 0:
+						print("[Interactor] No surface at x=", end.x, "; walking to clicked block")
+						selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
+					else:
+						end.y = surface_y + 1 # stand in air cell above surface
+						surface_path (selected_character, start, end)
+				print("path finished")
 			# ===== END PATHFIND GENERAL
 
 func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:

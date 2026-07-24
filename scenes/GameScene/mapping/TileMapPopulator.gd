@@ -142,6 +142,32 @@ func _populate_internal(data: ChunkData) -> TileMapLayer:
 	return layer
 
 
+## Update a single global block on its TileMapLayer (if that chunk layer is loaded).
+func set_global_cell(gx: int, gy: int, terrain_id: int) -> void:
+	var cs: int = WorldConfig.chunk_size()
+	var wx: int = Helpers.wrap_block_x(gx)
+	var cx: int = posmod(int(floor(float(wx) / float(cs))), WorldConfig.world_chunks_wide_max())
+	var cy: int = int(floor(float(gy) / float(cs)))
+	var key := Vector2i(cx, cy)
+	if not _layers.has(key):
+		return
+	var layer: TileMapLayer = _layers[key]
+	if not is_instance_valid(layer):
+		return
+	var lx: int = posmod(wx, cs)
+	var ly: int = posmod(gy, cs)
+	var cell := Vector2i(lx, cs - 1 - ly)
+	if terrain_id <= 0:
+		layer.set_cell(cell)
+		return
+	TileIdRegistry.ensure_ready()
+	var info: Dictionary = TileIdRegistry.atlas_for_id(terrain_id)
+	if info.is_empty():
+		layer.set_cell(cell)
+		return
+	layer.set_cell(cell, int(info["atlas"]), info["pos"])
+
+
 func _sync_debug_outline(layer: TileMapLayer, cs: int, ts: int) -> void:
 	var want: bool = WorldConfig.debug_grid()
 	var existing: Node = layer.get_node_or_null("DebugChunkOutline")

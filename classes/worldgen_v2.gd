@@ -699,6 +699,9 @@ func fill_column(column_x: int) -> Array:
 	_map_fill_trees_strip(strip, cs, world_h, wrapped_cx, surfaces, growable, id_log, id_leaves)
 	await get_tree().process_frame
 
+	# Portal once (mapped surface dressing) — after trees so canopy cannot overwrite it
+	_map_try_place_portal(strip, cs, world_h, wrapped_cx, surfaces)
+
 	# Slice into per-chunk arrays
 	var rows: Array = []
 	rows.resize(tall)
@@ -1055,6 +1058,60 @@ func _map_place_trees_from_column(
 			strip, cs, world_h, root_cx, target_cx, lx, surface + 1, th,
 			id_log, id_leaves, place_trunks
 		)
+
+
+# Pick portal column X once for mapped worlds (same middle-half rule as legacy gen).
+func ensure_mapped_portal_x() -> void:
+	if world.world_portal_pos != Vector2i.ZERO:
+		return
+	var w: int = WorldConfig.world_width_tiles()
+	if w <= 0:
+		return
+	var half: int = maxi(1, w / 2)
+	var x: int = int(rand_from_seed(world.w_seed)[0]) % half
+	x += int(w * 0.25)
+	world.world_portal_pos = Vector2i(Helpers.wrap_block_x(x), 0)
+	WorldConfig.logv("[Chunk] Portal will be at x=%d (column %d)" % [
+		world.world_portal_pos.x,
+		world.world_portal_pos.x / WorldConfig.chunk_size()
+	])
+
+
+func _map_strip_set(strip: PackedInt64Array, cs: int, world_h: int, lx: int, gy: int, terrain_id: int) -> void:
+	if lx < 0 or lx >= cs or gy < 0 or gy >= world_h:
+		return
+	strip[gy * cs + lx] = ChunkData.pack_cell(terrain_id)
+
+
+# Mapped equivalent of surface_dressing portal placement (natural stone base).
+func _map_try_place_portal(
+	strip: PackedInt64Array, cs: int, world_h: int, wrapped_cx: int, surfaces: PackedInt32Array
+) -> void:
+	ensure_mapped_portal_x()
+	# y != 0 means already placed this session
+	if world.world_portal_pos.y != 0:
+		return
+	var portal_gx: int = Helpers.wrap_block_x(world.world_portal_pos.x)
+	var portal_cx: int = int(floor(float(portal_gx) / float(cs)))
+	var wide: int = WorldConfig.world_chunks_wide_max()
+	if posmod(portal_cx, wide) != wrapped_cx:
+		return
+
+	var lx: int = posmod(portal_gx, cs)
+	var surface: int = int(surfaces[lx])
+	if surface < 0 or surface + 2 >= world_h:
+		push_warning("[Chunk] Portal surface invalid at x=%d surface=%d" % [portal_gx, surface])
+		return
+
+	var id_base: int = TileIdRegistry.id_from_name("blockforge:portal_base_stone")
+	var id_btm: int = TileIdRegistry.id_from_name("blockforge:portal_btm")
+	var id_top: int = TileIdRegistry.id_from_name("blockforge:portal_top")
+	_map_strip_set(strip, cs, world_h, lx, surface, id_base)
+	_map_strip_set(strip, cs, world_h, lx, surface + 1, id_btm)
+	_map_strip_set(strip, cs, world_h, lx, surface + 2, id_top)
+
+	world.world_portal_pos = Vector2i(portal_gx, surface)
+	WorldConfig.logv("[Chunk] Portal placed at %s" % Helpers.coord_string(portal_gx, surface))
 
 
 # Column surface stack for mapping gen (shared by fill_column and tree overhang).

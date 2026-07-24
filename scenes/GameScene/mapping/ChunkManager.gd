@@ -72,3 +72,62 @@ func remove_column(cx: int) -> Array:
 
 func _key(cx: int, cy: int) -> Vector2i:
 	return Vector2i(wrap_column(cx), clamp_row(cy))
+
+
+func global_to_chunk(gx: int, gy: int) -> Vector2i:
+	var cs: int = WorldConfig.chunk_size()
+	var wx: int = Helpers.wrap_block_x(gx)
+	return Vector2i(wrap_column(int(floor(float(wx) / float(cs)))), clamp_row(int(floor(float(gy) / float(cs)))))
+
+
+func global_to_local(gx: int, gy: int) -> Vector2i:
+	var cs: int = WorldConfig.chunk_size()
+	var wx: int = Helpers.wrap_block_x(gx)
+	return Vector2i(posmod(wx, cs), posmod(gy, cs))
+
+
+## Terrain id at global block coords (0 = air). Returns -1 if chunk not loaded.
+func get_terrain_id(gx: int, gy: int) -> int:
+	var tall_px: int = WorldConfig.world_chunks_tall_max() * WorldConfig.chunk_size()
+	if gy < 0 or gy >= tall_px:
+		return -1
+	var cxy := global_to_chunk(gx, gy)
+	var data: ChunkData = get_chunk(cxy.x, cxy.y)
+	if data == null:
+		return -1
+	var local := global_to_local(gx, gy)
+	return ChunkData.unpack_terrain(data.get_cell(local.x, local.y))
+
+
+func set_terrain_id(gx: int, gy: int, terrain_id: int) -> bool:
+	var tall_px: int = WorldConfig.world_chunks_tall_max() * WorldConfig.chunk_size()
+	if gy < 0 or gy >= tall_px:
+		return false
+	var cxy := global_to_chunk(gx, gy)
+	var data: ChunkData = get_chunk(cxy.x, cxy.y)
+	if data == null:
+		return false
+	var local := global_to_local(gx, gy)
+	data.set_terrain(local.x, local.y, terrain_id)
+	return true
+
+
+## Highest solid block gy at column gx (skips log/leaves canopy). -1 if unknown/unloaded.
+func find_surface_height(gx: int) -> int:
+	var cs: int = WorldConfig.chunk_size()
+	var wx: int = Helpers.wrap_block_x(gx)
+	var cx: int = wrap_column(int(floor(float(wx) / float(cs))))
+	var lx: int = posmod(wx, cs)
+	var id_log: int = TileIdRegistry.id_from_name("blockforge:log")
+	var id_leaves: int = TileIdRegistry.id_from_name("blockforge:leaves")
+	var tall: int = WorldConfig.world_chunks_tall_max()
+	for cy in range(tall - 1, -1, -1):
+		var data: ChunkData = get_chunk(cx, cy)
+		if data == null:
+			continue
+		for ly in range(cs - 1, -1, -1):
+			var tid: int = ChunkData.unpack_terrain(data.get_cell(lx, ly))
+			if tid == 0 or tid == id_log or tid == id_leaves:
+				continue
+			return cy * cs + ly
+	return -1

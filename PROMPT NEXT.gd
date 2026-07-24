@@ -4,6 +4,8 @@ PROMPT NEXT
 
 After the chunk system is working, implement the following in this priority order for a fast playable vertical slice:
 
+0. Best done as a dedicated slice: “World = facade over ChunkManager,” then delete Chunk. 
+
 1. **Background Layer**  
    - Add a background `TileMap` layer for walls that remain visible after digging.  
    - Reveal this layer when foreground tiles are removed.
