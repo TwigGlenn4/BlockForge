@@ -1,5 +1,6 @@
 # Sky above world top, lava below world bottom.
 # Tune colors in the inspector (editor-first; no runtime atlas sampling).
+# Disabled during boot loading (PROCESS_MODE_DISABLED) — cheaper than drawing.
 class_name WorldBoundsFiller
 extends Node2D
 
@@ -19,6 +20,18 @@ func _ready() -> void:
 	_lava = Polygon2D.new()
 	_lava.color = lava_color
 	add_child(_lava)
+	# Stay off until WorldInitializer finishes boot (avoids half-red flash + free CPU)
+	set_active(false)
+
+
+func set_active(active: bool) -> void:
+	visible = active
+	process_mode = Node.PROCESS_MODE_INHERIT if active else Node.PROCESS_MODE_DISABLED
+	if not active:
+		if _sky:
+			_sky.visible = false
+		if _lava:
+			_lava.visible = false
 
 
 func _process(_delta: float) -> void:

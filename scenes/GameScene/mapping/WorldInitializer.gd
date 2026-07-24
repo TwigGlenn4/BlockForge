@@ -3,6 +3,8 @@
 class_name WorldInitializer
 extends Node
 
+const BOOT_STEPS := 5 # setup, 3 columns, spawn
+
 @export var chunk_manager_path: NodePath = ^"../ChunkManager"
 @export var persistence_path: NodePath = ^"../ChunkPersistence"
 @export var populator_path: NodePath = ^"../TileMapPopulator"
@@ -10,12 +12,16 @@ extends Node
 @export var player_path: NodePath = ^"../../Character"
 @export var camera_path: NodePath = ^"../../MainCamera"
 @export var worldgen_path: NodePath = ^"../../WorldGen"
+@export var bounds_filler_path: NodePath = ^"../BoundsFiller"
+@export var loading_screen_path: NodePath = ^"../../../LoadingScreen"
 
 var chunk_manager: ChunkManager
 var visibility: VisibilityManager
 var player: Node2D
 var camera: Camera2D
 var worldgen: Node
+var bounds_filler: WorldBoundsFiller
+var loading: LoadingScreen
 
 
 func _ready() -> void:
@@ -28,6 +34,8 @@ func _resolve_nodes() -> bool:
 	player = _resolve(player_path, "../../Character") as Node2D
 	camera = _resolve(camera_path, "../../MainCamera") as Camera2D
 	worldgen = _resolve(worldgen_path, "../../WorldGen")
+	bounds_filler = _resolve(bounds_filler_path, "../BoundsFiller") as WorldBoundsFiller
+	loading = _resolve(loading_screen_path, "../../../LoadingScreen") as LoadingScreen
 	if chunk_manager == null or visibility == null or player == null or camera == null or worldgen == null:
 		push_error("[Init] Missing required Mapping nodes (ChunkManager/Visibility/Character/Camera/WorldGen)")
 		return false
@@ -56,6 +64,12 @@ func _boot() -> void:
 	if not _resolve_nodes():
 		return
 	var t0 := Time.get_ticks_msec()
+
+	if bounds_filler:
+		bounds_filler.set_active(false)
+	if loading:
+		loading.begin(BOOT_STEPS, "Preparing world…")
+
 	WorldConfig.reload()
 	_apply_viewport_window_size()
 	TileIdRegistry.ensure_ready()
@@ -69,6 +83,8 @@ func _boot() -> void:
 		worldgen.setup()
 
 	visibility.set_generator(worldgen)
+	if loading:
+		loading.advance("Generating terrain…")
 
 	# Portal first (center column), then load neighbors, then spawn player at portal
 	if worldgen and worldgen.has_method("ensure_mapped_portal_x"):
@@ -77,8 +93,12 @@ func _boot() -> void:
 	var center_col: int = WorldConfig.world_chunks_wide_max() / 2
 	for dx in range(-1, 2):
 		var cx: int = chunk_manager.wrap_column(center_col + dx)
+		if loading:
+			loading.advance("Loading column %d…" % cx)
 		await visibility.ensure_column(cx)
 
+	if loading:
+		loading.advance("Spawning…")
 	var spawn := _spawn_at_portal(world)
 	# Match Helpers.pos_block_to_pixel so camera/character align with tiles
 	player.global_position = Helpers.pos_block_to_pixel(spawn)
@@ -95,6 +115,11 @@ func _boot() -> void:
 	# Start streaming only after spawn so visibility doesn't unload center columns
 	# while the camera is still at the origin.
 	visibility.begin_streaming()
+
+	if bounds_filler:
+		bounds_filler.set_active(true)
+	if loading:
+		loading.finish()
 
 	WorldConfig.logv("[Init] World ready at spawn %s in %d ms" % [str(spawn), Time.get_ticks_msec() - t0])
 

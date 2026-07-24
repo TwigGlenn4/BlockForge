@@ -19,8 +19,11 @@
 [ext_resource type="Script" path="res://scenes/GameScene/mapping/WorldInitializer.gd" id="m_wi"]
 [ext_resource type="Script" path="res://scenes/GameScene/mapping/WorldBoundsFiller.gd" id="m_bf"]
 [ext_resource type="Script" path="res://scenes/GameScene/mapping/MappedTilesSaver.gd" id="m_ms"]
+[ext_resource type="PackedScene" path="res://scenes/GameScene/LoadingScreen/loading_screen.tscn" id="ls_boot"]
 
 [node name="GameScene" type="Node2D" unique_id=115789075]
+
+[node name="LoadingScreen" parent="." instance=ExtResource("ls_boot")]
 
 [node name="World" type="Node" parent="." unique_id=1681077584]
 script = ExtResource("1_7un8v")
@@ -61,7 +64,7 @@ script = ExtResource("m_ms")
 chunk_manager_path = NodePath("../ChunkManager")
 persistence_path = NodePath("../ChunkPersistence")
 
-[node name="WorldInitializer" type="Node" parent="World/Mapping" node_paths=PackedStringArray("chunk_manager_path", "persistence_path", "populator_path", "visibility_path", "player_path", "camera_path", "worldgen_path")]
+[node name="WorldInitializer" type="Node" parent="World/Mapping" node_paths=PackedStringArray("chunk_manager_path", "persistence_path", "populator_path", "visibility_path", "player_path", "camera_path", "worldgen_path", "bounds_filler_path", "loading_screen_path")]
 script = ExtResource("m_wi")
 chunk_manager_path = NodePath("../ChunkManager")
 persistence_path = NodePath("../ChunkPersistence")
@@ -70,6 +73,8 @@ visibility_path = NodePath("../VisibilityManager")
 player_path = NodePath("../../Character")
 camera_path = NodePath("../../MainCamera")
 worldgen_path = NodePath("../../WorldGen")
+bounds_filler_path = NodePath("../BoundsFiller")
+loading_screen_path = NodePath("../../../LoadingScreen")
 
 [node name="MainCamera" type="Camera2D" parent="World" unique_id=1617757319 node_paths=PackedStringArray("world_interactor")]
 zoom = Vector2(0.5, 0.5)
