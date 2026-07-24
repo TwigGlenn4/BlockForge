@@ -1,9 +1,7 @@
 PROMPT NEXT
 
-- starts on ugly half-red screen
 - non-superman mode not working
 - still has remapping of world data to original 4-chunk code for some interactions?
-- pc should spawn at portal, after portal is created 
 
 ### Recommended Next Steps (After Core Chunk System)
 
@@ -18,13 +16,6 @@ After the chunk system is working, implement the following in this priority orde
 2. **Basic Lighting & Shading**  
    - Underground darkness that increases with depth.  
    - Simple point lights (torches) and fake orthogonal shading on dug edges.
-
-3. **Player Digging**  
-   - Left-click (or tool use) to dig foreground blocks.  
-   - Update the chunk's `PackedInt64Array`, mark chunk dirty, and spawn particles/items.
-
-4. **Item Collection**  
-   - Dug materials drop as pickups and go into player inventory.
 
 5. **Pathfinding**  
    - Improve surface point-and-click movement.  

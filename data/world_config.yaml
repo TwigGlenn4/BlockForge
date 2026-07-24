@@ -24,6 +24,6 @@ player_speed: 10
 
 # ===== DEBUG
 player_speed: 40
-superman: true
-debug_grid: true
+superman: false
+debug_grid: false
 debug_clear_world_columns: true
