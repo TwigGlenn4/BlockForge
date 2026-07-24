@@ -1,5 +1,10 @@
 PROMPT NEXT
 
+- starts on ugly half-red screen
+- non-superman mode not working
+- still has remapping of world data to original 4-chunk code for some interactions?
+- pc should spawn at portal, after portal is created 
+
 ### Recommended Next Steps (After Core Chunk System)
 
 After the chunk system is working, implement the following in this priority order for a fast playable vertical slice:

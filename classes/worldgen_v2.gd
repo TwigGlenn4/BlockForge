@@ -1060,20 +1060,16 @@ func _map_place_trees_from_column(
 		)
 
 
-# Pick portal column X once for mapped worlds (same middle-half rule as legacy gen).
+# Pick portal X once: center block of the central map column.
 func ensure_mapped_portal_x() -> void:
 	if world.world_portal_pos != Vector2i.ZERO:
 		return
-	var w: int = WorldConfig.world_width_tiles()
-	if w <= 0:
-		return
-	var half: int = maxi(1, w / 2)
-	var x: int = int(rand_from_seed(world.w_seed)[0]) % half
-	x += int(w * 0.25)
+	var cs: int = WorldConfig.chunk_size()
+	var center_col: int = WorldConfig.world_chunks_wide_max() / 2
+	var x: int = center_col * cs + cs / 2
 	world.world_portal_pos = Vector2i(Helpers.wrap_block_x(x), 0)
-	WorldConfig.logv("[Chunk] Portal will be at x=%d (column %d)" % [
-		world.world_portal_pos.x,
-		world.world_portal_pos.x / WorldConfig.chunk_size()
+	WorldConfig.logv("[Chunk] Portal will be at x=%d (center column %d)" % [
+		world.world_portal_pos.x, center_col
 	])
 
 

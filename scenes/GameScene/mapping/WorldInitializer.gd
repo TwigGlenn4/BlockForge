@@ -70,20 +70,16 @@ func _boot() -> void:
 
 	visibility.set_generator(worldgen)
 
+	# Portal first (center column), then load neighbors, then spawn player at portal
+	if worldgen and worldgen.has_method("ensure_mapped_portal_x"):
+		worldgen.ensure_mapped_portal_x()
+
 	var center_col: int = WorldConfig.world_chunks_wide_max() / 2
 	for dx in range(-1, 2):
 		var cx: int = chunk_manager.wrap_column(center_col + dx)
 		await visibility.ensure_column(cx)
 
-	# Ensure portal column exists so crafting station is reachable after boot
-	if worldgen and worldgen.has_method("ensure_mapped_portal_x"):
-		worldgen.ensure_mapped_portal_x()
-	if world and "world_portal_pos" in world:
-		var portal_col: int = int(world.world_portal_pos.x) / WorldConfig.chunk_size()
-		portal_col = chunk_manager.wrap_column(portal_col)
-		await visibility.ensure_column(portal_col)
-
-	var spawn := _find_spawn(center_col)
+	var spawn := _spawn_at_portal(world)
 	# Match Helpers.pos_block_to_pixel so camera/character align with tiles
 	player.global_position = Helpers.pos_block_to_pixel(spawn)
 	if "current_pos" in player:
@@ -101,6 +97,25 @@ func _boot() -> void:
 	visibility.begin_streaming()
 
 	WorldConfig.logv("[Init] World ready at spawn %s in %d ms" % [str(spawn), Time.get_ticks_msec() - t0])
+
+
+## Stand beside the portal on the surface (portal base = world_portal_pos).
+func _spawn_at_portal(world: Node) -> Vector2i:
+	if world == null or not ("world_portal_pos" in world):
+		return _find_spawn(WorldConfig.world_chunks_wide_max() / 2)
+	var p: Vector2i = world.world_portal_pos
+	if p.y <= 0:
+		# Portal not stamped yet — fall back to surface at portal X
+		var gy: int = chunk_manager.find_surface_height(p.x)
+		if gy < 0:
+			push_warning("[Init] Portal surface missing at x=%d; using fallback spawn" % p.x)
+			return _find_spawn(WorldConfig.world_chunks_wide_max() / 2)
+		p = Vector2i(p.x, gy)
+		world.world_portal_pos = p
+	# Ground-level air cell next to portal_btm (base at p, btm at p.y+1, top at p.y+2)
+	var spawn := Vector2i(Helpers.wrap_block_x(p.x + 1), p.y + 1)
+	WorldConfig.logv("[Init] Spawn at portal %s → %s" % [str(p), str(spawn)])
+	return spawn
 
 
 func _find_spawn(center_col: int) -> Vector2i:
