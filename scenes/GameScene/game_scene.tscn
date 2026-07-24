@@ -12,6 +12,13 @@
 [ext_resource type="Texture2D" uid="uid://c145e8oi1b1dq" path="res://assets/textures/entity/character.png" id="8_rfaf3"]
 [ext_resource type="Script" uid="uid://djij37f0hbxgv" path="res://scenes/GameScene/inventory_ui.gd" id="8_rvax8"]
 [ext_resource type="PackedScene" uid="uid://ctttbkmhtit7g" path="res://scenes/GameScene/RecipeUI/CraftingProgress/CraftingProgress.tscn" id="11_rvax8"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/ChunkManager.gd" id="m_cm"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/ChunkPersistence.gd" id="m_cp"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/TileMapPopulator.gd" id="m_tp"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/VisibilityManager.gd" id="m_vm"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/WorldInitializer.gd" id="m_wi"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/WorldBoundsFiller.gd" id="m_bf"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/MappedTilesSaver.gd" id="m_ms"]
 
 [node name="GameScene" type="Node2D" unique_id=115789075]
 
@@ -19,13 +26,54 @@
 script = ExtResource("1_7un8v")
 
 [node name="Foreground" type="TileMapLayer" parent="World" unique_id=1165209314]
+visible = false
 texture_filter = 1
 use_parent_material = true
 tile_set = ExtResource("2_6vc3a")
 
+[node name="Mapping" type="Node" parent="World"]
+
+[node name="ChunkMaps" type="Node2D" parent="World/Mapping"]
+z_index = 0
+
+[node name="BoundsFiller" type="Node2D" parent="World/Mapping"]
+script = ExtResource("m_bf")
+
+[node name="ChunkManager" type="Node" parent="World/Mapping"]
+script = ExtResource("m_cm")
+
+[node name="ChunkPersistence" type="Node" parent="World/Mapping"]
+script = ExtResource("m_cp")
+
+[node name="TileMapPopulator" type="Node" parent="World/Mapping" node_paths=PackedStringArray("maps_root_path")]
+script = ExtResource("m_tp")
+maps_root_path = NodePath("../ChunkMaps")
+
+[node name="VisibilityManager" type="Node" parent="World/Mapping" node_paths=PackedStringArray("chunk_manager_path", "persistence_path", "populator_path", "player_path")]
+script = ExtResource("m_vm")
+chunk_manager_path = NodePath("../ChunkManager")
+persistence_path = NodePath("../ChunkPersistence")
+populator_path = NodePath("../TileMapPopulator")
+player_path = NodePath("../../Character")
+
+[node name="MappedTilesSaver" type="Node" parent="World/Mapping" node_paths=PackedStringArray("chunk_manager_path", "persistence_path")]
+script = ExtResource("m_ms")
+chunk_manager_path = NodePath("../ChunkManager")
+persistence_path = NodePath("../ChunkPersistence")
+
+[node name="WorldInitializer" type="Node" parent="World/Mapping" node_paths=PackedStringArray("chunk_manager_path", "persistence_path", "populator_path", "visibility_path", "player_path", "camera_path", "worldgen_path")]
+script = ExtResource("m_wi")
+chunk_manager_path = NodePath("../ChunkManager")
+persistence_path = NodePath("../ChunkPersistence")
+populator_path = NodePath("../TileMapPopulator")
+visibility_path = NodePath("../VisibilityManager")
+player_path = NodePath("../../Character")
+camera_path = NodePath("../../MainCamera")
+worldgen_path = NodePath("../../WorldGen")
+
 [node name="MainCamera" type="Camera2D" parent="World" unique_id=1617757319 node_paths=PackedStringArray("world_interactor")]
-scale = Vector2(0.5, 0.5)
-zoom = Vector2(0.1, 0.1)
+zoom = Vector2(0.5, 0.5)
+scale = Vector2(1, 1)
 script = ExtResource("4_ws153")
 world_interactor = NodePath("MainUI/WorldInteractor")
 RECIPE_SELECTOR_SCENE = ExtResource("4_yxywe")
@@ -92,7 +140,8 @@ CRAFTING_PROGRESS_SCENE = ExtResource("11_rvax8")
 [node name="Sprite2D" type="Sprite2D" parent="World/Character" unique_id=799500243]
 z_index = 1
 texture = ExtResource("8_rfaf3")
-offset = Vector2(0, -8)
+centered = true
+offset = Vector2(0, -16)
 
 [node name="WorldCanvasLayer" type="CanvasLayer" parent="World" unique_id=1644691024]
 layer = 11

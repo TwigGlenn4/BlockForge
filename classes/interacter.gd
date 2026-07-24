@@ -76,6 +76,11 @@ func _process(delta):
 			lerp_timer = 0
 			lerp_target = Vector2i(-1,-1)
 
+	# Keep cylindrical chunk maps aligned while the camera pans away from the player
+	var pop := get_node_or_null("../Mapping/TileMapPopulator")
+	if pop and pop.has_method("align_layers_to_camera"):
+		pop.align_layers_to_camera(global_position.x)
+
 	# Generate 3 chunks at camera
 	if generating_chunks_enabled:
 		var chunk_num:int = Helpers.pos_pixel_to_block(position).x / Chunk.WIDTH

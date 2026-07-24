@@ -118,11 +118,44 @@ static func is_growable( tile ):
 static func coord_string( x:int, y:int ):
 	return "("+str(x)+", "+str(y)+")"
 
-# Convert between block coordinates and godot pixel units
-static func pos_block_to_pixel( block_pos: Vector2i ):
-	return Vector2i(block_pos.x*16 + 8, -block_pos.y*16 - 8)
-static func pos_pixel_to_block( block_pos: Vector2i ):
-	return Vector2i((block_pos.x)/16, (-block_pos.y)/16)
+# Convert between block coordinates and godot pixel units.
+# Standing point: horizontally centered in the tile, feet on groundward edge.
+# Tile gy occupies y in [-(gy+1)*ts, -gy*ts); groundward edge = -gy*ts.
+static func pos_block_to_pixel(block_pos: Vector2i):
+	var ts: int = WorldConfig.tile_size_px()
+	return Vector2i(block_pos.x * ts + ts / 2, -block_pos.y * ts)
+
+
+static func pos_pixel_to_block(pixel_pos: Vector2i):
+	var ts: float = float(WorldConfig.tile_size_px())
+	return Vector2i(int(floor(float(pixel_pos.x) / ts)), int(floor(float(-pixel_pos.y) / ts)))
+
+
+# Toroidal wrap: keep X in [0, world_width)
+static func wrap_block_x(gx: int) -> int:
+	var w: int = WorldConfig.world_width_tiles()
+	return posmod(gx, w)
+
+
+static func wrap_pixel_x(px: float) -> float:
+	var w: float = WorldConfig.world_width_px()
+	if w <= 0.0:
+		return px
+	return fposmod(px, w)
+
+
+# Pick target pixel X on the cylinder closest to `from_px` for shortest walk.
+static func wrapped_target_pixel(from_px: float, block_pos: Vector2i) -> Vector2:
+	var tp := Vector2(pos_block_to_pixel(Vector2i(wrap_block_x(block_pos.x), block_pos.y)))
+	var w: float = WorldConfig.world_width_px()
+	if w <= 0.0:
+		return tp
+	var dx: float = tp.x - from_px
+	if dx > w * 0.5:
+		tp.x -= w
+	elif dx < -w * 0.5:
+		tp.x += w
+	return tp
 
 # camera_to(): centers the camera on the given position at given zoom
 static func camera_to( cam: Camera2D, pos: Vector2, zoom=null ):

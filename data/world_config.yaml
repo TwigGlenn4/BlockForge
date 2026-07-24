@@ -1,0 +1,29 @@
+# World Configuration
+chunk_size: 64
+world_chunks_wide_max: 32
+world_chunks_tall_max: 8
+tile_size_px: 16
+margin_blocks_preload: 8
+margin_blocks_unload: 130
+
+# Zoom and performance limits (tune during playtesting)
+max_zoom: 8
+min_zoom: 0.125
+initial_zoom: 1.0
+max_active_tilemaps: 4096
+visibility_update_every_n_frames: 30
+
+default_viewport_width_px: 2096
+default_viewport_height_px: 1024
+
+# World seed (can be overridden by save file)
+world_seed: 42
+
+# Player speed in blocks per second (default 10.0)
+player_speed: 10
+
+# ===== DEBUG
+player_speed: 40
+superman: true
+debug_grid: true
+debug_clear_world_columns: true
