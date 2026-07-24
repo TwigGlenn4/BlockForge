@@ -19,12 +19,24 @@ func has(item_name:String, count:int = 1) -> bool:
 	
 	return false # if there are not enough items that match in the inventory, return 0
 
+func has_recipe_ingredients(recipe_id: String, recipe_count: int = 1) -> bool:
+	var recipe: DataRecipe = DataRecipe.find(recipe_id)
+	var has_all_ingredients: bool = true
+
+	for ingredient: ItemStack in recipe.ingredients: # for each item in ingredients, disable this recipe if any ingredient is missing
+		var items_needed: int = ingredient.count * recipe_count
+		if not self.has(ingredient.item_name, items_needed):
+			print("[Inventory:has_recipe_ingredients] inventory has less than %d of %s for recipe %s" % [items_needed, ingredient.item_name, recipe_id])
+			has_all_ingredients = false
+	return has_all_ingredients
+
 
 # currently assuming items will be referred to with strings, likely to change.
 ## Add a number of (untracked) items to the inventory, stacking into existing stacks where possible.
+## Returns the number of leftover items that don't fit into the inventory
 func add_items( item_name:String, count:int = 1) -> int: 
 	_contents_changed = true
-	print("[Inventory.add_items(%s, %d)]" % [item_name, count])
+	# print("[Inventory.add_items(%s, %d)]" % [item_name, count])
 	# add to existing stacks
 	for stack:ItemStack in contents: # for every stack in contents
 		if stack != null and stack.item_name == item_name:    # if the item name matches, stack into this stack

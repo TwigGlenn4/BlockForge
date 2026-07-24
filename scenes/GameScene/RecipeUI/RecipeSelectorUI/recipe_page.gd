@@ -23,7 +23,7 @@ func _ready() -> void:
 func set_recipe(recipe_id: String) -> void:
 	recipe = DataRecipe.find(recipe_id)
 	name += "_" + recipe.id
-	print("[RecipePage] Setting up page for recipe " + recipe.id)
+	# print("[RecipePage] Setting up page for recipe " + recipe.id)
 
 	title.text = recipe.name
 	description.text = recipe.description
@@ -35,7 +35,7 @@ func set_recipe(recipe_id: String) -> void:
 
 
 func _on_craft_button_pressed() -> void:
-	print("[RecipePage] Craft button pressed for %d x %s" % [quantity, recipe.id])
+	# print("[RecipePage] Craft button pressed for %d x %s" % [quantity, recipe.id])
 	start_craft.emit(recipe.id, quantity)
 
 func _on_quantity_changed(value: float) -> void:

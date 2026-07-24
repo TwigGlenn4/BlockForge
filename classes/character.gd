@@ -1,6 +1,9 @@
 extends Node2D
 class_name Character
 
+var active_crafting_progress: CraftingProgress = null
+@export var CRAFTING_PROGRESS_SCENE: Resource
+
 ## Use `Interactor.selected_character_inventory_changed` where possible, it handles reconnecting when `Interactor.selected_character` changes.
 signal inventory_changed
 
@@ -72,28 +75,38 @@ func open_inventory():
 func _process_jobs():
 	if position == Vector2(Helpers.pos_block_to_pixel(target_pos)):
 		if target_pos == job_active.pos:
+			if job_active.type == Job.TYPE.GOTO:
+				job_active = Job.NONE
 			if job_active.type == Job.TYPE.BREAK:
 				_job_break(job_active)
 			elif job_active.type == Job.TYPE.PLACE:
 				_job_place(job_active)
+			elif job_active.type == Job.TYPE.CRAFT:
+				_job_craft(job_active)
 
-			job_active = Job.NONE # reset to NONE job
 		target_pos = Vector2i(-1,-1)
 		
 
-func _job_break(job) -> bool:
+func _job_break(job) -> void:
 	var tile: DataTile = Interactor.world.get_tile_v(job.pos)
 	if tile == Tiles.AIR:
 		print("Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
-		return false
+		job_active = Job.NONE
+		return
 	else:
 		inventory.add_items(tile.drops, 1)
 		# TODO: drop items if inventory full
 		Interactor.world.place_tile_v(job.pos, Tiles.AIR)
 		print("broke tile ", tile, " at ", job.pos)
-	return true
+	job_active = Job.NONE
+	return
 
-func _job_place(job) -> bool:
+func _job_place(job) -> void:
+	var world_tile: DataTile = Interactor.world.get_tile_v(job.pos)
+	if world_tile != Tiles.AIR:
+		print("[Character:_job_place] Position %s is not air at time of job execution, not placing." % [job.pos])
+		job_active = Job.NONE
+		return
 	var tile_string: String = job.data
 	var tile: DataTile = DataTile.tile(tile_string)
 	if tile:
@@ -101,13 +114,88 @@ func _job_place(job) -> bool:
 			inventory.remove_items(tile_string)
 			Interactor.world.place_tile_v(job.pos, tile)
 			print("Placed tile ", tile, " at ", job.pos)
-			return true
+			job_active = Job.NONE
+			return
 		else:
 			print("[Character:_job_place] Inventory is missing item: ", tile_string)
-			return false
+			job_active = Job.NONE
+			return
 	else:
 		print("[Character:_job_place] Tile does not exist: ", tile_string)
-		return false
+		job_active = Job.NONE
+		return
+
+func _job_craft(job) -> void:
+	# Verify we still have the ingredients
+	if(!inventory.has_recipe_ingredients(job.data, job.data2)):
+		print("[Character:_job_craft] Cancelled Job due to missing ingredients: ", job)
+		job_active = Job.NONE
+		return
+	# open CraftingProgress (only once)
+	if( active_crafting_progress == null ):
+		active_crafting_progress = CRAFTING_PROGRESS_SCENE.instantiate()
+		Interactor.world_canvas_layer.add_child(active_crafting_progress)
+		active_crafting_progress.setup(job.data, job.data2, job.get_uuid(), job.pos)
+		# remove items from inventory
+		var recipe = DataRecipe.find(job.data)
+		for ingredient: ItemStack in recipe.ingredients:
+			inventory.remove_items(ingredient.item_name, ingredient.count * job.data2)
+		# update inventory when craft_complete (attach signal)
+		active_crafting_progress.craft_complete.connect(_on_craft_complete)
+		# update job when update_job_status fires (attach signal)
+		# finally remove job when update_job_status returns quantity 0
+		active_crafting_progress.update_job_status.connect(_on_update_craft_job_status)
+		# connect craft_cancelled to return leftover ingredients
+		active_crafting_progress.craft_cancelled.connect(_on_craft_cancelled)
+	else:
+		var active_craft_progress_type: int = typeof(active_crafting_progress)
+		print("[Character:_job_craft()] active_crafting_progress is not null: type = %d (%s)" % [active_craft_progress_type, type_string(active_craft_progress_type)])
+	return
+
+func _on_craft_complete(job_uuid: UUID, quantity_crafted: int) -> void:
+	if !job_active.uuid_matches(job_uuid):
+		print("[Character:_on_craft_complete()] job_uuid did not match active_job")
+		return
+	
+	var recipe = DataRecipe.find(job_active.data)
+	for result: ItemStack in recipe.results:
+		print("[Character:_on_craft_complete()] attempting to add %d of %s to inventory" % [quantity_crafted * result.count, result.item_name])
+		var items_left_over = inventory.add_items(result.item_name, quantity_crafted * result.count)
+		
+		if items_left_over > 0:
+			print("[Character:_on_craft_complete()] dropping %d of %s that did not fit in inventory" % [items_left_over, result.item_name])
+			drop_items(result.item_name, items_left_over)
+	
+
+func _on_update_craft_job_status(job_uuid: UUID, quantity_remaining: int) -> void:
+	if !job_active.uuid_matches(job_uuid):
+		print("[Character:_on_update_craft_job_status()] job_uuid did not match active_job")
+		return
+	
+	job_active.data2 = quantity_remaining
+
+	if quantity_remaining <= 0:
+		print("[Character] Craft job finished: ", job_active)
+		job_active = Job.NONE
+		active_crafting_progress.queue_free()
+
+
+func _on_craft_cancelled(job_uuid: UUID, quantity_remaining: int) -> void:
+	if !job_active.uuid_matches(job_uuid):
+		print("[Character:_on_craft_cancelled()] job_uuid did not match active_job")
+		return
+	
+	# refund items
+	var recipe = DataRecipe.find(job_active.data)
+	for ingredient: ItemStack in recipe.ingredients:
+		print("[Character:_on_craft_cancelled()] attempting to refund %d of %s to inventory" % [quantity_remaining * ingredient.count, ingredient.item_name])
+		var items_left_over = inventory.add_items(ingredient.item_name, quantity_remaining * ingredient.count)
+
+		if items_left_over > 0:
+			print("[Character:_on_craft_cancelled()] dropping %d of %s that did not fit in inventory" % [items_left_over, ingredient.item_name])
+			drop_items(ingredient.item_name, items_left_over)
+	# cancel job
+	job_active = Job.NONE
 
 ## Cancel the current job. TODO: cancel job by jobID
 func cancel_job() -> bool:
@@ -117,3 +205,8 @@ func cancel_job() -> bool:
 	else:
 		print("[Character] Can't cancel Job.NONE")
 		return false
+
+
+##
+func drop_items(item_name: String, count: int = 1) -> void:
+	print("[Character:drop_items()] NOT IMPLEMENTED Dropped %d %s" % [count, item_name])

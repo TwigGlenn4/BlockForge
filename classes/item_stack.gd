@@ -31,7 +31,7 @@ func add_items( num:int ) -> int: # adds items and returns remainder to add if s
 		return 0
 	
 	if count + num <= stack_max: # there is enough space left in the stack to add num items
-		print("[ItemStack.add_items(%d)] adding %d items to stack." % [num, num])
+		# print("[ItemStack.add_items(%d)] adding %d items to stack." % [num, num])
 		count += num
 		return 0
 	

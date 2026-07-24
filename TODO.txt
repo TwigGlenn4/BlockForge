@@ -4,17 +4,6 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * Remake scraped ore textures before publishing.
 	_ underground.png currently uses placeholders (wiki scrape blocked) + tin from old terrain art
 
-/ Implement Crafting Recipes
-* X Add Recipe class
-* X X see below for class members / methods
-* * Static file for recipe lists like tiles.gd
-* * Add workbench tile
-* X Somehow tag interactable tiles
-* X Create Recipe selection UI
-* X Create Crafting progress UI?
-* * Implement Craft Job
-* * * Crafting Progress emits craft_complete and update_job_status signals. Connect these to the character that started the craft
-
 * Add more hotkeys
 * * numbers for hotbar
 * * Disable arrow-key camera panning while crafting menu open
@@ -28,15 +17,10 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * Textures? surely texture atlas is scriptable
 
 * Expand Job system
-* * Job IDs (UUID): reference a job in a player's job queue for action
-* * * Allow cancelling jobs in queue
-* * * Hook into Crafting progress cancel
+* X Job IDs (UUID): reference a job in a player's job queue for action
+* * * Allow cancelling jobs in queue by uuid
 * * Job visualization: preview queued jobs in-world
 * * * Possibly also a UI element to show all (or first few) queued jobs for selected_character
-
-* Fix overlapping place jobs.
-* * When two place jobs are created at the same position before the character reaches it, the second job still places and effectively deletes an item.
-* * Fix this with a check that the place job is still valid when the character arrives.
 
 * Refactor and Optimize
 * * chunk.gd: check if static var tiles is actually saving time
@@ -47,8 +31,23 @@ X Move various _on_selected_character_inventory_changed signals to Interactor
 X X Interactor should relay signals, and can properly handle disconnecting when selected_character changes
 X X Known usages: inventory_ui.gd, recipe_selector.gd, recipe_page.gd
 
+X Implement Crafting Recipes
+X X Add Recipe class
+x X X see below for class members / methods
+x X Static file for recipe lists like tiles.gd
+x * Add workbench tile
+x X Somehow tag interactable tiles
+x X Create Recipe selection UI
+x X Create Crafting progress UI?
+x X Implement Craft Job
+x X X Crafting Progress emits craft_complete and update_job_status signals. Connect these to the character that started the craft
+
+X Fix overlapping place jobs.
+X X When two place jobs are created at the same position before the character reaches it, the second job still places and effectively deletes an item.
+X X Fix this with a check that the place job is still valid when the character arrives.
 
 
+OLDER TODO
 
 X Add leaves to trees
 	generate triangle on each side

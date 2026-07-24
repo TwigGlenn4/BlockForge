@@ -7,30 +7,30 @@ extends Control
 @export var main_theme: Theme
 @export var CRAFTING_PROGRESS_SCENE: Resource
 
-var interacter: Camera2D
 var workstation: String
+var workstation_pos: Vector2i
 var recipe_id_list: PackedStringArray
 
-func setup(workstation: String, interacter: Camera2D) -> void:
+func setup(workstation: String, workstation_pos: Vector2i) -> void:
 	print("[RecipeSelector] Setting up selector for workstation " + workstation)
 	self.workstation = workstation
-	self.interacter = interacter
+	self.workstation_pos = workstation_pos
 
 	var recipe_ids: PackedStringArray = DataRecipe.find_workstation_recipe_ids(workstation)
 	# let _add_recipe() handle populating recipe_id_list to ensure the indexing matches recipe_list items
 	recipe_id_list.resize(recipe_ids.size())
 
-	print("[RecipeSelector] Recipe list: " + str(recipe_ids))
+	# print("[RecipeSelector] Recipe list: " + str(recipe_ids))
 	_populate_recipe_tab_container(recipe_ids)
 	
 	# connect to selected_character_changed signal
-	Interactor.selected_character_inventory_changed.connect(_on_character_inventory_changed)
+	# Interactor.selected_character_inventory_changed.connect(_on_character_inventory_changed) # disabled while _enable_recipes_by_character_inventory() does nothing
+	# _enable_recipes_by_character_inventory()
 
 	if recipe_id_list.size() >= 0:
 		recipe_list.select(0)
 		_on_recipe_list_item_selected(0)
 	
-	_enable_recipes_by_character_inventory()
 
 	recipe_page.start_craft.connect(_on_start_craft)
 	
@@ -44,13 +44,13 @@ func _populate_recipe_tab_container(recipe_ids: PackedStringArray) -> void:
 func _add_recipe(recipe: DataRecipe) -> void:
 	var list_index: int = recipe_list.add_item(recipe.name)
 	recipe_id_list.set(list_index, recipe.id)
-	print("[RecipeSelector] Added recipe " + str(list_index) + ": " + recipe.id)
+	# print("[RecipeSelector] Added recipe " + str(list_index) + ": " + recipe.id)
 
 func _set_active_recipe(recipe_id: String) -> void:
 	recipe_page.set_recipe(recipe_id)
 
 func _on_recipe_list_item_selected(index: int) -> void:
-	print("[RecipeSelector] Item clicked: " + str(index))
+	# print("[RecipeSelector] Item clicked: " + str(index))
 	_set_active_recipe(recipe_id_list.get(index))
 
 func _on_close_button_pressed() -> void:
@@ -62,28 +62,19 @@ func _set_recipe_enabled(index: int, is_enabled: bool) -> void:
 	else:
 		print("[RecipeSelector] Disabling recipe (does nothing for now) ", recipe_id_list.get(index))
 
+## Unused for now, eventually may want to gray out recipes in recipe_list here
 func _enable_recipes_by_character_inventory() -> void:
 	print("[RecipeSelector] Filtering recipes by inventory...")
-	for index: int in recipe_id_list.size(): # check each recipe in the recipe list
+	for index: int in recipe_id_list.size(): # check each recipe in the recipe list	
 		var recipe_id: String = recipe_id_list.get(index)
-		var recipe: DataRecipe = DataRecipe.find(recipe_id)
-		var has_all_ingredients: bool = true
-
-		for ingredient: ItemStack in recipe.ingredients: # for each item in ingredients, disable this recipe if any ingredient is missing
-			if not Interactor.selected_character.inventory.has(ingredient.item_name, ingredient.count):
-				print("[RecipeSelector] recipe ", recipe_id, " is missing ingredient ", ingredient)
-				has_all_ingredients = false
-		
-		_set_recipe_enabled(index, has_all_ingredients)
+		_set_recipe_enabled(index, Interactor.selected_character.inventory.has_recipe_ingredients(recipe_id))
 
 
 func _on_character_inventory_changed() -> void:
 	print("[RecipeSelector] Inventory changed, updating enabled recipes")
-	_enable_recipes_by_character_inventory()
+	# _enable_recipes_by_character_inventory()
 
 func _on_start_craft(recipe_id: String, quantity: int) -> void:
 	self.visible = false
-	var crafting_progress: Control = CRAFTING_PROGRESS_SCENE.instantiate()
-	crafting_progress.setup(recipe_id, quantity)
-	self.get_parent().add_child(crafting_progress)
+	Interactor.selected_character.add_job(Job.new(Job.TYPE.CRAFT, workstation_pos, recipe_id, quantity))
 	self.queue_free()

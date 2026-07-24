@@ -132,7 +132,7 @@ static func camera_to( cam: Camera2D, pos: Vector2, zoom=null ):
 
 ## Return a string formatted as `[MM]m:[SS]s` or `[SS]s`. Rounds to the nearest second
 static func time_str_sec(seconds: float) -> String:
-	return time_str_sec_int(int(roundf(seconds)))
+	return time_str_sec_int(int(ceilf(seconds)))
 
 ## Return a string formatted as `[MM]m:[SS]s` or `[SS]s`.
 static func time_str_sec_int(seconds: int) -> String:

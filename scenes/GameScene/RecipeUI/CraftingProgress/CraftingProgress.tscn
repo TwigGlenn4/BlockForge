@@ -7,12 +7,13 @@ font_size = 20
 
 [node name="CraftingProgress" type="Control" unique_id=509064505 node_paths=PackedStringArray("recipe_name_label", "result_label", "progress_bar", "time_left_label", "cancel_button")]
 layout_mode = 3
-anchor_left = 0.3
+anchor_left = 0.35
 anchor_top = 0.35
-anchor_right = 0.7
+anchor_right = 0.65
 anchor_bottom = 0.65
 grow_horizontal = 2
 grow_vertical = 2
+pivot_offset_ratio = Vector2(0.5, 1)
 script = ExtResource("1_08hyh")
 recipe_name_label = NodePath("Panel/Control/RecipeNameLabel")
 result_label = NodePath("Panel/Control/ResultLabel")

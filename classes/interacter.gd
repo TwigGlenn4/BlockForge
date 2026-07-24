@@ -28,6 +28,8 @@ static var selected_character_inventory_changed: Signal = _create_static_signal(
 static var world: World
 static var main_ui: CanvasLayer
 static var inventory_ui: Control
+static var world_canvas_layer: CanvasLayer
+static var main_camera: Camera2D
 
 @export var world_interactor: Control
 @export var RECIPE_SELECTOR_SCENE: Resource
@@ -47,6 +49,8 @@ func _ready():
 	world = get_node("/root/GameScene/World")
 	main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
 	inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
+	world_canvas_layer = get_node("/root/GameScene/World/WorldCanvasLayer")
+	main_camera = self
 
 
 func _process(delta):
@@ -209,6 +213,7 @@ func _input_block_interact(block_pos: Vector2i) -> bool:
 	var tile: DataTile = world.get_tile_v(block_pos)
 	if tile.interactable:
 		_tile_interacion(block_pos, tile)
+		return true
 	elif tile != Tiles.AIR:
 		var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
 		selected_character.add_job(job)
@@ -278,5 +283,5 @@ func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
 				active_recipe_selector.queue_free()
 
 			active_recipe_selector = RECIPE_SELECTOR_SCENE.instantiate()
-			active_recipe_selector.setup(tile.name, self)
+			active_recipe_selector.setup(tile.name, block_pos)
 			main_ui.add_child(active_recipe_selector)

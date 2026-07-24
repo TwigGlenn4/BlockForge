@@ -1,5 +1,5 @@
-## Job Class stores all info about a particular job and belongs to a Character
-## Valid Types: NONE, GOTO, BREAK, PLACE, CRAFT
+## Job Class stores all info about a particular job and belongs to a Character.
+## Valid Types: `NONE`, `GOTO`, `BREAK`, `PLACE`, `CRAFT`
 
 class_name Job
 
@@ -27,7 +27,8 @@ var data: String
 ## TYPE=CRAFT, data2 = count
 var data2: int
 
-var _uuid: PackedByteArray
+## UUID is private to prevent overwriting
+var _uuid: UUID
 
 ## Job Constructor: All info needed to create a job
 ## 
@@ -41,7 +42,7 @@ func _init(job_type:TYPE, job_pos:Vector2i = Vector2i.MIN, job_data:String = "_"
 	pos = job_pos
 	data = job_data
 	data2 = job_data2
-	_uuid = UUID.uuidbin()
+	_uuid = UUID.new()
 	_validate()
 
 func _to_string():
@@ -58,7 +59,7 @@ func _to_string():
 		_:
 			job_string = "Job(NONE, %s)" % [pos]
 	
-	return "%s {_uuid=%s}" % [job_string, _uuid]
+	return "%s {uuid=%s}" % [job_string, _uuid]
 
 func _validate() -> void:
 	if type != TYPE.NONE && pos == Vector2i.MIN:
@@ -85,8 +86,8 @@ func _validate() -> void:
 	
 	return
 
-func get_uuid() -> PackedByteArray:
+func get_uuid() -> UUID:
 	return _uuid
 
-func uuid_matches(other_uuid: PackedByteArray) -> bool:
-	return _uuid == other_uuid
+func uuid_matches(other_uuid: UUID) -> bool:
+	return _uuid.is_equal(other_uuid)
