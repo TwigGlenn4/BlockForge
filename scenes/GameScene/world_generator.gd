@@ -250,3 +250,15 @@ func _process( _delta ):
 		print("Done Generating")
 		timer_stop.emit()
 		progressbar.done()
+
+
+# Bridge for mapping — prefer WorldGenV2 on the WorldGen node.
+# TODO: Procedural objects placement
+func fill_chunk_array(chunk_x: int, chunk_y: int, out_array: PackedInt64Array) -> void:
+	var wg = get_node_or_null("../WorldGen")
+	if wg == null:
+		wg = get_node_or_null("/root/GameScene/World/WorldGen")
+	if wg and wg.has_method("fill_chunk_array"):
+		await wg.fill_chunk_array(chunk_x, chunk_y, out_array)
+		return
+	push_warning("[WorldGenerator] fill_chunk_array: no WorldGenV2 bridge")

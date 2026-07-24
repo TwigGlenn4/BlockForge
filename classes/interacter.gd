@@ -76,6 +76,11 @@ func _process(delta):
 			lerp_timer = 0
 			lerp_target = Vector2i(-1,-1)
 
+	# Keep cylindrical chunk maps aligned while the camera pans away from the player
+	var pop := get_node_or_null("../Mapping/TileMapPopulator")
+	if pop and pop.has_method("align_layers_to_camera"):
+		pop.align_layers_to_camera(global_position.x)
+
 	# Generate 3 chunks at camera
 	if generating_chunks_enabled:
 		var chunk_num:int = Helpers.pos_pixel_to_block(position).x / Chunk.WIDTH
@@ -101,82 +106,271 @@ static func _create_static_signal(signal_name: String, arg_array: Array = []) ->
 static func _on_selected_character_inventory_changed_internal() -> void:
 	selected_character_inventory_changed.emit()
 
-# ===== PATHFIND ==== This method needs to be gathered into pathfinding.gd
-func surface_path (character:Node, from:Vector2i, dest:Vector2i):
-	print("surface_path ",str(from)," ",str(dest))
-	var _method: Path.Movement
-	var here:Vector2i = from
-	var dx:int = sign(dest.x - here.x)
-	var dy:int
-	while(here.x != dest.x):
-		here.x += dx
-		var y = world.get_surface(here.x)
-		dy = y - here.y
-		here.y += dy
-		
-		if abs(dy) > 1:
-			_method = Path.Movement.CLIMB
-		elif abs(dy) == 1:
-			_method = Path.Movement.HOP
-		else:
-			_method = Path.Movement.WALK 
-			# similar for but lookup blocks for climb in trees, blocks around for CLIMB_RIGHT, blocks above for CRAWL
-		
+# ===== PATHFIND ==== Minimal surface + tree helpers (no A* / no general search)
+
+func _is_tree_tile(pos: Vector2i) -> bool:
+	var tile: DataTile = world.get_tile_v(pos)
+	return tile != null and (
+		tile == DataTile.tile("blockforge:log")
+		or tile == DataTile.tile("blockforge:leaves")
+	)
+
+
+## True if standing on a tree tile or orthogonally against one (air pocket in canopy).
+func _is_in_tree(pos: Vector2i) -> bool:
+	if _is_tree_tile(pos):
+		return true
+	for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]:
+		var n := Vector2i(Helpers.wrap_block_x(pos.x + d.x), pos.y + d.y)
+		if _is_tree_tile(n):
+			return true
+	return false
+
+
+## Move onto a neighboring tree cell if `pos` itself is air beside the tree.
+func _step_onto_tree(character: Node, pos: Vector2i) -> Vector2i:
+	if _is_tree_tile(pos):
+		return pos
+	for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]:
+		var n := Vector2i(Helpers.wrap_block_x(pos.x + d.x), pos.y + d.y)
+		if _is_tree_tile(n):
+			character.add_job(Job.new(Job.TYPE.GOTO, n))
+			return n
+	return pos
+
+
+func surface_path(character: Node, from: Vector2i, dest: Vector2i) -> void:
+	print("surface_path ", str(from), " ", str(dest))
+	# Must already be near ground — never use this to leave a tree/canopy
+	var here: Vector2i = from
+	var dest_x: int = Helpers.wrap_block_x(dest.x)
+	here.x = Helpers.wrap_block_x(here.x)
+	var sy0: int = world.get_surface(here.x)
+	if sy0 >= 0:
+		var stand0 := Vector2i(here.x, sy0 + 1)
+		if here != stand0:
+			# Only step down to stand if already at/near surface (caller must climb first)
+			if here.y <= sy0 + 2:
+				here = stand0
+				character.add_job(Job.new(Job.TYPE.GOTO, here))
+			else:
+				push_warning("[Interactor] surface_path called from elevated y=%d; climb_down first" % here.y)
+	var dx: int = sign(dest_x - here.x)
+	var w: int = WorldConfig.world_width_tiles()
+	if w > 0:
+		var direct: int = dest_x - here.x
+		if abs(direct) > w / 2 and direct != 0:
+			dx = -sign(direct)
+	var guard: int = w + 2
+	while here.x != dest_x and guard > 0:
+		guard -= 1
+		here.x = Helpers.wrap_block_x(here.x + dx)
+		var y: int = world.get_surface(here.x)
+		if y < 0:
+			continue
+		here.y = y + 1 # stand in air above surface
 		character.add_job(Job.new(Job.TYPE.GOTO, here))
-		# should add method as another parameter in TYPE.GOTO
 
-func tree_path (character:Node, start:Vector2i, end:Vector2i): # traverse tree
-	print("tree_path ",str(start),"",str(end))
-	var here:Vector2i
-	if start.y>end.y: #dir.DOWN
-		here = start
-		for x in g3_range(start.x, end.x):
-			here.x = x
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-		for y in g3_range(start.y, end.y):
-			here.y = y
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-	else: # Dir.UP
-		here = start
-		for y in g3_range(start.y, end.y):
-			here.y = y
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-		for x in g3_range(start.x, end.x):
-			here.x = x
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-	return here 
 
-func g3_range(a:int, b:int):
-	var d:int = sign(b-a)
-	if d == 0: # set step to 1 if sign == 0
+func g3_range(a: int, b: int):
+	var d: int = sign(b - a)
+	if d == 0:
 		d = 1
-	return range(a, b+d, d)
-		
-func find_tree_base(place:Vector2i): # find nearest trunk
-	var base:Vector2i
-	var y:int
-	var x:int
-	for dx in 20:
-		x = place.x+dx
-		y = world.get_surface(x) + 1
-		#print("x,y ",x,",",y)
-		# world.place_tile(x,y,DataTile.tile("blockforge:water")) #DEBUG
-		# await get_tree().create_timer(1.0).timeout
-		if world.get_tile(x, y)==DataTile.tile("blockforge:log"):
-			base = Vector2i(x, y)
-			break
-		x = place.x-dx 
-		y = world.get_surface(x) + 1
-		if world.get_tile(x, y)==DataTile.tile("blockforge:log"):
-			base = Vector2i(x, y)
-			break
-	#if not is_instance_valid(base): # ===== DEBUG
-	#  pass #can't get out of tree
-	#  return false
-	print("found tree base at ",str(base))
-	return base
+	return range(a, b + d, d)
 
-# ===== END PATHFIND    
+
+## Every cell on an L-shaped (axis) path must be tree. horizontal_first = x then y.
+func _axis_tree_clear(from: Vector2i, to: Vector2i, horizontal_first: bool) -> bool:
+	if from == to:
+		return _is_tree_tile(from)
+	if horizontal_first:
+		for x in g3_range(from.x, to.x):
+			if not _is_tree_tile(Vector2i(x, from.y)):
+				return false
+		for y in g3_range(from.y, to.y):
+			if not _is_tree_tile(Vector2i(to.x, y)):
+				return false
+	else:
+		for y in g3_range(from.y, to.y):
+			if not _is_tree_tile(Vector2i(from.x, y)):
+				return false
+		for x in g3_range(from.x, to.x):
+			if not _is_tree_tile(Vector2i(x, to.y)):
+				return false
+	return true
+
+
+func _emit_axis_jobs(character: Node, cells: Array[Vector2i], from: Vector2i) -> void:
+	for cell in cells:
+		if cell == from:
+			continue
+		character.add_job(Job.new(Job.TYPE.GOTO, cell))
+
+
+func _axis_tree_cells(from: Vector2i, to: Vector2i, horizontal_first: bool) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if horizontal_first:
+		for x in g3_range(from.x, to.x):
+			cells.append(Vector2i(x, from.y))
+		for y in g3_range(from.y, to.y):
+			var c := Vector2i(to.x, y)
+			if cells.is_empty() or cells[cells.size() - 1] != c:
+				cells.append(c)
+	else:
+		for y in g3_range(from.y, to.y):
+			cells.append(Vector2i(from.x, y))
+		for x in g3_range(from.x, to.x):
+			var c := Vector2i(x, to.y)
+			if cells.is_empty() or cells[cells.size() - 1] != c:
+				cells.append(c)
+	return cells
+
+
+## Demi-direct: HV or VH through tree tiles only (no air). False if neither L works.
+func try_tree_connected_path(character: Node, from: Vector2i, to: Vector2i) -> bool:
+	if from == to:
+		return true
+	if _axis_tree_clear(from, to, true):
+		_emit_axis_jobs(character, _axis_tree_cells(from, to, true), from)
+		return true
+	if _axis_tree_clear(from, to, false):
+		_emit_axis_jobs(character, _axis_tree_cells(from, to, false), from)
+		return true
+	return false
+
+
+func find_tree_base(place: Vector2i) -> Vector2i:
+	# Prefer this column's lowest log reachable through tree tiles below `place`
+	var x: int = Helpers.wrap_block_x(place.x)
+	var last_log := Vector2i(-1, -1)
+	for y in range(place.y, -1, -1):
+		var p := Vector2i(x, y)
+		if not _is_tree_tile(p):
+			break
+		if world.get_tile_v(p) == DataTile.tile("blockforge:log"):
+			last_log = p
+	if last_log.x >= 0:
+		var y2: int = last_log.y - 1
+		while y2 >= 0 and world.get_tile_v(Vector2i(x, y2)) == DataTile.tile("blockforge:log"):
+			last_log = Vector2i(x, y2)
+			y2 -= 1
+		print("found tree base at ", str(last_log))
+		return last_log
+	# Fallback: nearest surface trunk within ±20 columns
+	for dx in 21:
+		for side in [1, -1]:
+			if dx == 0 and side < 0:
+				continue
+			var bx: int = Helpers.wrap_block_x(place.x + dx * side)
+			var by: int = world.get_surface(bx) + 1
+			if world.get_tile_v(Vector2i(bx, by)) == DataTile.tile("blockforge:log"):
+				print("found tree base at ", str(Vector2i(bx, by)))
+				return Vector2i(bx, by)
+	return Vector2i(-1, -1)
+
+
+## Greedy crawl down through tree tiles; drop only when no tree step remains.
+func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
+	var here: Vector2i = from
+	var base: Vector2i = find_tree_base(from)
+	var guard: int = 256
+	while guard > 0 and _is_tree_tile(here):
+		guard -= 1
+		# 1) Prefer descending through tree
+		var below := Vector2i(here.x, here.y - 1)
+		if _is_tree_tile(below):
+			here = below
+			character.add_job(Job.new(Job.TYPE.GOTO, here))
+			continue
+		# 2) Sidestep toward trunk base on this row (stay in canopy/trunk)
+		var moved := false
+		if base.x >= 0 and here.x != base.x:
+			var step: int = sign(base.x - here.x)
+			var side := Vector2i(Helpers.wrap_block_x(here.x + step), here.y)
+			if _is_tree_tile(side):
+				here = side
+				character.add_job(Job.new(Job.TYPE.GOTO, here))
+				moved = true
+		if moved:
+			continue
+		# 3) Any horizontal tree neighbor (prefer one that has tree below)
+		for step2 in [1, -1]:
+			var side2 := Vector2i(Helpers.wrap_block_x(here.x + step2), here.y)
+			if not _is_tree_tile(side2):
+				continue
+			here = side2
+			character.add_job(Job.new(Job.TYPE.GOTO, here))
+			moved = true
+			break
+		if moved:
+			continue
+		break # no tree moves left
+
+	# Finish with axis path to base if still in tree and connected by L
+	if base.x >= 0 and here != base and _is_tree_tile(here):
+		if try_tree_connected_path(character, here, base):
+			return base
+
+	if base.x >= 0 and here == base:
+		return base
+
+	# Already at ground-level tree cell — do not drop through air
+	var sy: int = world.get_surface(here.x)
+	if sy >= 0 and here.y <= sy + 1:
+		return here
+
+	# Last resort: drop only if still above ground and no further tree crawl
+	if sy >= 0 and here.y > sy + 1:
+		var ground := Vector2i(Helpers.wrap_block_x(here.x), sy + 1)
+		character.add_job(Job.new(Job.TYPE.GOTO, ground))
+		return ground
+	return here
+
+
+## Non-superman move: tree↔tree prefers connected L; else down → surface → up.
+func navigate_to(character: Node, start: Vector2i, end: Vector2i) -> Vector2i:
+	# current_pos is often air beside leaves — treat as in-tree and step onto wood first
+	if _is_in_tree(start):
+		start = _step_onto_tree(character, start)
+	if _is_in_tree(end) and not _is_tree_tile(end):
+		# Clicked air next to tree destination — aim at the tree cell
+		for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]:
+			var n := Vector2i(Helpers.wrap_block_x(end.x + d.x), end.y + d.y)
+			if _is_tree_tile(n):
+				end = n
+				break
+
+	var start_tree: bool = _is_tree_tile(start)
+	var end_tree: bool = _is_tree_tile(end)
+
+	if start_tree and end_tree:
+		if try_tree_connected_path(character, start, end):
+			return end
+		var ground: Vector2i = climb_down_to_ground(character, start)
+		var base_e: Vector2i = find_tree_base(end)
+		if base_e.x < 0:
+			base_e = end
+		surface_path(character, ground, base_e)
+		try_tree_connected_path(character, base_e, end)
+		return end
+
+	if start_tree and not end_tree:
+		var ground2: Vector2i = climb_down_to_ground(character, start)
+		surface_path(character, ground2, end)
+		return end
+
+	if not start_tree and end_tree:
+		var base_e2: Vector2i = find_tree_base(end)
+		if base_e2.x < 0:
+			base_e2 = end
+		surface_path(character, start, base_e2)
+		try_tree_connected_path(character, base_e2, end)
+		return end
+
+	surface_path(character, start, end)
+	return end
+
+# ===== END PATHFIND
 
 
 # Zoom controls in _input to properly accept mouse wheel input
@@ -211,13 +405,18 @@ func _input_character_inventory(event: InputEvent) -> void:
 
 func _input_block_interact(block_pos: Vector2i) -> bool:
 	var tile: DataTile = world.get_tile_v(block_pos)
+	if tile == null:
+		return false
 	if tile.interactable:
 		_tile_interacion(block_pos, tile)
 		return true
 	elif tile != Tiles.AIR:
-		var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
-		selected_character.add_job(job)
-		return true
+		# Superman: dig/walk straight to the block. Normal mode: fall through to surface/tree pathfinding.
+		if WorldConfig.superman():
+			var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
+			selected_character.add_job(job)
+			return true
+		return false
 	else:
 		var held_item_stack: ItemStack = inventory_ui.get_held_item_stack()
 		if held_item_stack:
@@ -253,24 +452,39 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 
 			# ===== PATHFIND GENERAL
 			var start:Vector2i = selected_character.current_pos
-			var end:Vector2i = block_pos
-			var next:Vector2i
+			var end:Vector2i = Vector2i(Helpers.wrap_block_x(block_pos.x), block_pos.y)
 
 			print("\nstart -> end ",str(start)," -> ",str(end))
-			var tile = world.get_tile_v(start)
-			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):
-				next = find_tree_base (start)
-				tree_path(selected_character, start, next)
-				start = next
-			tile = world.get_tile_v(end)
-			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):  
-				next = find_tree_base(end)
-				surface_path(selected_character, start, next)
-				tree_path(selected_character, next, end)
+
+			# Superman: fly/walk straight to the clicked cell (no surface follow / tree path)
+			if WorldConfig.superman():
+				selected_character.job_queue.clear()
+				selected_character.job_active = Job.NONE
+				selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
+				print("path finished (superman direct)")
 			else:
-				end.y = world.get_surface(end.x) # pin to surface of earth
-				surface_path (selected_character, start, end)
-			print("path finished")
+				selected_character.job_queue.clear()
+				selected_character.job_active = Job.NONE
+				var dig_pos: Vector2i = end
+				var dig_tile: DataTile = world.get_tile_v(dig_pos)
+				var want_dig: bool = (
+					dig_tile != null
+					and dig_tile != Tiles.AIR
+					and not dig_tile.interactable
+				)
+				var is_tree_click: bool = want_dig and _is_tree_tile(dig_pos)
+				# Surface destinations stand in air above ground (not when targeting a tree)
+				if not is_tree_click and not _is_in_tree(end):
+					var surface_y: int = world.get_surface(end.x)
+					if surface_y >= 0:
+						end.y = surface_y + 1
+				var arrived: Vector2i = navigate_to(selected_character, start, end)
+				# After navigating: dig trees, or near-surface blocks (not deep underground shortcuts)
+				if want_dig:
+					var near_surface: bool = abs(dig_pos.y - arrived.y) <= 2
+					if is_tree_click or near_surface:
+						selected_character.add_job(Job.new(Job.TYPE.BREAK, dig_pos))
+				print("path finished")
 			# ===== END PATHFIND GENERAL
 
 func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:

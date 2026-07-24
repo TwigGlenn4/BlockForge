@@ -16,45 +16,56 @@ var job_queue: Array[Job] = []
 var job_active: Job = Job.NONE
 
 var stats = {
-	speed = 10.0 #   Character speed in blocks per second.
+	speed = 10.0 # Character speed in blocks per second.
 }
 
 var inventory: Inventory = Inventory.new()
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
-	pass # Replace with function body.
+	stats.speed = WorldConfig.player_speed()
 
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	if target_pos != Vector2i(-1, -1):
+		var target_pixels: Vector2 = Helpers.wrapped_target_pixel(position.x, target_pos)
+		position = position.move_toward(
+			target_pixels,
+			delta * (stats.speed * float(WorldConfig.tile_size_px()))
+		)
+		_wrap_world_x()
 
-	if target_pos != Vector2i(-1,-1):
-		var target_pixels: Vector2i = Helpers.pos_block_to_pixel(target_pos)
-		position = position.move_toward(target_pixels, delta*(stats.speed*16))
-	
 	if inventory.contents_changed_check():
 		inventory_changed.emit()
 
 
 func _physics_process(_delta):
 	_try_queue_next_job()
-	
-	current_pos = Helpers.pos_pixel_to_block(position)
+	_wrap_world_x()
+	current_pos = Helpers.pos_pixel_to_block(Vector2i(position))
+	current_pos.x = Helpers.wrap_block_x(current_pos.x)
 	_process_jobs()
 
 
+# Keep player on the cylinder [0, world_width_px).
+func _wrap_world_x() -> void:
+	var w: float = WorldConfig.world_width_px()
+	if w <= 0.0:
+		return
+	var before: float = position.x
+	position.x = Helpers.wrap_pixel_x(position.x)
+	if not is_equal_approx(before, position.x) and target_pos != Vector2i(-1, -1):
+		target_pos.x = Helpers.wrap_block_x(target_pos.x)
+
+
 func _try_queue_next_job() -> void:
-	if (not job_queue.is_empty()) and job_active.type == Job.TYPE.NONE: # if job queue contains job and there is no active job, go to next job
+	if (not job_queue.is_empty()) and job_active.type == Job.TYPE.NONE:
 		job_active = job_queue.pop_front()
-		target_pos = job_active.pos
+		target_pos = Vector2i(Helpers.wrap_block_x(int(job_active.pos.x)), int(job_active.pos.y))
 		print("Activating "+job_active._to_string())
+
 
 func add_job(job:Job) -> void:
 	job_queue.push_back(job)
-	#print("added "+str(job._to_string()))
-
 
 
 func _set_target_pos(block_pos:Vector2):
@@ -63,9 +74,10 @@ func _set_target_pos(block_pos:Vector2):
 	job_queue.push_front(goto_job)
 
 
-
 func _teleport_to(block_pos:Vector2):
-	position = Helpers.pos_block_to_pixel(block_pos)
+	var bx := Vector2i(Helpers.wrap_block_x(int(block_pos.x)), int(block_pos.y))
+	position = Helpers.pos_block_to_pixel(bx)
+	_wrap_world_x()
 
 
 func open_inventory():
@@ -73,19 +85,28 @@ func open_inventory():
 
 
 func _process_jobs():
-	if position == Vector2(Helpers.pos_block_to_pixel(target_pos)):
-		if target_pos == job_active.pos:
-			if job_active.type == Job.TYPE.GOTO:
-				job_active = Job.NONE
-			if job_active.type == Job.TYPE.BREAK:
-				_job_break(job_active)
-			elif job_active.type == Job.TYPE.PLACE:
-				_job_place(job_active)
-			elif job_active.type == Job.TYPE.CRAFT:
-				_job_craft(job_active)
+	if target_pos == Vector2i(-1, -1):
+		return
+	if position.distance_to(Helpers.wrapped_target_pixel(position.x, target_pos)) >= 0.5:
+		return
 
-		target_pos = Vector2i(-1,-1)
-		
+	var snapped := Vector2i(Helpers.wrap_block_x(target_pos.x), target_pos.y)
+	position = Vector2(Helpers.pos_block_to_pixel(snapped))
+	_wrap_world_x()
+	current_pos = snapped
+
+	if target_pos == job_active.pos or Vector2i(Helpers.wrap_block_x(int(job_active.pos.x)), int(job_active.pos.y)) == snapped:
+		if job_active.type == Job.TYPE.GOTO:
+			job_active = Job.NONE
+		elif job_active.type == Job.TYPE.BREAK:
+			_job_break(job_active)
+		elif job_active.type == Job.TYPE.PLACE:
+			_job_place(job_active)
+		elif job_active.type == Job.TYPE.CRAFT:
+			_job_craft(job_active)
+
+	target_pos = Vector2i(-1, -1)
+
 
 func _job_break(job) -> void:
 	var tile: DataTile = Interactor.world.get_tile_v(job.pos)
@@ -100,6 +121,7 @@ func _job_break(job) -> void:
 		print("broke tile ", tile, " at ", job.pos)
 	job_active = Job.NONE
 	return
+
 
 func _job_place(job) -> void:
 	var world_tile: DataTile = Interactor.world.get_tile_v(job.pos)
@@ -124,6 +146,7 @@ func _job_place(job) -> void:
 		print("[Character:_job_place] Tile does not exist: ", tile_string)
 		job_active = Job.NONE
 		return
+
 
 func _job_craft(job) -> void:
 	# Verify we still have the ingredients
@@ -152,26 +175,27 @@ func _job_craft(job) -> void:
 		print("[Character:_job_craft()] active_crafting_progress is not null: type = %d (%s)" % [active_craft_progress_type, type_string(active_craft_progress_type)])
 	return
 
+
 func _on_craft_complete(job_uuid: UUID, quantity_crafted: int) -> void:
 	if !job_active.uuid_matches(job_uuid):
 		print("[Character:_on_craft_complete()] job_uuid did not match active_job")
 		return
-	
+
 	var recipe = DataRecipe.find(job_active.data)
 	for result: ItemStack in recipe.results:
 		print("[Character:_on_craft_complete()] attempting to add %d of %s to inventory" % [quantity_crafted * result.count, result.item_name])
 		var items_left_over = inventory.add_items(result.item_name, quantity_crafted * result.count)
-		
+
 		if items_left_over > 0:
 			print("[Character:_on_craft_complete()] dropping %d of %s that did not fit in inventory" % [items_left_over, result.item_name])
 			drop_items(result.item_name, items_left_over)
-	
+
 
 func _on_update_craft_job_status(job_uuid: UUID, quantity_remaining: int) -> void:
 	if !job_active.uuid_matches(job_uuid):
 		print("[Character:_on_update_craft_job_status()] job_uuid did not match active_job")
 		return
-	
+
 	job_active.data2 = quantity_remaining
 
 	if quantity_remaining <= 0:
@@ -184,7 +208,7 @@ func _on_craft_cancelled(job_uuid: UUID, quantity_remaining: int) -> void:
 	if !job_active.uuid_matches(job_uuid):
 		print("[Character:_on_craft_cancelled()] job_uuid did not match active_job")
 		return
-	
+
 	# refund items
 	var recipe = DataRecipe.find(job_active.data)
 	for ingredient: ItemStack in recipe.ingredients:
@@ -197,6 +221,7 @@ func _on_craft_cancelled(job_uuid: UUID, quantity_remaining: int) -> void:
 	# cancel job
 	job_active = Job.NONE
 
+
 ## Cancel the current job. TODO: cancel job by jobID
 func cancel_job() -> bool:
 	if job_active && job_active.type != Job.TYPE.NONE:
@@ -207,6 +232,5 @@ func cancel_job() -> bool:
 		return false
 
 
-##
 func drop_items(item_name: String, count: int = 1) -> void:
 	print("[Character:drop_items()] NOT IMPLEMENTED Dropped %d %s" % [count, item_name])
