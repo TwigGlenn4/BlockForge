@@ -30,6 +30,7 @@ static var main_ui: CanvasLayer
 static var inventory_ui: Control
 static var world_canvas_layer: CanvasLayer
 static var main_camera: Camera2D
+static var tilemap_populator: TileMapPopulator
 
 @export var world_interactor: Control
 @export var RECIPE_SELECTOR_SCENE: Resource
@@ -45,11 +46,13 @@ var lerp_timer: float = 0.0
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	# set static references
+	# these don't use get_node_or_null() because these node references aren't optional.
 	selected_character = get_node("/root/GameScene/World/Character")
 	world = get_node("/root/GameScene/World")
 	main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
 	inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
 	world_canvas_layer = get_node("/root/GameScene/World/WorldCanvasLayer")
+	tilemap_populator = get_node("../Mapping/TileMapPopulator")
 	main_camera = self
 
 
@@ -77,9 +80,8 @@ func _process(delta):
 			lerp_target = Vector2i(-1,-1)
 
 	# Keep cylindrical chunk maps aligned while the camera pans away from the player
-	var pop := get_node_or_null("../Mapping/TileMapPopulator")
-	if pop and pop.has_method("align_layers_to_camera"):
-		pop.align_layers_to_camera(global_position.x)
+	if tilemap_populator and tilemap_populator.has_method("align_layers_to_camera"):
+		tilemap_populator.align_layers_to_camera(global_position.x)
 
 	# Generate 3 chunks at camera
 	if generating_chunks_enabled:
