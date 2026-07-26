@@ -8,8 +8,8 @@ var active_crafting_progress: CraftingProgress = null
 signal inventory_changed
 
 
-var current_pos: Vector2i = Vector2i(0,0)   # block pos Vector
-var target_pos: Vector2i = Vector2i(-1,-1)  # block pos Vector
+var current_pos: Vector2i = Vector2i(0,0)   ## block pos Vector
+var target_pos: Vector2i = Vector2i(-1,-1)  ## block pos Vector
 var lerp_timer: float = 0.0
 
 var job_queue: Array[Job] = []
@@ -48,8 +48,8 @@ func _physics_process(_delta):
 
 # Keep player on the cylinder [0, world_width_px).
 func _wrap_world_x() -> void:
-	var w: float = WorldConfig.world_width_px()
-	if w <= 0.0:
+	var world_width_px: float = WorldConfig.world_width_px()
+	if world_width_px <= 0.0:
 		return
 	var before: float = position.x
 	position.x = Helpers.wrap_pixel_x(position.x)
@@ -75,8 +75,8 @@ func _set_target_pos(block_pos:Vector2):
 
 
 func _teleport_to(block_pos:Vector2):
-	var bx := Vector2i(Helpers.wrap_block_x(int(block_pos.x)), int(block_pos.y))
-	position = Helpers.pos_block_to_pixel(bx)
+	var block_pos_wrapped := Vector2i(Helpers.wrap_block_x(int(block_pos.x)), int(block_pos.y))
+	position = Helpers.pos_block_to_pixel(block_pos_wrapped)
 	_wrap_world_x()
 
 
@@ -85,17 +85,18 @@ func open_inventory():
 
 
 func _process_jobs():
+	# do nothing if invalid target_pos or further than 0.5 pixels from target
 	if target_pos == Vector2i(-1, -1):
 		return
 	if position.distance_to(Helpers.wrapped_target_pixel(position.x, target_pos)) >= 0.5:
 		return
 
-	var snapped := Vector2i(Helpers.wrap_block_x(target_pos.x), target_pos.y)
-	position = Vector2(Helpers.pos_block_to_pixel(snapped))
-	_wrap_world_x()
-	current_pos = snapped
+	# snap to the nearest block (already passed position is <0.5px from target condition above)
+	var nearest_block := Vector2i(Helpers.wrap_block_x(target_pos.x), target_pos.y)
+	position = Vector2(Helpers.pos_block_to_pixel(nearest_block)) # don't need to call _wrap_world_x() as the position in `nearest_block` is already wrapped
+	current_pos = nearest_block
 
-	if target_pos == job_active.pos or Vector2i(Helpers.wrap_block_x(int(job_active.pos.x)), int(job_active.pos.y)) == snapped:
+	if target_pos == job_active.pos or Vector2i(Helpers.wrap_block_x(int(job_active.pos.x)), int(job_active.pos.y)) == nearest_block:
 		if job_active.type == Job.TYPE.GOTO:
 			job_active = Job.NONE
 		elif job_active.type == Job.TYPE.BREAK:
