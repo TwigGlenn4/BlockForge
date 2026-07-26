@@ -5,7 +5,7 @@ const TILES = preload("res://classes/tiles.gd")
 ### NOISE FUNCTIONS
 
 
-# create_noise(): return a new noise generator.
+## create_noise(): return a new noise generator.
 static func create_noise( nseed, freq, oct ):
 	var noise_gen = FastNoiseLite.new()
 	noise_gen.seed = nseed             # Seed defines the contents of the noise
@@ -15,7 +15,7 @@ static func create_noise( nseed, freq, oct ):
 	return noise_gen
 
 
-# noise_array_1d(): Returns an array of length containing values from 0.0 to 1.0 according to noise
+## noise_array_1d(): Returns an array of length containing values from 0.0 to 1.0 according to noise
 static func noise_array_1d( generator, length, offset=0) -> Array[float]:
 	var array: Array[float] = []
 	array.resize(length)
@@ -24,7 +24,7 @@ static func noise_array_1d( generator, length, offset=0) -> Array[float]:
 	return array
 
 
-# noise_array_2d(): Returns a 2d array containing values from 0.0 to 1.0 according to noise
+## noise_array_2d(): Returns a 2d array containing values from 0.0 to 1.0 according to noise
 static func noise_array_2d( generator, size: Vector2i, ridged=false):
 	var array = {}
 	for x in size.x:
@@ -36,7 +36,7 @@ static func noise_array_2d( generator, size: Vector2i, ridged=false):
 				array[Vector2i(x, y)] += 0.5
 	return array
 
-# noise_array_2d_offset(): Returns a 2d array containing values from 0.0 to 1.0 according to noise
+## noise_array_2d_offset(): Returns a 2d array containing values from 0.0 to 1.0 according to noise
 static func noise_array_2d_offset( generator, size: Vector2i, offset: Vector2i, ridged=false):
 	var array = {}
 	for x in size.x:
@@ -50,14 +50,14 @@ static func noise_array_2d_offset( generator, size: Vector2i, offset: Vector2i, 
 
 ### ARRAY FUNCTIOINS
 
-# Each value will be pre-incremented, multiplied, and post-incremented
+## Each value will be pre-incremented, multiplied, and post-incremented
 static func array_scale( array, multiplier = 1.0, constant = 0.0 ):
 	for i in len(array):
 		array[i] = array[i] * multiplier + constant
 	return array
 
 
-# local_max_array(): returns an array of 0's and 1's where 1 corresponds to a local maximum.
+## local_max_array(): returns an array of 0's and 1's where 1 corresponds to a local maximum.
 static func array_local_max( array ):
 	var result = []
 	result.resize( len(array) )
@@ -107,24 +107,57 @@ static func array_local_max_vec2i( array_vec2i, size:Vector2i ):
 
 
 
-# is_growable(): returns true if given tile is in TILES.GROWABLE
+## is_growable(): returns true if given tile is in TILES.GROWABLE
 static func is_growable( tile ):
 	if TILES.GROWABLE.find(tile) == -1:
 		return false
 	return true
 
 
-# coord_string(): format given coordinates as (x, y)
+## coord_string(): format given coordinates as (x, y)
 static func coord_string( x:int, y:int ):
 	return "("+str(x)+", "+str(y)+")"
 
-# Convert between block coordinates and godot pixel units
-static func pos_block_to_pixel( block_pos: Vector2i ):
-	return Vector2i(block_pos.x*16 + 8, -block_pos.y*16 - 8)
-static func pos_pixel_to_block( block_pos: Vector2i ):
-	return Vector2i((block_pos.x)/16, (-block_pos.y)/16)
+# Convert between block coordinates and godot pixel units.
+# Standing point: horizontally centered in the tile, feet on groundward edge.
+# Tile gy occupies y in [-(gy+1)*tile_size, -gy*ts); groundward edge = -gy*tile_size.
+static func pos_block_to_pixel(block_pos: Vector2i):
+	var tile_size: int = WorldConfig.tile_size_px()
+	return Vector2i(block_pos.x * tile_size + tile_size / 2, -block_pos.y * tile_size)
 
-# camera_to(): centers the camera on the given position at given zoom
+
+static func pos_pixel_to_block(pixel_pos: Vector2i):
+	var tile_size: float = float(WorldConfig.tile_size_px())
+	return Vector2i(int(floor(float(pixel_pos.x) / tile_size)), int(floor(float(-pixel_pos.y) / tile_size)))
+
+
+## Toroidal wrap: keep X in [0, world_width)
+static func wrap_block_x(gx: int) -> int:
+	var world_width_tiles: int = WorldConfig.world_width_tiles()
+	return posmod(gx, world_width_tiles)
+
+
+static func wrap_pixel_x(px: float) -> float:
+	var world_width_px: float = WorldConfig.world_width_px()
+	if world_width_px <= 0.0:
+		return px
+	return fposmod(px, world_width_px)
+
+
+## Pick target pixel X on the cylinder closest to `from_px` for shortest walk.
+static func wrapped_target_pixel(from_px: float, block_pos: Vector2i) -> Vector2:
+	var target_pixel := Vector2(pos_block_to_pixel(Vector2i(wrap_block_x(block_pos.x), block_pos.y)))
+	var world_width_px: float = WorldConfig.world_width_px()
+	if world_width_px <= 0.0:
+		return target_pixel
+	var dx: float = target_pixel.x - from_px
+	if dx > world_width_px * 0.5:
+		target_pixel.x -= world_width_px
+	elif dx < -world_width_px * 0.5:
+		target_pixel.x += world_width_px
+	return target_pixel
+
+## camera_to(): centers the camera on the given position at given zoom
 static func camera_to( cam: Camera2D, pos: Vector2, zoom=null ):
 	cam.position = pos_block_to_pixel(pos)
 	if zoom != null and typeof(zoom) == Variant.Type.TYPE_VECTOR2:

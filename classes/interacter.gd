@@ -30,6 +30,7 @@ static var main_ui: CanvasLayer
 static var inventory_ui: Control
 static var world_canvas_layer: CanvasLayer
 static var main_camera: Camera2D
+static var tilemap_populator: TileMapPopulator
 
 @export var world_interactor: Control
 @export var RECIPE_SELECTOR_SCENE: Resource
@@ -45,11 +46,13 @@ var lerp_timer: float = 0.0
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	# set static references
+	# these don't use get_node_or_null() because these node references aren't optional.
 	selected_character = get_node("/root/GameScene/World/Character")
 	world = get_node("/root/GameScene/World")
 	main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
 	inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
 	world_canvas_layer = get_node("/root/GameScene/World/WorldCanvasLayer")
+	tilemap_populator = get_node("../Mapping/TileMapPopulator")
 	main_camera = self
 
 
@@ -76,6 +79,10 @@ func _process(delta):
 			lerp_timer = 0
 			lerp_target = Vector2i(-1,-1)
 
+	# Keep cylindrical chunk maps aligned while the camera pans away from the player
+	if tilemap_populator and tilemap_populator.has_method("align_layers_to_camera"):
+		tilemap_populator.align_layers_to_camera(global_position.x)
+
 	# Generate 3 chunks at camera
 	if generating_chunks_enabled:
 		var chunk_num:int = Helpers.pos_pixel_to_block(position).x / Chunk.WIDTH
@@ -100,83 +107,6 @@ static func _create_static_signal(signal_name: String, arg_array: Array = []) ->
 ## This listeners to only need Interacter
 static func _on_selected_character_inventory_changed_internal() -> void:
 	selected_character_inventory_changed.emit()
-
-# ===== PATHFIND ==== This method needs to be gathered into pathfinding.gd
-func surface_path (character:Node, from:Vector2i, dest:Vector2i):
-	print("surface_path ",str(from)," ",str(dest))
-	var _method: Path.Movement
-	var here:Vector2i = from
-	var dx:int = sign(dest.x - here.x)
-	var dy:int
-	while(here.x != dest.x):
-		here.x += dx
-		var y = world.get_surface(here.x)
-		dy = y - here.y
-		here.y += dy
-		
-		if abs(dy) > 1:
-			_method = Path.Movement.CLIMB
-		elif abs(dy) == 1:
-			_method = Path.Movement.HOP
-		else:
-			_method = Path.Movement.WALK 
-			# similar for but lookup blocks for climb in trees, blocks around for CLIMB_RIGHT, blocks above for CRAWL
-		
-		character.add_job(Job.new(Job.TYPE.GOTO, here))
-		# should add method as another parameter in TYPE.GOTO
-
-func tree_path (character:Node, start:Vector2i, end:Vector2i): # traverse tree
-	print("tree_path ",str(start),"",str(end))
-	var here:Vector2i
-	if start.y>end.y: #dir.DOWN
-		here = start
-		for x in g3_range(start.x, end.x):
-			here.x = x
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-		for y in g3_range(start.y, end.y):
-			here.y = y
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-	else: # Dir.UP
-		here = start
-		for y in g3_range(start.y, end.y):
-			here.y = y
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-		for x in g3_range(start.x, end.x):
-			here.x = x
-			character.add_job(Job.new(Job.TYPE.GOTO, here)) #method = CLIMB
-	return here 
-
-func g3_range(a:int, b:int):
-	var d:int = sign(b-a)
-	if d == 0: # set step to 1 if sign == 0
-		d = 1
-	return range(a, b+d, d)
-		
-func find_tree_base(place:Vector2i): # find nearest trunk
-	var base:Vector2i
-	var y:int
-	var x:int
-	for dx in 20:
-		x = place.x+dx
-		y = world.get_surface(x) + 1
-		#print("x,y ",x,",",y)
-		# world.place_tile(x,y,DataTile.tile("blockforge:water")) #DEBUG
-		# await get_tree().create_timer(1.0).timeout
-		if world.get_tile(x, y)==DataTile.tile("blockforge:log"):
-			base = Vector2i(x, y)
-			break
-		x = place.x-dx 
-		y = world.get_surface(x) + 1
-		if world.get_tile(x, y)==DataTile.tile("blockforge:log"):
-			base = Vector2i(x, y)
-			break
-	#if not is_instance_valid(base): # ===== DEBUG
-	#  pass #can't get out of tree
-	#  return false
-	print("found tree base at ",str(base))
-	return base
-
-# ===== END PATHFIND    
 
 
 # Zoom controls in _input to properly accept mouse wheel input
@@ -211,13 +141,18 @@ func _input_character_inventory(event: InputEvent) -> void:
 
 func _input_block_interact(block_pos: Vector2i) -> bool:
 	var tile: DataTile = world.get_tile_v(block_pos)
+	if tile == null:
+		return false
 	if tile.interactable:
 		_tile_interacion(block_pos, tile)
 		return true
 	elif tile != Tiles.AIR:
-		var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
-		selected_character.add_job(job)
-		return true
+		# Superman: dig/walk straight to the block. Normal mode: fall through to surface/tree pathfinding.
+		if WorldConfig.superman():
+			var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
+			selected_character.add_job(job)
+			return true
+		return false
 	else:
 		var held_item_stack: ItemStack = inventory_ui.get_held_item_stack()
 		if held_item_stack:
@@ -253,24 +188,39 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 
 			# ===== PATHFIND GENERAL
 			var start:Vector2i = selected_character.current_pos
-			var end:Vector2i = block_pos
-			var next:Vector2i
+			var end:Vector2i = Vector2i(Helpers.wrap_block_x(block_pos.x), block_pos.y)
 
 			print("\nstart -> end ",str(start)," -> ",str(end))
-			var tile = world.get_tile_v(start)
-			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):
-				next = find_tree_base (start)
-				tree_path(selected_character, start, next)
-				start = next
-			tile = world.get_tile_v(end)
-			if tile==DataTile.tile("blockforge:log") or tile==DataTile.tile("blockforge:leaves"):  
-				next = find_tree_base(end)
-				surface_path(selected_character, start, next)
-				tree_path(selected_character, next, end)
+
+			# Superman: fly/walk straight to the clicked cell (no surface follow / tree path)
+			if WorldConfig.superman():
+				selected_character.job_queue.clear()
+				selected_character.job_active = Job.NONE
+				selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
+				print("path finished (superman direct)")
 			else:
-				end.y = world.get_surface(end.x) # pin to surface of earth
-				surface_path (selected_character, start, end)
-			print("path finished")
+				selected_character.job_queue.clear()
+				selected_character.job_active = Job.NONE
+				var dig_pos: Vector2i = end
+				var dig_tile: DataTile = world.get_tile_v(dig_pos)
+				var want_dig: bool = (
+					dig_tile != null
+					and dig_tile != Tiles.AIR
+					and not dig_tile.interactable
+				)
+				var is_tree_click: bool = want_dig and Pathfinding.is_tree_tile(dig_pos)
+				# Surface destinations stand in air above ground (not when targeting a tree)
+				if not is_tree_click and not Pathfinding.is_in_tree(end):
+					var surface_y: int = world.get_surface(end.x)
+					if surface_y >= 0:
+						end.y = surface_y + 1
+				var arrived: Vector2i = Pathfinding.navigate_to(selected_character, start, end)
+				# After navigating: dig trees, or near-surface blocks (not deep underground shortcuts)
+				if want_dig:
+					var near_surface: bool = abs(dig_pos.y - arrived.y) <= 2
+					if is_tree_click or near_surface:
+						selected_character.add_job(Job.new(Job.TYPE.BREAK, dig_pos))
+				print("path finished")
 			# ===== END PATHFIND GENERAL
 
 func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:

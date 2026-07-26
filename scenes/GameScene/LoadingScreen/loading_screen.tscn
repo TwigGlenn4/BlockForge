@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://bloading01screen"]
+
+[ext_resource type="Script" path="res://scenes/GameScene/LoadingScreen/loading_screen.gd" id="1_ls"]
+
+[node name="LoadingScreen" type="CanvasLayer" node_paths=PackedStringArray("backdrop", "graphic", "progress_bar", "status_label")]
+layer = 100
+script = ExtResource("1_ls")
+backdrop = NodePath("Root/Backdrop")
+graphic = NodePath("Root/Center/VBox/Graphic")
+progress_bar = NodePath("Root/Center/VBox/ProgressBar")
+status_label = NodePath("Root/Center/VBox/Status")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Backdrop" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.08, 0.09, 0.11, 1)
+
+[node name="Center" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="Root/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Graphic" type="TextureRect" parent="Root/Center/VBox"]
+visible = false
+custom_minimum_size = Vector2(256, 128)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Status" type="Label" parent="Root/Center/VBox"]
+layout_mode = 2
+text = "Loading…"
+horizontal_alignment = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="Root/Center/VBox"]
+custom_minimum_size = Vector2(320, 24)
+layout_mode = 2
+max_value = 5.0
+show_percentage = false
