@@ -77,7 +77,7 @@ func _process(delta: float) -> void:
 		# print("[CraftingProgress] Craft done, removing this progress dialog")
 		self.visible = false
 		queue_free()
-	scale = Vector2.ONE / Interactor.main_camera.zoom
+	scale = Vector2.ONE / GameScene.main_camera.zoom
 
 
 func _update_text_progress() -> void:

@@ -16,7 +16,7 @@ var recipe: DataRecipe
 var quantity: int
 
 func _ready() -> void:
-	Interactor.selected_character_inventory_changed.connect(_update_contents_inv_quantity)
+	GameScene.selected_character_inventory_changed.connect(_update_contents_inv_quantity)
 	quantity_slider.value_changed.connect(_on_quantity_changed)
 
 
@@ -49,14 +49,14 @@ func _update_contents_inv_quantity():
 
 	var result_text: String = "Result: "
 	for result: ItemStack in recipe.results:
-		var num_in_inventory: int = Interactor.selected_character.inventory.count_items(result.item_name)
+		var num_in_inventory: int = GameScene.selected_character.inventory.count_items(result.item_name)
 		result_text += str(result.count) + " " + result.item_name +  " ("+str(num_in_inventory)+"), "
 	result.text = result_text.substr(0, result_text.length()-2)
 
 	var max_recipe_quantity: int = 99 # calcs how many recipes can be made using inventory ingredients. Set to max in one craft job.
 
 	for ingredient: ItemStack in recipe.ingredients:
-		var num_in_inventory: int = Interactor.selected_character.inventory.count_items(ingredient.item_name)
+		var num_in_inventory: int = GameScene.selected_character.inventory.count_items(ingredient.item_name)
 		ingredient_text += str(ingredient.count) + " " + ingredient.item_name + " ("+str(num_in_inventory)+")\n"
 
 		var max_recipes_this_ingredient: int = num_in_inventory / ingredient.count

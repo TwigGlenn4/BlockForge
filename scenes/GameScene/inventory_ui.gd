@@ -13,7 +13,7 @@ func _ready() -> void:
 	_on_hotbar_slot_selected(0)
 
 	get_tree().get_root().size_changed.connect(_window_resized)
-	Interactor.selected_character_inventory_changed.connect(_on_character_inventory_changed)
+	GameScene.selected_character_inventory_changed.connect(_on_character_inventory_changed)
 	# Layout size is often 0 during _ready; defer so slots are square on boot
 	call_deferred("_window_resized")
 
@@ -42,7 +42,7 @@ func _on_character_inventory_changed() -> void:
 
 func _update_inventory_contents() -> void:
 	print("[InventoryUI] updating hotbar contents")
-	var inv := Interactor.selected_character.inventory
+	var inv := GameScene.selected_character.inventory
 	for i:int in hotbar.size():
 		hotbar[i].set_stack(inv.contents[i])
 
@@ -74,4 +74,4 @@ func _on_hotbar_slot_selected(selected_slot_num: int) -> void:
 
 
 func get_held_item_stack() -> ItemStack:
-	return Interactor.selected_character.inventory.contents[selected_slot]
+	return GameScene.selected_character.inventory.contents[selected_slot]

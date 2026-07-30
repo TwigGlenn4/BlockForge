@@ -17,9 +17,9 @@ func _create_text() -> String:
 
 	var block_pos: Vector2i = Helpers.pos_pixel_to_block(mouse_pos)
 	output += "\nSelected Block Pos: " + str(block_pos)
-	var selected_tile: DataTile = Interactor.world.get_tile_v(block_pos)
+	var selected_tile: DataTile = GameScene.world.get_tile_v(block_pos)
 	output += "\nSelected Block: " + str(selected_tile)
-	var held_item: String = str(Interactor.inventory_ui.get_held_item_stack()) # explicit cast to string here makes it null-safe
+	var held_item: String = str(GameScene.inventory_ui.get_held_item_stack()) # explicit cast to string here makes it null-safe
 	output += "\nHeld Item: " + held_item
 
 

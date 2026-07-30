@@ -26,6 +26,12 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * chunk.gd: check if static var tiles is actually saving time
 * * worldgen_v2.gd: stop using world.place_tile, terrain gen should be contained to the chunk until after write_to_tilemap
 
+* Optimize WorldBoundsFiller
+* * sky polygon not needed, handled by same background/skybox as air blocks
+* * Possibly make lava polygon part of WorldCanvasLayer to reduce redraw
+
+* Tile WorldCanvasLayer to show RecipeProgress (and possibly lava polygon) as world loops
+
 
 X Move various _on_selected_character_inventory_changed signals to Interactor
 X X Interactor should relay signals, and can properly handle disconnecting when selected_character changes
