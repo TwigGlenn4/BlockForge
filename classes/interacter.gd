@@ -6,30 +6,6 @@ const PAN_SPEED = 10
 const ZOOM_SPEED = 0.05
 const LERP_TIME = 1
 
-static var selected_character: Character:
-	set(new_char):
-		if new_char != selected_character: 
-			# disconnect inventory_changed signal from selected_character
-			if selected_character && selected_character.inventory_changed.is_connected(_on_selected_character_inventory_changed_internal):
-				selected_character.inventory_changed.disconnect(_on_selected_character_inventory_changed_internal)
-			# update selected character
-			selected_character = new_char
-			# reconnect inventory_changed signal to new character
-			selected_character.inventory_changed.connect(_on_selected_character_inventory_changed_internal)
-			# emit signals that selected_character and inventory have changed
-			selected_character_changed.emit(selected_character)
-			selected_character_inventory_changed.emit()
-
-## This signal emits when `Interactor.selected_character` changes
-static var selected_character_changed: Signal = _create_static_signal("selected_character_changed", ["new_char", typeof(Character)])
-## This signal emits when `Interactor.selected_character`'s inventory changes, or when `Interactor.selected_character` itself changes
-static var selected_character_inventory_changed: Signal = _create_static_signal("selected_character_inventory_changed")
-
-static var world: World
-static var main_ui: CanvasLayer
-static var inventory_ui: Control
-static var world_canvas_layer: CanvasLayer
-static var main_camera: Camera2D
 static var tilemap_populator: TileMapPopulator
 
 @export var world_interactor: Control
@@ -47,13 +23,7 @@ var lerp_timer: float = 0.0
 func _ready():
 	# set static references
 	# these don't use get_node_or_null() because these node references aren't optional.
-	selected_character = get_node("/root/GameScene/World/Character")
-	world = get_node("/root/GameScene/World")
-	main_ui = get_node("/root/GameScene/World/MainCamera/MainUI")
-	inventory_ui = get_node("/root/GameScene/World/MainCamera/MainUI/InventoryUI")
-	world_canvas_layer = get_node("/root/GameScene/World/WorldCanvasLayer")
 	tilemap_populator = get_node("../Mapping/TileMapPopulator")
-	main_camera = self
 
 
 func _process(delta):
@@ -86,13 +56,13 @@ func _process(delta):
 	# Generate 3 chunks at camera
 	if generating_chunks_enabled:
 		var chunk_num:int = Helpers.pos_pixel_to_block(position).x / Chunk.WIDTH
-		if chunk_num > 0 and chunk_num < world.width-1:
-			if world.chunks[chunk_num].gen_state != Chunk.GEN_STATE_MAX:
-				world.worldgen.queue_chunk(chunk_num, Chunk.GEN_STATE_MAX)
-			if world.chunks[chunk_num-1].gen_state != Chunk.GEN_STATE_MAX:
-				world.worldgen.queue_chunk(chunk_num-1, Chunk.GEN_STATE_MAX)
-			if world.chunks[chunk_num+1].gen_state != Chunk.GEN_STATE_MAX:
-				world.worldgen.queue_chunk(chunk_num+1, Chunk.GEN_STATE_MAX)
+		if chunk_num > 0 and chunk_num < GameScene.world.width-1:
+			if GameScene.world.chunks[chunk_num].gen_state != Chunk.GEN_STATE_MAX:
+				GameScene.world.worldgen.queue_chunk(chunk_num, Chunk.GEN_STATE_MAX)
+			if GameScene.world.chunks[chunk_num-1].gen_state != Chunk.GEN_STATE_MAX:
+				GameScene.world.worldgen.queue_chunk(chunk_num-1, Chunk.GEN_STATE_MAX)
+			if GameScene.world.chunks[chunk_num+1].gen_state != Chunk.GEN_STATE_MAX:
+				GameScene.world.worldgen.queue_chunk(chunk_num+1, Chunk.GEN_STATE_MAX)
 
 
 # signal functions
@@ -106,7 +76,7 @@ static func _create_static_signal(signal_name: String, arg_array: Array = []) ->
 ## forward inventory_changed signals from the selected character onwards.
 ## This listeners to only need Interacter
 static func _on_selected_character_inventory_changed_internal() -> void:
-	selected_character_inventory_changed.emit()
+	GameScene.selected_character_inventory_changed.emit()
 
 
 # Zoom controls in _input to properly accept mouse wheel input
@@ -127,20 +97,20 @@ func _input_camera_movement(event: InputEvent) -> void:
 	scale = Vector2(1 / zoom.x, 1 / zoom.y)
 
 	if Input.is_action_just_pressed("look_at_portal"): # centers camera on bottom block of portal anim
-		_move_to_block(world.world_portal_pos)
+		_move_to_block(GameScene.world.world_portal_pos)
 	if Input.is_action_just_pressed("look_at_character"):
 		# print("moving to character")selected_character.current_pos
-		_move_to_block(selected_character.current_pos)
+		_move_to_block(GameScene.selected_character.current_pos)
 	
 func _input_character_inventory(event: InputEvent) -> void:
 	# open inventory
 	if event.is_action_pressed("inventory_open"):
 		# print("[interactor.gd] open inventory")
-		print(selected_character.inventory)
+		print(GameScene.selected_character.inventory)
 		
 
 func _input_block_interact(block_pos: Vector2i) -> bool:
-	var tile: DataTile = world.get_tile_v(block_pos)
+	var tile: DataTile = GameScene.world.get_tile_v(block_pos)
 	if tile == null:
 		return false
 	if tile.interactable:
@@ -150,15 +120,15 @@ func _input_block_interact(block_pos: Vector2i) -> bool:
 		# Superman: dig/walk straight to the block. Normal mode: fall through to surface/tree pathfinding.
 		if WorldConfig.superman():
 			var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
-			selected_character.add_job(job)
+			GameScene.selected_character.add_job(job)
 			return true
 		return false
 	else:
-		var held_item_stack: ItemStack = inventory_ui.get_held_item_stack()
+		var held_item_stack: ItemStack = GameScene.inventory_ui.get_held_item_stack()
 		if held_item_stack:
 			print("[Interacter] Held item is " + str(held_item_stack) + ", item string is " + str(held_item_stack.get_item()))
 			var job: Job = Job.new(Job.TYPE.PLACE, block_pos, str(held_item_stack.get_item()))
-			selected_character.add_job(job)
+			GameScene.selected_character.add_job(job)
 			return true
 
 	return false
@@ -167,7 +137,7 @@ func _input_click_pos_test(_event: InputEvent) -> void:
 	if Input.is_action_just_pressed("click_right"):
 		var click_pos:Vector2 = get_global_mouse_position()
 		var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
-		world.place_tile_v(block_pos, DataTile.UNDEFINED)
+		GameScene.world.place_tile_v(block_pos, DataTile.UNDEFINED)
 		print("[Interactor._input_click_pos_test()] clicked at ", block_pos)
 	
 
@@ -187,22 +157,22 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 		if not _input_block_interact(block_pos):
 
 			# ===== PATHFIND GENERAL
-			var start:Vector2i = selected_character.current_pos
+			var start:Vector2i = GameScene.selected_character.current_pos
 			var end:Vector2i = Vector2i(Helpers.wrap_block_x(block_pos.x), block_pos.y)
 
 			print("\nstart -> end ",str(start)," -> ",str(end))
 
 			# Superman: fly/walk straight to the clicked cell (no surface follow / tree path)
 			if WorldConfig.superman():
-				selected_character.job_queue.clear()
-				selected_character.job_active = Job.NONE
-				selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
+				GameScene.selected_character.job_queue.clear()
+				GameScene.selected_character.job_active = Job.NONE
+				GameScene.selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
 				print("path finished (superman direct)")
 			else:
-				selected_character.job_queue.clear()
-				selected_character.job_active = Job.NONE
+				GameScene.selected_character.job_queue.clear()
+				GameScene.selected_character.job_active = Job.NONE
 				var dig_pos: Vector2i = end
-				var dig_tile: DataTile = world.get_tile_v(dig_pos)
+				var dig_tile: DataTile = GameScene.world.get_tile_v(dig_pos)
 				var want_dig: bool = (
 					dig_tile != null
 					and dig_tile != Tiles.AIR
@@ -211,15 +181,15 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 				var is_tree_click: bool = want_dig and Pathfinding.is_tree_tile(dig_pos)
 				# Surface destinations stand in air above ground (not when targeting a tree)
 				if not is_tree_click and not Pathfinding.is_in_tree(end):
-					var surface_y: int = world.get_surface(end.x)
+					var surface_y: int = GameScene.world.get_surface(end.x)
 					if surface_y >= 0:
 						end.y = surface_y + 1
-				var arrived: Vector2i = Pathfinding.navigate_to(selected_character, start, end)
+				var arrived: Vector2i = Pathfinding.navigate_to(GameScene.selected_character, start, end)
 				# After navigating: dig trees, or near-surface blocks (not deep underground shortcuts)
 				if want_dig:
 					var near_surface: bool = abs(dig_pos.y - arrived.y) <= 2
 					if is_tree_click or near_surface:
-						selected_character.add_job(Job.new(Job.TYPE.BREAK, dig_pos))
+						GameScene.selected_character.add_job(Job.new(Job.TYPE.BREAK, dig_pos))
 				print("path finished")
 			# ===== END PATHFIND GENERAL
 
@@ -234,4 +204,4 @@ func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
 
 			active_recipe_selector = RECIPE_SELECTOR_SCENE.instantiate()
 			active_recipe_selector.setup(tile.name, block_pos)
-			main_ui.add_child(active_recipe_selector)
+			GameScene.main_ui.add_child(active_recipe_selector)

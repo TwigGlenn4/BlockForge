@@ -3,7 +3,7 @@ class_name Pathfinding
 # ===== PATHFIND ==== Minimal surface + tree helpers (no A* / no general search)
 
 static func is_tree_tile(pos: Vector2i) -> bool:
-	var tile: DataTile = Interactor.world.get_tile_v(pos)
+	var tile: DataTile = GameScene.world.get_tile_v(pos)
 	return tile != null and (
 		tile == DataTile.tile("blockforge:log")
 		or tile == DataTile.tile("blockforge:leaves")
@@ -39,7 +39,7 @@ static func surface_path(character: Node, from: Vector2i, dest: Vector2i) -> voi
 	var here: Vector2i = from
 	var dest_x: int = Helpers.wrap_block_x(dest.x)
 	here.x = Helpers.wrap_block_x(here.x)
-	var sy0: int = Interactor.world.get_surface(here.x)
+	var sy0: int = GameScene.world.get_surface(here.x)
 	if sy0 >= 0:
 		var stand0 := Vector2i(here.x, sy0 + 1)
 		if here != stand0:
@@ -48,7 +48,7 @@ static func surface_path(character: Node, from: Vector2i, dest: Vector2i) -> voi
 				here = stand0
 				character.add_job(Job.new(Job.TYPE.GOTO, here))
 			else:
-				push_warning("[Interactor] surface_path called from elevated y=%d; climb_down first" % here.y)
+				push_warning("[Pathfinding] surface_path called from elevated y=%d; climb_down first" % here.y)
 	var dx: int = sign(dest_x - here.x)
 	var w: int = WorldConfig.world_width_tiles()
 	if w > 0:
@@ -59,7 +59,7 @@ static func surface_path(character: Node, from: Vector2i, dest: Vector2i) -> voi
 	while here.x != dest_x and guard > 0:
 		guard -= 1
 		here.x = Helpers.wrap_block_x(here.x + dx)
-		var y: int = Interactor.world.get_surface(here.x)
+		var y: int = GameScene.world.get_surface(here.x)
 		if y < 0:
 			continue
 		here.y = y + 1 # stand in air above surface
@@ -141,11 +141,11 @@ static func find_tree_base(place: Vector2i) -> Vector2i:
 		var p := Vector2i(x, y)
 		if not is_tree_tile(p):
 			break
-		if Interactor.world.get_tile_v(p) == DataTile.tile("blockforge:log"):
+		if GameScene.world.get_tile_v(p) == DataTile.tile("blockforge:log"):
 			last_log = p
 	if last_log.x >= 0:
 		var y2: int = last_log.y - 1
-		while y2 >= 0 and Interactor.world.get_tile_v(Vector2i(x, y2)) == DataTile.tile("blockforge:log"):
+		while y2 >= 0 and GameScene.world.get_tile_v(Vector2i(x, y2)) == DataTile.tile("blockforge:log"):
 			last_log = Vector2i(x, y2)
 			y2 -= 1
 		print("found tree base at ", str(last_log))
@@ -156,8 +156,8 @@ static func find_tree_base(place: Vector2i) -> Vector2i:
 			if dx == 0 and side < 0:
 				continue
 			var bx: int = Helpers.wrap_block_x(place.x + dx * side)
-			var by: int = Interactor.world.get_surface(bx) + 1
-			if Interactor.world.get_tile_v(Vector2i(bx, by)) == DataTile.tile("blockforge:log"):
+			var by: int = GameScene.world.get_surface(bx) + 1
+			if GameScene.world.get_tile_v(Vector2i(bx, by)) == DataTile.tile("blockforge:log"):
 				print("found tree base at ", str(Vector2i(bx, by)))
 				return Vector2i(bx, by)
 	return Vector2i(-1, -1)
@@ -209,7 +209,7 @@ static func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
 		return base
 
 	# Already at ground-level tree cell — do not drop through air
-	var sy: int = Interactor.world.get_surface(here.x)
+	var sy: int = GameScene.world.get_surface(here.x)
 	if sy >= 0 and here.y <= sy + 1:
 		return here
 

@@ -110,7 +110,7 @@ func _process_jobs():
 
 
 func _job_break(job) -> void:
-	var tile: DataTile = Interactor.world.get_tile_v(job.pos)
+	var tile: DataTile = GameScene.world.get_tile_v(job.pos)
 	if tile == Tiles.AIR:
 		print("Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
 		job_active = Job.NONE
@@ -118,14 +118,14 @@ func _job_break(job) -> void:
 	else:
 		inventory.add_items(tile.drops, 1)
 		# TODO: drop items if inventory full
-		Interactor.world.place_tile_v(job.pos, Tiles.AIR)
+		GameScene.world.place_tile_v(job.pos, Tiles.AIR)
 		print("broke tile ", tile, " at ", job.pos)
 	job_active = Job.NONE
 	return
 
 
 func _job_place(job) -> void:
-	var world_tile: DataTile = Interactor.world.get_tile_v(job.pos)
+	var world_tile: DataTile = GameScene.world.get_tile_v(job.pos)
 	if world_tile != Tiles.AIR:
 		print("[Character:_job_place] Position %s is not air at time of job execution, not placing." % [job.pos])
 		job_active = Job.NONE
@@ -135,7 +135,7 @@ func _job_place(job) -> void:
 	if tile:
 		if inventory.has(tile_string):
 			inventory.remove_items(tile_string)
-			Interactor.world.place_tile_v(job.pos, tile)
+			GameScene.world.place_tile_v(job.pos, tile)
 			print("Placed tile ", tile, " at ", job.pos)
 			job_active = Job.NONE
 			return
@@ -158,7 +158,7 @@ func _job_craft(job) -> void:
 	# open CraftingProgress (only once)
 	if( active_crafting_progress == null ):
 		active_crafting_progress = CRAFTING_PROGRESS_SCENE.instantiate()
-		Interactor.world_canvas_layer.add_child(active_crafting_progress)
+		GameScene.world_canvas_layer.add_child(active_crafting_progress)
 		active_crafting_progress.setup(job.data, job.data2, job.get_uuid(), job.pos)
 		# remove items from inventory
 		var recipe = DataRecipe.find(job.data)

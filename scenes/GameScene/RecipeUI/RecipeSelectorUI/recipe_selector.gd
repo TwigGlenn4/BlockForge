@@ -67,7 +67,7 @@ func _enable_recipes_by_character_inventory() -> void:
 	print("[RecipeSelector] Filtering recipes by inventory...")
 	for index: int in recipe_id_list.size(): # check each recipe in the recipe list	
 		var recipe_id: String = recipe_id_list.get(index)
-		_set_recipe_enabled(index, Interactor.selected_character.inventory.has_recipe_ingredients(recipe_id))
+		_set_recipe_enabled(index, GameScene.selected_character.inventory.has_recipe_ingredients(recipe_id))
 
 
 func _on_character_inventory_changed() -> void:
@@ -76,5 +76,5 @@ func _on_character_inventory_changed() -> void:
 
 func _on_start_craft(recipe_id: String, quantity: int) -> void:
 	self.visible = false
-	Interactor.selected_character.add_job(Job.new(Job.TYPE.CRAFT, workstation_pos, recipe_id, quantity))
+	GameScene.selected_character.add_job(Job.new(Job.TYPE.CRAFT, workstation_pos, recipe_id, quantity))
 	self.queue_free()
