@@ -36,8 +36,6 @@ static var main_camera: Camera2D
 
 var active_recipe_selector: Control
 
-var generating_chunks_enabled = false
-
 # move camera to position
 var lerp_target: Vector2i = Vector2i(-1,-1)
 var lerp_timer: float = 0.0
@@ -80,17 +78,6 @@ func _process(delta):
 	var pop := get_node_or_null("../Mapping/TileMapPopulator")
 	if pop and pop.has_method("align_layers_to_camera"):
 		pop.align_layers_to_camera(global_position.x)
-
-	# Generate 3 chunks at camera
-	if generating_chunks_enabled:
-		var chunk_num:int = Helpers.pos_pixel_to_block(position).x / Chunk.WIDTH
-		if chunk_num > 0 and chunk_num < world.width-1:
-			if world.chunks[chunk_num].gen_state != Chunk.GEN_STATE_MAX:
-				world.worldgen.queue_chunk(chunk_num, Chunk.GEN_STATE_MAX)
-			if world.chunks[chunk_num-1].gen_state != Chunk.GEN_STATE_MAX:
-				world.worldgen.queue_chunk(chunk_num-1, Chunk.GEN_STATE_MAX)
-			if world.chunks[chunk_num+1].gen_state != Chunk.GEN_STATE_MAX:
-				world.worldgen.queue_chunk(chunk_num+1, Chunk.GEN_STATE_MAX)
 
 
 # signal functions

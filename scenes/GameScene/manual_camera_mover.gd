@@ -5,8 +5,6 @@ const ZOOM_SPEED = 0.05
 
 @onready var world = get_node("/root/GameScene/World")
 
-var generating_chunks_enabled = false
-
 # Called when the node enters the scene tree for the first time.
 func _ready():
   pass # Replace with function body.
@@ -27,18 +25,6 @@ func _physics_process(delta):
 
   if Input.is_action_pressed("look_at_portal"): # centers camera on bottom block of portal anim
     position = Helpers.pos_block_to_pixel(world.world_portal_pos)
-
-
-  # Generate 3 chunks at camera
-  if generating_chunks_enabled:
-    var chunk_num:int = Helpers.pos_pixel_to_block(position).x / Chunk.WIDTH
-    if chunk_num > 0 and chunk_num < world.width-1:
-      if world.chunks[chunk_num].gen_state != Chunk.GEN_STATE_MAX:
-        world.worldgen.queue_chunk(chunk_num, Chunk.GEN_STATE_MAX)
-      if world.chunks[chunk_num-1].gen_state != Chunk.GEN_STATE_MAX:
-        world.worldgen.queue_chunk(chunk_num-1, Chunk.GEN_STATE_MAX)
-      if world.chunks[chunk_num+1].gen_state != Chunk.GEN_STATE_MAX:
-        world.worldgen.queue_chunk(chunk_num+1, Chunk.GEN_STATE_MAX)
 
 
 # Zoom controls in _input to properly accept mouse wheel input
