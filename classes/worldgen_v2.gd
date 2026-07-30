@@ -1,6 +1,6 @@
 # WorldGenV2
 # Mapped world generation only — fill_column / fill_chunk_array for ChunkManager streaming.
-# Legacy queue_chunk / Chunk[] generation was removed (see utilities_glenn/legacy/).
+# Legacy queue_chunk / Chunk[] generation was removed (see legacy/).
 
 extends Node
 class_name WorldGenV2

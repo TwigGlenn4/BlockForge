@@ -1,4 +1,5 @@
-# Chunk class
+# LEGACY Chunk class — quarantined. Live sizes: WorldConfig.chunk_size() / world_height_tiles().
+# Only referenced by legacy/world_generator.gd.
 class_name Chunk
 
 
@@ -67,7 +68,7 @@ func place_tile_chunk_overwrite( x:int, y:int, tile,  overwrite_tiles):
 
 
 # using Chunk x and a dict of generators, return a chunk with base terrain (lava/stone/cobble).
-# LEGACY — used only by quarantined utilities_glenn/legacy/world_generator.gd.
+# LEGACY — used only by quarantined legacy/world_generator.gd.
 # Live gen is WorldGenV2.fill_column (ChunkManager / PackedInt64Array).
 static func generate_chunk_threadsafe( chunk_x: int, gen ):
 	# print("Generating chunk " + str(chunk_x) + "...")
