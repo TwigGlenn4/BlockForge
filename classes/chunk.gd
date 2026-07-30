@@ -67,7 +67,8 @@ func place_tile_chunk_overwrite( x:int, y:int, tile,  overwrite_tiles):
 
 
 # using Chunk x and a dict of generators, return a chunk with base terrain (lava/stone/cobble).
-# Soil, topsoil, trees, and portal are applied later by WorldGenV2.surface_dressing().
+# LEGACY — used only by quarantined utilities_glenn/legacy/world_generator.gd.
+# Live gen is WorldGenV2.fill_column (ChunkManager / PackedInt64Array).
 static func generate_chunk_threadsafe( chunk_x: int, gen ):
 	# print("Generating chunk " + str(chunk_x) + "...")
 	var chunk = Chunk.new(chunk_x)
@@ -118,7 +119,7 @@ static func generate_chunk_threadsafe( chunk_x: int, gen ):
 			# print("Reducing height by "+ str(diff) + " at x=" + str(x))
 			print("surface at x="+ str(x) + " is reduced to y=" + str(chunk.surface_level[x]))
 		
-		# Base layers only — soil/topsoil applied in surface_dressing
+		# Base layers only (legacy pipeline)
 		for y in range( 0, chunk.rock_top[x]):
 
 			if y < chunk.lava_top[x]: 		# Lava layer (bottom of world)

@@ -7,7 +7,6 @@
 [ext_resource type="Script" uid="uid://w6yr38jum6jq" path="res://scenes/GameScene/GeneratorProgress.gd" id="5_4gwsg"]
 [ext_resource type="PackedScene" uid="uid://c3vqbaps2gav1" path="res://scenes/GameScene/DebugInfo/debug_info.tscn" id="6_2b2ab"]
 [ext_resource type="Script" uid="uid://bvnvk8t0nu8bf" path="res://classes/worldgen_v2.gd" id="6_s71n1"]
-[ext_resource type="Script" uid="uid://dlgg06agpm32s" path="res://scenes/GameScene/WorldGenTimer.gd" id="7_8d45b"]
 [ext_resource type="Script" uid="uid://buq3rnhdmjljb" path="res://classes/character.gd" id="8_dcpno"]
 [ext_resource type="Texture2D" uid="uid://c145e8oi1b1dq" path="res://assets/textures/entity/character.png" id="8_rfaf3"]
 [ext_resource type="Script" uid="uid://djij37f0hbxgv" path="res://scenes/GameScene/inventory_ui.gd" id="8_rvax8"]
@@ -135,9 +134,6 @@ metadata/_edit_use_anchors_ = true
 [node name="WorldGen" type="Node" parent="World" unique_id=516468895]
 script = ExtResource("6_s71n1")
 
-[node name="WorldGenTimer" type="Node" parent="World/WorldGen" unique_id=335784170]
-script = ExtResource("7_8d45b")
-
 [node name="Character" type="Node2D" parent="World" unique_id=817376053]
 script = ExtResource("8_dcpno")
 CRAFTING_PROGRESS_SCENE = ExtResource("11_rvax8")
@@ -153,7 +149,3 @@ layer = 11
 follow_viewport_enabled = true
 
 [connection signal="gui_input" from="World/MainCamera/MainUI/WorldInteractor" to="World/MainCamera" method="_on_world_interactor_click"]
-[connection signal="character_to_portal" from="World/WorldGen" to="World/Character" method="_teleport_to"]
-[connection signal="gentimer_start" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_start"]
-[connection signal="gentimer_stop" from="World/WorldGen" to="World/WorldGen/WorldGenTimer" method="_timer_stop"]
-[connection signal="move_camera" from="World/WorldGen" to="World/MainCamera" method="_move_to_block"]
