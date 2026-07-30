@@ -15,6 +15,9 @@ var lerp_timer: float = 0.0
 var job_queue: Array[Job] = []
 var job_active: Job = Job.NONE
 
+## A Path object or null (no path)
+var _path_to_job: Path = null
+
 var stats = {
 	speed = 10.0 # Character speed in blocks per second.
 }
@@ -26,6 +29,9 @@ func _ready():
 
 
 func _process(delta):
+	if _path_to_job && target_pos == Vector2i(-1, -1):
+		target_pos = _path_to_job.next()
+	
 	if target_pos != Vector2i(-1, -1):
 		var target_pixels: Vector2 = Helpers.wrapped_target_pixel(position.x, target_pos)
 		position = position.move_toward(
@@ -34,6 +40,13 @@ func _process(delta):
 		)
 		_wrap_world_x()
 
+	# update target_pos to next point on _path_to_job when reached
+	if _path_to_job && position == Helpers.wrapped_target_pixel(position.x, target_pos):
+		target_pos = _path_to_job.pop_next()
+	if _path_to_job && _path_to_job.size() <= 0:
+		_path_to_job = null
+		
+	
 	if inventory.contents_changed_check():
 		inventory_changed.emit()
 
@@ -60,8 +73,8 @@ func _wrap_world_x() -> void:
 func _try_queue_next_job() -> void:
 	if (not job_queue.is_empty()) and job_active.type == Job.TYPE.NONE:
 		job_active = job_queue.pop_front()
-		target_pos = Vector2i(Helpers.wrap_block_x(int(job_active.pos.x)), int(job_active.pos.y))
-		print("Activating "+job_active._to_string())
+		_pathfind_to(job_active.pos)
+		print("[Character] Activating "+job_active._to_string())
 
 
 func add_job(job:Job) -> void:
@@ -70,7 +83,7 @@ func add_job(job:Job) -> void:
 
 func _set_target_pos(block_pos:Vector2):
 	var goto_job = Job.new(Job.TYPE.GOTO, block_pos)
-	print("Prepending "+goto_job._to_string())
+	print("[Character] Prepending "+goto_job._to_string())
 	job_queue.push_front(goto_job)
 
 
@@ -96,30 +109,37 @@ func _process_jobs():
 	position = Vector2(Helpers.pos_block_to_pixel(nearest_block)) # don't need to call _wrap_world_x() as the position in `nearest_block` is already wrapped
 	current_pos = nearest_block
 
-	if target_pos == job_active.pos or Vector2i(Helpers.wrap_block_x(int(job_active.pos.x)), int(job_active.pos.y)) == nearest_block:
-		if job_active.type == Job.TYPE.GOTO:
-			job_active = Job.NONE
-		elif job_active.type == Job.TYPE.BREAK:
-			_job_break(job_active)
-		elif job_active.type == Job.TYPE.PLACE:
-			_job_place(job_active)
-		elif job_active.type == Job.TYPE.CRAFT:
-			_job_craft(job_active)
+	if not _path_to_job: # pathing has finished
+		# var distance = target_pos.distance_squared_to(job_active.pos)
+		# print("[Character._process_jobs] distance_squared from active job: ", distance)
 
-	target_pos = Vector2i(-1, -1)
+		if current_pos == job_active.pos:
+			if job_active.type == Job.TYPE.GOTO:
+				job_active = Job.NONE
+			elif job_active.type == Job.TYPE.BREAK:
+				_job_break(job_active)
+			elif job_active.type == Job.TYPE.PLACE:
+				_job_place(job_active)
+			elif job_active.type == Job.TYPE.CRAFT:
+				_job_craft(job_active)
+			target_pos = Vector2i(-1, -1)
+
+		else:
+			print("[Character._process_jobs] pathfind didn't leave me exactly at job pos, nocliping to job pos: ", job_active)
+			target_pos = job_active.pos
 
 
 func _job_break(job) -> void:
 	var tile: DataTile = GameScene.world.get_tile_v(job.pos)
 	if tile == Tiles.AIR:
-		print("Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
+		print("[Character] Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
 		job_active = Job.NONE
 		return
 	else:
 		inventory.add_items(tile.drops, 1)
 		# TODO: drop items if inventory full
 		GameScene.world.place_tile_v(job.pos, Tiles.AIR)
-		print("broke tile ", tile, " at ", job.pos)
+		print("[Character] broke tile ", tile, " at ", job.pos)
 	job_active = Job.NONE
 	return
 
@@ -235,3 +255,25 @@ func cancel_job() -> bool:
 
 func drop_items(item_name: String, count: int = 1) -> void:
 	print("[Character:drop_items()] NOT IMPLEMENTED Dropped %d %s" % [count, item_name])
+
+
+## Pathfind to the destination. Return true if pathfinding was successful
+func _pathfind_to(destination: Vector2i) -> bool:
+	if _path_to_job && _path_to_job.front() == destination:
+		print("[Character]._pathfind_to() already pathing to destination.")
+		return true
+	
+	if WorldConfig.superman():
+		print("[Character] Superman Pathing to ", destination)
+		_path_to_job = Path.new()
+		_path_to_job.add_point(destination)
+		return true
+	print("[Character] Pathfinding from %s to %s." % [current_pos, destination])
+	_path_to_job = Pathfinding.navigate(current_pos, destination)
+	target_pos = Vector2i(-1, -1)
+
+	if _path_to_job.size() <= 0: # if path is length 0, null it to avoid calling .destionation() on an empty path
+		print("[Character] Pathfinding created null path")
+		_path_to_job = null
+	
+	return _path_to_job != null

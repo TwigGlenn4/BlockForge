@@ -108,7 +108,8 @@ func _input_character_inventory(event: InputEvent) -> void:
 		# print("[interactor.gd] open inventory")
 		print(GameScene.selected_character.inventory)
 		
-
+## Try to interact with a block. Returns true if the block is interactable, or the tile can be broken, or a tile can be placed.
+## False should cause a goto job
 func _input_block_interact(block_pos: Vector2i) -> bool:
 	var tile: DataTile = GameScene.world.get_tile_v(block_pos)
 	if tile == null:
@@ -117,16 +118,15 @@ func _input_block_interact(block_pos: Vector2i) -> bool:
 		_tile_interacion(block_pos, tile)
 		return true
 	elif tile != Tiles.AIR:
-		# Superman: dig/walk straight to the block. Normal mode: fall through to surface/tree pathfinding.
-		if WorldConfig.superman():
-			var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
-			GameScene.selected_character.add_job(job)
-			return true
-		return false
+		print("[Interactor] Creating BREAK Job.")
+		var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
+		GameScene.selected_character.add_job(job)
+		return true
 	else:
 		var held_item_stack: ItemStack = GameScene.inventory_ui.get_held_item_stack()
 		if held_item_stack:
 			print("[Interacter] Held item is " + str(held_item_stack) + ", item string is " + str(held_item_stack.get_item()))
+			print("[Interactor] Creating PLACE Job.")
 			var job: Job = Job.new(Job.TYPE.PLACE, block_pos, str(held_item_stack.get_item()))
 			GameScene.selected_character.add_job(job)
 			return true
@@ -152,46 +152,48 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 		var click_pos:Vector2 = get_global_mouse_position()
 
 		var block_pos:Vector2i = Helpers.pos_pixel_to_block(click_pos)
-		print("Clicked at "+str(block_pos))
+		print("[Interactor] Clicked at "+str(block_pos))
 
 		if not _input_block_interact(block_pos):
+			print("[Interactor] Creating GOTO Job.")
 
-			# ===== PATHFIND GENERAL
-			var start:Vector2i = GameScene.selected_character.current_pos
-			var end:Vector2i = Vector2i(Helpers.wrap_block_x(block_pos.x), block_pos.y)
+			var job: Job = Job.new(Job.TYPE.GOTO, block_pos)
+			GameScene.selected_character.add_job(job)
 
-			print("\nstart -> end ",str(start)," -> ",str(end))
+			
+			# TODO: Re-implement this nearby-job logic in Pathfinding
+			# # ===== PATHFIND GENERAL
+			# var start:Vector2i = GameScene.selected_character.current_pos
+			# var end:Vector2i = Vector2i(Helpers.wrap_block_x(block_pos.x), block_pos.y)
 
-			# Superman: fly/walk straight to the clicked cell (no surface follow / tree path)
-			if WorldConfig.superman():
-				GameScene.selected_character.job_queue.clear()
-				GameScene.selected_character.job_active = Job.NONE
-				GameScene.selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
-				print("path finished (superman direct)")
-			else:
-				GameScene.selected_character.job_queue.clear()
-				GameScene.selected_character.job_active = Job.NONE
-				var dig_pos: Vector2i = end
-				var dig_tile: DataTile = GameScene.world.get_tile_v(dig_pos)
-				var want_dig: bool = (
-					dig_tile != null
-					and dig_tile != Tiles.AIR
-					and not dig_tile.interactable
-				)
-				var is_tree_click: bool = want_dig and Pathfinding.is_tree_tile(dig_pos)
-				# Surface destinations stand in air above ground (not when targeting a tree)
-				if not is_tree_click and not Pathfinding.is_in_tree(end):
-					var surface_y: int = GameScene.world.get_surface(end.x)
-					if surface_y >= 0:
-						end.y = surface_y + 1
-				var arrived: Vector2i = Pathfinding.navigate_to(GameScene.selected_character, start, end)
-				# After navigating: dig trees, or near-surface blocks (not deep underground shortcuts)
-				if want_dig:
-					var near_surface: bool = abs(dig_pos.y - arrived.y) <= 2
-					if is_tree_click or near_surface:
-						GameScene.selected_character.add_job(Job.new(Job.TYPE.BREAK, dig_pos))
-				print("path finished")
-			# ===== END PATHFIND GENERAL
+			# print("\nstart -> end ",str(start)," -> ",str(end))
+
+			# # Superman: fly/walk straight to the clicked cell (no surface follow / tree path)
+			# if WorldConfig.superman():
+			# 	GameScene.selected_character.add_job(Job.new(Job.TYPE.GOTO, end))
+			# 	print("path finished (superman direct)")
+			# else:
+			# 	var dig_pos: Vector2i = end
+			# 	var dig_tile: DataTile = GameScene.world.get_tile_v(dig_pos)
+			# 	var want_dig: bool = (
+			# 		dig_tile != null
+			# 		and dig_tile != Tiles.AIR
+			# 		and not dig_tile.interactable
+			# 	)
+			# 	var is_tree_click: bool = want_dig and Pathfinding.is_tree_tile(dig_pos)
+			# 	# Surface destinations stand in air above ground (not when targeting a tree)
+			# 	if not is_tree_click and not Pathfinding.is_in_tree(end):
+			# 		var surface_y: int = GameScene.world.get_surface(end.x)
+			# 		if surface_y >= 0:
+			# 			end.y = surface_y + 1
+			# 	# var arrived: Vector2i = Pathfinding.navigate_to(GameScene.selected_character, start, end)
+			# 	# After navigating: dig trees, or near-surface blocks (not deep underground shortcuts)
+			# 	if want_dig:
+			# 		var near_surface: bool = abs(dig_pos.y - end.y) <= 2
+			# 		if is_tree_click or near_surface:
+			# 			GameScene.selected_character.add_job(Job.new(Job.TYPE.BREAK, dig_pos))
+			# 	print("path finished")
+			# # ===== END PATHFIND GENERAL
 
 func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
 	match tile.interactable:

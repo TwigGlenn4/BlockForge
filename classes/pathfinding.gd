@@ -22,18 +22,18 @@ static func is_in_tree(pos: Vector2i) -> bool:
 
 
 ## Move onto a neighboring tree cell if `pos` itself is air beside the tree.
-static func _step_onto_tree(character: Node, pos: Vector2i) -> Vector2i:
+static func _step_onto_tree(path: Path, pos: Vector2i) -> Vector2i:
 	if is_tree_tile(pos):
 		return pos
 	for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]:
 		var n := Vector2i(Helpers.wrap_block_x(pos.x + d.x), pos.y + d.y)
 		if is_tree_tile(n):
-			character.add_job(Job.new(Job.TYPE.GOTO, n))
+			path.add_point(n)
 			return n
 	return pos
 
 
-static func surface_path(character: Node, from: Vector2i, dest: Vector2i) -> void:
+static func surface_path(path: Path, from: Vector2i, dest: Vector2i) -> void:
 	print("surface_path ", str(from), " ", str(dest))
 	# Must already be near ground — never use this to leave a tree/canopy
 	var here: Vector2i = from
@@ -46,7 +46,7 @@ static func surface_path(character: Node, from: Vector2i, dest: Vector2i) -> voi
 			# Only step down to stand if already at/near surface (caller must climb first)
 			if here.y <= sy0 + 2:
 				here = stand0
-				character.add_job(Job.new(Job.TYPE.GOTO, here))
+				path.add_point(here)
 			else:
 				push_warning("[Pathfinding] surface_path called from elevated y=%d; climb_down first" % here.y)
 	var dx: int = sign(dest_x - here.x)
@@ -63,7 +63,7 @@ static func surface_path(character: Node, from: Vector2i, dest: Vector2i) -> voi
 		if y < 0:
 			continue
 		here.y = y + 1 # stand in air above surface
-		character.add_job(Job.new(Job.TYPE.GOTO, here))
+		path.add_point(here)
 
 
 static func g3_range(a: int, b: int):
@@ -94,11 +94,11 @@ static func _axis_tree_clear(from: Vector2i, to: Vector2i, horizontal_first: boo
 	return true
 
 
-static func _emit_axis_jobs(character: Node, cells: Array[Vector2i], from: Vector2i) -> void:
+static func _emit_axis_jobs(path: Path, cells: Array[Vector2i], from: Vector2i) -> void:
 	for cell in cells:
 		if cell == from:
 			continue
-		character.add_job(Job.new(Job.TYPE.GOTO, cell))
+		path.add_point(cell)
 
 
 static func _axis_tree_cells(from: Vector2i, to: Vector2i, horizontal_first: bool) -> Array[Vector2i]:
@@ -121,14 +121,14 @@ static func _axis_tree_cells(from: Vector2i, to: Vector2i, horizontal_first: boo
 
 
 ## Demi-direct: HV or VH through tree tiles only (no air). False if neither L works.
-static func try_tree_connected_path(character: Node, from: Vector2i, to: Vector2i) -> bool:
+static func try_tree_connected_path(path: Path, from: Vector2i, to: Vector2i) -> bool:
 	if from == to:
 		return true
 	if _axis_tree_clear(from, to, true):
-		_emit_axis_jobs(character, _axis_tree_cells(from, to, true), from)
+		_emit_axis_jobs(path, _axis_tree_cells(from, to, true), from)
 		return true
 	if _axis_tree_clear(from, to, false):
-		_emit_axis_jobs(character, _axis_tree_cells(from, to, false), from)
+		_emit_axis_jobs(path, _axis_tree_cells(from, to, false), from)
 		return true
 	return false
 
@@ -164,7 +164,7 @@ static func find_tree_base(place: Vector2i) -> Vector2i:
 
 
 ## Greedy crawl down through tree tiles; drop only when no tree step remains.
-static func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
+static func climb_down_to_ground(path: Path, from: Vector2i) -> Vector2i:
 	var here: Vector2i = from
 	var base: Vector2i = find_tree_base(from)
 	var guard: int = 256
@@ -174,7 +174,7 @@ static func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
 		var below := Vector2i(here.x, here.y - 1)
 		if is_tree_tile(below):
 			here = below
-			character.add_job(Job.new(Job.TYPE.GOTO, here))
+			path.add_point(here)
 			continue
 		# 2) Sidestep toward trunk base on this row (stay in canopy/trunk)
 		var moved := false
@@ -183,7 +183,7 @@ static func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
 			var side := Vector2i(Helpers.wrap_block_x(here.x + step), here.y)
 			if is_tree_tile(side):
 				here = side
-				character.add_job(Job.new(Job.TYPE.GOTO, here))
+				path.add_point(here)
 				moved = true
 		if moved:
 			continue
@@ -193,7 +193,7 @@ static func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
 			if not is_tree_tile(side2):
 				continue
 			here = side2
-			character.add_job(Job.new(Job.TYPE.GOTO, here))
+			path.add_point(here)
 			moved = true
 			break
 		if moved:
@@ -202,7 +202,7 @@ static func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
 
 	# Finish with axis path to base if still in tree and connected by L
 	if base.x >= 0 and here != base and is_tree_tile(here):
-		if try_tree_connected_path(character, here, base):
+		if try_tree_connected_path(path, here, base):
 			return base
 
 	if base.x >= 0 and here == base:
@@ -216,16 +216,22 @@ static func climb_down_to_ground(character: Node, from: Vector2i) -> Vector2i:
 	# Last resort: drop only if still above ground and no further tree crawl
 	if sy >= 0 and here.y > sy + 1:
 		var ground := Vector2i(Helpers.wrap_block_x(here.x), sy + 1)
-		character.add_job(Job.new(Job.TYPE.GOTO, ground))
+		path.add_point(ground)
 		return ground
 	return here
 
 
 ## Non-superman move: tree↔tree prefers connected L; else down → surface → up.
-static func navigate_to(character: Node, start: Vector2i, end: Vector2i) -> Vector2i:
+static func navigate(start: Vector2i, end: Vector2i) -> Path:
+	var path := Path.new()
+
+	if start == end:
+		path.add_point(end)
+		return path
+
 	# current_pos is often air beside leaves — treat as in-tree and step onto wood first
 	if is_in_tree(start):
-		start = _step_onto_tree(character, start)
+		start = _step_onto_tree(path, start)
 	if is_in_tree(end) and not is_tree_tile(end):
 		# Clicked air next to tree destination — aim at the tree cell
 		for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]:
@@ -238,28 +244,27 @@ static func navigate_to(character: Node, start: Vector2i, end: Vector2i) -> Vect
 	var end_tree: bool = is_tree_tile(end)
 
 	if start_tree and end_tree:
-		if try_tree_connected_path(character, start, end):
-			return end
-		var ground: Vector2i = climb_down_to_ground(character, start)
+		if try_tree_connected_path(path, start, end):
+			return path
+		var ground: Vector2i = climb_down_to_ground(path, start)
 		var base_e: Vector2i = find_tree_base(end)
 		if base_e.x < 0:
 			base_e = end
-		surface_path(character, ground, base_e)
-		try_tree_connected_path(character, base_e, end)
-		return end
+		surface_path(path, ground, base_e)
+		try_tree_connected_path(path, base_e, end)
+		return path
 
 	if start_tree and not end_tree:
-		var ground2: Vector2i = climb_down_to_ground(character, start)
-		surface_path(character, ground2, end)
-		return end
-
+		var ground2: Vector2i = climb_down_to_ground(path, start)
+		surface_path(path, ground2, end)
+		return path
 	if not start_tree and end_tree:
 		var base_e2: Vector2i = find_tree_base(end)
 		if base_e2.x < 0:
 			base_e2 = end
-		surface_path(character, start, base_e2)
-		try_tree_connected_path(character, base_e2, end)
-		return end
+		surface_path(path, start, base_e2)
+		try_tree_connected_path(path, base_e2, end)
+		return path
 
-	surface_path(character, start, end)
-	return end
+	surface_path(path, start, end)
+	return path
