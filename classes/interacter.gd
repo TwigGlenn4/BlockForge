@@ -13,8 +13,6 @@ static var tilemap_populator: TileMapPopulator
 
 var active_recipe_selector: Control
 
-var generating_chunks_enabled = false
-
 # move camera to position
 var lerp_target: Vector2i = Vector2i(-1,-1)
 var lerp_timer: float = 0.0
@@ -52,17 +50,6 @@ func _process(delta):
 	# Keep cylindrical chunk maps aligned while the camera pans away from the player
 	if tilemap_populator and tilemap_populator.has_method("align_layers_to_camera"):
 		tilemap_populator.align_layers_to_camera(global_position.x)
-
-	# Generate 3 chunks at camera
-	if generating_chunks_enabled:
-		var chunk_num:int = Helpers.pos_pixel_to_block(position).x / Chunk.WIDTH
-		if chunk_num > 0 and chunk_num < GameScene.world.width-1:
-			if GameScene.world.chunks[chunk_num].gen_state != Chunk.GEN_STATE_MAX:
-				GameScene.world.worldgen.queue_chunk(chunk_num, Chunk.GEN_STATE_MAX)
-			if GameScene.world.chunks[chunk_num-1].gen_state != Chunk.GEN_STATE_MAX:
-				GameScene.world.worldgen.queue_chunk(chunk_num-1, Chunk.GEN_STATE_MAX)
-			if GameScene.world.chunks[chunk_num+1].gen_state != Chunk.GEN_STATE_MAX:
-				GameScene.world.worldgen.queue_chunk(chunk_num+1, Chunk.GEN_STATE_MAX)
 
 
 # signal functions

@@ -15,7 +15,7 @@ signal column_needed(column_x) # int — request full vertical column generation
 @onready var populator: TileMapPopulator = get_node_or_null(populator_path)
 @onready var player: Node2D = get_node_or_null(player_path)
 
-var _generator: Node = null # WorldGenV2 / WorldGenerator providing fill_chunk_array
+var _generator: Node = null # WorldGenV2 providing fill_column
 var _streaming_enabled := false
 var _last_player_tile: Vector2i = Vector2i(0x7fffffff, 0x7fffffff)
 # Columns currently generating (coroutine in flight) — never start a second gen
