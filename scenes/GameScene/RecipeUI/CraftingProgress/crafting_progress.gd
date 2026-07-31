@@ -40,10 +40,11 @@ func setup(recipe_id: String, num: int, job_uuid: UUID, workstation_pos: Vector2
 	_update_text_progress()
 	_update_time_left()
 
-	cancel_button.button_up.connect(_on_cancel_pressed)
+	cancel_button.button_up.connect(on_cancel_pressed)
 
 ## The cancel button was pressed. Refund the remaining ingredients, cancel the job, and remove this CraftingProgress instance.
-func _on_cancel_pressed() -> void:
+## This func made public to allow cancelling by character (ex. player cancelled job from job queue) with proper recipe count and cleanup
+func on_cancel_pressed() -> void:
 	# print("[CraftingProgress] Emitted craft_cancelled(%s, %d)" % [_job_uuid, _recipe_count])
 	craft_cancelled.emit(_job_uuid, _recipe_count)
 	queue_free()
@@ -96,3 +97,9 @@ func _update_text_progress() -> void:
 
 func _update_time_left() -> void:
 	time_left_label.text = Helpers.time_str_sec(_time_left)
+
+func get_job_uuid() -> UUID:
+	return _job_uuid
+
+func get_quantity_remaining() -> int:
+	return _recipe_count

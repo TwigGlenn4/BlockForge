@@ -18,8 +18,8 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 
 * Expand Job system
 * X Job IDs (UUID): reference a job in a player's job queue for action
-* * * Allow cancelling jobs in queue by uuid
-* * Job visualization: preview queued jobs in-world
+* X X Allow cancelling jobs in queue by uuid
+* X Job visualization: preview queued jobs in-world
 * * * Possibly also a UI element to show all (or first few) queued jobs for selected_character
 
 * Refactor and Optimize

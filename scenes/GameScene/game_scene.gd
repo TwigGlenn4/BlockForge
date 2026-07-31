@@ -24,9 +24,11 @@ static var selected_character: Character:
 			selected_character_changed.emit(selected_character)
 			selected_character_inventory_changed.emit()
 
-## This signal emits when `Interactor.selected_character` changes
+## This signal emits when `Interactor.selected_character` changes.
+## Params: `new_char: Character`
 static var selected_character_changed: Signal = _create_static_signal("selected_character_changed", ["new_char", typeof(Character)])
 ## This signal emits when `Interactor.selected_character`'s inventory changes, or when `Interactor.selected_character` itself changes
+## Params: none
 static var selected_character_inventory_changed: Signal = _create_static_signal("selected_character_inventory_changed")
 
 

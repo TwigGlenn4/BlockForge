@@ -3,6 +3,7 @@ class_name Character
 
 var active_crafting_progress: CraftingProgress = null
 @export var CRAFTING_PROGRESS_SCENE: Resource
+@export var JOB_VISUALIZER_SCENE: Resource
 
 ## Use `Interactor.selected_character_inventory_changed` where possible, it handles reconnecting when `Interactor.selected_character` changes.
 signal inventory_changed
@@ -29,6 +30,8 @@ func _ready():
 
 
 func _process(delta):
+	if target_pos == Vector2i.MIN:
+		target_pos = Vector2i(-1,-1)
 	if _path_to_job && target_pos == Vector2i(-1, -1):
 		target_pos = _path_to_job.next()
 	
@@ -79,6 +82,8 @@ func _try_queue_next_job() -> void:
 
 func add_job(job:Job) -> void:
 	job_queue.push_back(job)
+	var job_vis: JobVisualizer = JOB_VISUALIZER_SCENE.instantiate()
+	job_vis.setup(self, job)
 
 
 func _set_target_pos(block_pos:Vector2):
@@ -114,8 +119,10 @@ func _process_jobs():
 		# print("[Character._process_jobs] distance_squared from active job: ", distance)
 
 		if current_pos == job_active.pos:
+			if job_active.type == Job.TYPE.NONE:
+				remove_active_job()
 			if job_active.type == Job.TYPE.GOTO:
-				job_active = Job.NONE
+				remove_active_job()
 			elif job_active.type == Job.TYPE.BREAK:
 				_job_break(job_active)
 			elif job_active.type == Job.TYPE.PLACE:
@@ -124,7 +131,7 @@ func _process_jobs():
 				_job_craft(job_active)
 			target_pos = Vector2i(-1, -1)
 
-		else:
+		elif job_active.type != Job.TYPE.NONE:
 			print("[Character._process_jobs] pathfind didn't leave me exactly at job pos, nocliping to job pos: ", job_active)
 			target_pos = job_active.pos
 
@@ -133,14 +140,14 @@ func _job_break(job) -> void:
 	var tile: DataTile = GameScene.world.get_tile_v(job.pos)
 	if tile == Tiles.AIR:
 		print("[Character] Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
-		job_active = Job.NONE
+		remove_active_job()
 		return
 	else:
 		inventory.add_items(tile.drops, 1)
 		# TODO: drop items if inventory full
 		GameScene.world.place_tile_v(job.pos, Tiles.AIR)
 		print("[Character] broke tile ", tile, " at ", job.pos)
-	job_active = Job.NONE
+	remove_active_job()
 	return
 
 
@@ -148,7 +155,7 @@ func _job_place(job) -> void:
 	var world_tile: DataTile = GameScene.world.get_tile_v(job.pos)
 	if world_tile != Tiles.AIR:
 		print("[Character:_job_place] Position %s is not air at time of job execution, not placing." % [job.pos])
-		job_active = Job.NONE
+		remove_active_job()
 		return
 	var tile_string: String = job.data
 	var tile: DataTile = DataTile.tile(tile_string)
@@ -157,15 +164,15 @@ func _job_place(job) -> void:
 			inventory.remove_items(tile_string)
 			GameScene.world.place_tile_v(job.pos, tile)
 			print("Placed tile ", tile, " at ", job.pos)
-			job_active = Job.NONE
+			remove_active_job()
 			return
 		else:
 			print("[Character:_job_place] Inventory is missing item: ", tile_string)
-			job_active = Job.NONE
+			remove_active_job()
 			return
 	else:
 		print("[Character:_job_place] Tile does not exist: ", tile_string)
-		job_active = Job.NONE
+		remove_active_job()
 		return
 
 
@@ -173,7 +180,7 @@ func _job_craft(job) -> void:
 	# Verify we still have the ingredients
 	if(!inventory.has_recipe_ingredients(job.data, job.data2)):
 		print("[Character:_job_craft] Cancelled Job due to missing ingredients: ", job)
-		job_active = Job.NONE
+		remove_active_job()
 		return
 	# open CraftingProgress (only once)
 	if( active_crafting_progress == null ):
@@ -221,8 +228,7 @@ func _on_update_craft_job_status(job_uuid: UUID, quantity_remaining: int) -> voi
 
 	if quantity_remaining <= 0:
 		print("[Character] Craft job finished: ", job_active)
-		job_active = Job.NONE
-		active_crafting_progress.queue_free()
+		remove_active_job()
 
 
 func _on_craft_cancelled(job_uuid: UUID, quantity_remaining: int) -> void:
@@ -240,17 +246,41 @@ func _on_craft_cancelled(job_uuid: UUID, quantity_remaining: int) -> void:
 			print("[Character:_on_craft_cancelled()] dropping %d of %s that did not fit in inventory" % [items_left_over, ingredient.item_name])
 			drop_items(ingredient.item_name, items_left_over)
 	# cancel job
-	job_active = Job.NONE
+	remove_active_job()
 
 
-## Cancel the current job. TODO: cancel job by jobID
-func cancel_job() -> bool:
-	if job_active && job_active.type != Job.TYPE.NONE:
-		job_active = Job.NONE
+## Cancel job by UUID
+func cancel_job(job_id: UUID) -> bool:
+	# check active job
+	if job_active.get_uuid() == job_id:
+		print("[Character.cancel_job] cancelling active job ", job_active)
+		remove_active_job()
 		return true
-	else:
-		print("[Character] Can't cancel Job.NONE")
-		return false
+	# check job queue
+	for job in job_queue:
+		if job.get_uuid() == job_id:
+			print("[Character.cancel_job] cancelling queued job ", job_active)
+			JobVisualizer.remove_by_uuid(job_id)
+			job_queue.erase(job)
+			return true
+	# job id not found
+	print("[Character.cancel_job] Couldn't find job ", job_id)
+	return false
+
+## WARNING: Does not handle refunding & cleanup of an active crafting job
+func remove_active_job() -> void:
+	# backup next pathing point for smooth path stopping
+	var current_pathing_point := Vector2i(-1, -1)
+	if _path_to_job:
+		current_pathing_point = _path_to_job.next()
+	# remove the job
+	JobVisualizer.remove_by_uuid(job_active.get_uuid())
+	job_active = Job.NONE
+	# smoothly stop pathing
+	target_pos = current_pathing_point
+	if _path_to_job:
+		_path_to_job = Path.new()
+		_path_to_job.add_point(current_pathing_point)
 
 
 func drop_items(item_name: String, count: int = 1) -> void:
@@ -259,7 +289,7 @@ func drop_items(item_name: String, count: int = 1) -> void:
 
 ## Pathfind to the destination. Return true if pathfinding was successful
 func _pathfind_to(destination: Vector2i) -> bool:
-	if _path_to_job && _path_to_job.front() == destination:
+	if _path_to_job && _path_to_job.next() == destination:
 		print("[Character]._pathfind_to() already pathing to destination.")
 		return true
 	
@@ -274,6 +304,8 @@ func _pathfind_to(destination: Vector2i) -> bool:
 
 	if _path_to_job.size() <= 0: # if path is length 0, null it to avoid calling .destionation() on an empty path
 		print("[Character] Pathfinding created null path")
-		_path_to_job = null
+		# _path_to_job = null
+		_path_to_job = Path.new()
+		_path_to_job.add_point(destination)
 	
 	return _path_to_job != null

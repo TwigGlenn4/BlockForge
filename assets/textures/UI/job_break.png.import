@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bvun1qq5o0d58"
-path="res://.godot/imported/inventory_slot.png-c6103c4a395083aa3f75ef0e5fa053e0.ctex"
+uid="uid://bxw282dvld4wi"
+path="res://.godot/imported/job_break.png-1734a39114e520c13885eae558f97433.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/atlas/inventory_slot.png"
-dest_files=["res://.godot/imported/inventory_slot.png-c6103c4a395083aa3f75ef0e5fa053e0.ctex"]
+source_file="res://assets/textures/UI/job_break.png"
+dest_files=["res://.godot/imported/job_break.png-1734a39114e520c13885eae558f97433.ctex"]
 
 [params]
 

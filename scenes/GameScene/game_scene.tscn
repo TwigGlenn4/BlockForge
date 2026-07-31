@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://d2oedqu2fq7x2" path="res://classes/world.gd" id="1_7un8v"]
 [ext_resource type="Script" uid="uid://ddagfjrik7f20" path="res://scenes/GameScene/game_scene.gd" id="1_xqlox"]
-[ext_resource type="TileSet" uid="uid://dpfjjvmnau73i" path="res://assets/textures/main_tileset.tres" id="2_6vc3a"]
 [ext_resource type="Script" uid="uid://kh2fdue00hth" path="res://classes/interacter.gd" id="4_ws153"]
 [ext_resource type="PackedScene" uid="uid://cecal6g038m22" path="res://scenes/GameScene/RecipeUI/RecipeSelectorUI/RecipeSelector.tscn" id="4_yxywe"]
 [ext_resource type="PackedScene" uid="uid://c3vqbaps2gav1" path="res://scenes/GameScene/DebugInfo/debug_info.tscn" id="6_2b2ab"]
@@ -11,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://c145e8oi1b1dq" path="res://assets/textures/entity/character.png" id="8_rfaf3"]
 [ext_resource type="Script" uid="uid://djij37f0hbxgv" path="res://scenes/GameScene/inventory_ui.gd" id="8_rvax8"]
 [ext_resource type="PackedScene" uid="uid://ctttbkmhtit7g" path="res://scenes/GameScene/RecipeUI/CraftingProgress/CraftingProgress.tscn" id="11_rvax8"]
+[ext_resource type="PackedScene" uid="uid://b8onobuj2v821" path="res://scenes/GameScene/JobVisualizer/JobVisualizer.tscn" id="18_lm1f7"]
 [ext_resource type="PackedScene" uid="uid://cqqdidtfmb05f" path="res://scenes/GameScene/LoadingScreen/loading_screen.tscn" id="ls_boot"]
 [ext_resource type="Script" uid="uid://claeg1cd804j1" path="res://scenes/GameScene/mapping/WorldBoundsFiller.gd" id="m_bf"]
 [ext_resource type="Script" uid="uid://pntgt1arnpbj" path="res://scenes/GameScene/mapping/ChunkManager.gd" id="m_cm"]
@@ -27,12 +27,6 @@ script = ExtResource("1_xqlox")
 
 [node name="World" type="Node" parent="." unique_id=1681077584]
 script = ExtResource("1_7un8v")
-
-[node name="Foreground" type="TileMapLayer" parent="World" unique_id=1165209314]
-visible = false
-texture_filter = 1
-use_parent_material = true
-tile_set = ExtResource("2_6vc3a")
 
 [node name="Mapping" type="Node" parent="World" unique_id=1473215594]
 
@@ -98,6 +92,7 @@ script = ExtResource("6_s71n1")
 [node name="Character" type="Node2D" parent="World" unique_id=817376053]
 script = ExtResource("8_dcpno")
 CRAFTING_PROGRESS_SCENE = ExtResource("11_rvax8")
+JOB_VISUALIZER_SCENE = ExtResource("18_lm1f7")
 
 [node name="Sprite2D" type="Sprite2D" parent="World/Character" unique_id=799500243]
 z_index = 1

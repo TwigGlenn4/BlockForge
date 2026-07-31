@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://cvwqvrjf6tdsd"]
 
 [ext_resource type="Script" uid="uid://bljh8oyaq86bn" path="res://scenes/GameScene/hotbar_slot.gd" id="1_y0ys2"]
-[ext_resource type="Texture2D" uid="uid://bvun1qq5o0d58" path="res://assets/textures/atlas/inventory_slot.png" id="2_kumi0"]
-[ext_resource type="Texture2D" uid="uid://calvmioev1lrw" path="res://assets/textures/atlas/inventory_slot_selected.png" id="3_kumi0"]
+[ext_resource type="Texture2D" uid="uid://bvun1qq5o0d58" path="res://assets/textures/UI/inventory_slot.png" id="2_kumi0"]
+[ext_resource type="Texture2D" uid="uid://calvmioev1lrw" path="res://assets/textures/UI/inventory_slot_selected.png" id="3_kumi0"]
 [ext_resource type="ButtonGroup" uid="uid://df83lbcmb6rs2" path="res://scenes/GameScene/HotbarSlot/hotbar_button_group.tres" id="4_u2wll"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_y0ys2"]
