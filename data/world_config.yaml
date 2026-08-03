@@ -8,7 +8,7 @@ margin_blocks_unload: 130
 
 # Zoom and performance limits (tune during playtesting)
 max_zoom: 8
-min_zoom: 0.125
+min_zoom: 0.2
 initial_zoom: 1.0
 max_active_tilemaps: 4096
 visibility_update_every_n_frames: 30

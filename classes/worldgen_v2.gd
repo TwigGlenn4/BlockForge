@@ -127,7 +127,7 @@ func fill_column(column_x: int) -> Array:
 				terrain_id = id_sand if n_hum < WG_Settings.DESERT_HUMIDITY_MAX else id_dirt
 			elif gy == surface:
 				terrain_id = top_id
-			strip[gy * cs + lx] = ChunkData.pack_cell(terrain_id)
+			strip[gy * cs + lx] = WallTiles.pack_with_wall(terrain_id)
 
 	await get_tree().process_frame
 
@@ -190,7 +190,7 @@ func _map_strip_overwrite(strip: PackedInt64Array, cs: int, world_h: int, lx: in
 	var cur: int = ChunkData.unpack_terrain(strip[idx])
 	if hosts.find(cur) == -1:
 		return false
-	strip[idx] = ChunkData.pack_cell(tid)
+	strip[idx] = WallTiles.pack_with_wall(tid)
 	return true
 
 
@@ -264,7 +264,7 @@ func _map_generate_layers(
 									continue
 								var itid: int = TileIdRegistry.id_from_name(str(icfg.get("tile", "")))
 								if itid != 0:
-									strip[gy * cs + cx] = ChunkData.pack_cell(itid)
+									strip[gy * cs + cx] = WallTiles.pack_with_wall(itid)
 				x += seg_len + rng.randi_range(gap_min, gap_max)
 
 
@@ -313,7 +313,8 @@ func _map_dig_caves(
 					continue
 				var pos := Vector2i(x, y)
 				if absf(float(cave_noise.get(pos, 0.5)) - 0.5) <= width:
-					strip[y * cs + x] = 0
+					var idx: int = y * cs + x
+					strip[idx] = WallTiles.carve_air_preserve_wall(strip[idx])
 					tunnel_mask[pos] = true
 
 		# Pass 2: chambers at junctions
@@ -370,7 +371,8 @@ func _map_cave_carve_irregular(
 				continue
 			if tunnel_mask.has(pos):
 				continue
-			strip[py * cs + px] = 0
+			var idx: int = py * cs + px
+			strip[idx] = WallTiles.carve_air_preserve_wall(strip[idx])
 			tunnel_mask[pos] = true
 			carved += 1
 	return carved
@@ -518,7 +520,7 @@ func ensure_mapped_portal_x() -> void:
 func _map_strip_set(strip: PackedInt64Array, cs: int, world_h: int, lx: int, gy: int, terrain_id: int) -> void:
 	if lx < 0 or lx >= cs or gy < 0 or gy >= world_h:
 		return
-	strip[gy * cs + lx] = ChunkData.pack_cell(terrain_id)
+	strip[gy * cs + lx] = WallTiles.pack_with_wall(terrain_id)
 
 
 # Mapped equivalent of surface_dressing portal placement (natural stone base).
@@ -610,7 +612,7 @@ func _map_place_tree_into_strip(
 			var existing: int = ChunkData.unpack_terrain(strip[idx])
 			if existing != 0 and existing != id_leaves:
 				return
-			strip[idx] = ChunkData.pack_cell(id_log)
+			strip[idx] = WallTiles.pack_with_wall(id_log, 0, strip[idx])
 
 	var leaf_btm: int = int(height * 0.4)
 	var width: float = float(int(height * 0.75))
@@ -640,4 +642,4 @@ func _map_set_leaf_world(
 	var lx: int = gx - target_cx * cs
 	var idx: int = gy * cs + lx
 	if ChunkData.unpack_terrain(strip[idx]) == 0:
-		strip[idx] = ChunkData.pack_cell(id_leaves)
+		strip[idx] = WallTiles.pack_with_wall(id_leaves, 0, strip[idx])

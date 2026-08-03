@@ -1,5 +1,6 @@
 # ChunkData — 64x64 PackedInt64Array + bit packing
-# Layout (LSB→MSB): terrain_id 0-15 | item_id 16-31 | data 32-47 | bit63 reserved
+# Layout (LSB→MSB): terrain_id 0-15 | item_id 16-31 | wall_id (data) 32-47 | bit63 reserved
+# wall_id = background wall terrain (0 = none). Survives FG digs / cave carve.
 # How to test: var c = ChunkData.new(0,0); c.set_terrain(1,1,5); print(c.get_cell(1,1))
 class_name ChunkData
 extends RefCounted
@@ -61,3 +62,12 @@ func set_cell_packed(local_x: int, local_y: int, packed: int) -> void:
 func set_terrain(local_x: int, local_y: int, terrain_id: int) -> void:
 	var cur: int = get_cell(local_x, local_y)
 	set_cell_packed(local_x, local_y, pack_cell(terrain_id, unpack_item(cur), unpack_data(cur)))
+
+
+func get_wall(local_x: int, local_y: int) -> int:
+	return unpack_data(get_cell(local_x, local_y))
+
+
+func set_wall(local_x: int, local_y: int, wall_id: int) -> void:
+	var cur: int = get_cell(local_x, local_y)
+	set_cell_packed(local_x, local_y, pack_cell(unpack_terrain(cur), unpack_item(cur), wall_id))
