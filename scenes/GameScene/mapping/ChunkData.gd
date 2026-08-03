@@ -17,12 +17,15 @@ var chunk_y: int = 0
 var cells: PackedInt64Array = PackedInt64Array()
 var dirty: bool = false
 var generated: bool = false
+## Cached WorldConfig.chunk_size() for this instance (avoids per-cell config lookups).
+var size: int = 0
 
 
 func _init(p_x: int = 0, p_y: int = 0) -> void:
 	chunk_x = p_x
 	chunk_y = p_y
-	var n: int = WorldConfig.chunk_size() * WorldConfig.chunk_size()
+	size = WorldConfig.chunk_size()
+	var n: int = size * size
 	cells.resize(n)
 	cells.fill(0)
 
@@ -47,15 +50,15 @@ static func unpack_data(cell: int) -> int:
 
 
 func index(local_x: int, local_y: int) -> int:
-	return local_y * WorldConfig.chunk_size() + local_x
+	return local_y * size + local_x
 
 
 func get_cell(local_x: int, local_y: int) -> int:
-	return cells[index(local_x, local_y)]
+	return cells[local_y * size + local_x]
 
 
 func set_cell_packed(local_x: int, local_y: int, packed: int) -> void:
-	cells[index(local_x, local_y)] = packed & ~RESERVED_BIT
+	cells[local_y * size + local_x] = packed & ~RESERVED_BIT
 	dirty = true
 
 

@@ -57,8 +57,8 @@ func _cave_tunnel_branches( tunnel_mask: Dictionary, pos: Vector2i ) -> int:
 
 
 # fill_column: generate an entire vertical column (coroutine — yields between phases).
-# Returns Array[PackedInt64Array]. Callers must await.
-func fill_column(column_x: int) -> Array:
+# Returns { "rows": Array[PackedInt64Array], "surfaces": PackedInt32Array }. Callers must await.
+func fill_column(column_x: int) -> Dictionary:
 	var t0 := Time.get_ticks_msec()
 	if noise.is_empty():
 		setup()
@@ -157,13 +157,14 @@ func fill_column(column_x: int) -> Array:
 		rows[cy] = cells
 
 	WorldConfig.logv("[Chunk] Generated column %d in %d ms" % [wrapped_cx, Time.get_ticks_msec() - t0])
-	return rows
+	return { "rows": rows, "surfaces": surfaces }
 
 
 # fill_chunk_array: pack one chunk row (uses fill_column; prefer fill_column for streaming).
 # TODO: Procedural objects placement (spatial hash / complex objects)
 func fill_chunk_array(chunk_x: int, chunk_y: int, out_array: PackedInt64Array) -> void:
-	var rows: Array = await fill_column(chunk_x)
+	var result: Dictionary = await fill_column(chunk_x)
+	var rows: Array = result.get("rows", [])
 	var cs: int = WorldConfig.chunk_size()
 	var expected: int = cs * cs
 	if out_array.size() != expected:
