@@ -1,15 +1,25 @@
-# TileMapPopulator — chunk PackedInt64Array → TileMapLayer nodes.
+# TileMapPopulator — chunk PackedInt64Array → TileMapLayer nodes (FG / BG walls / Decorations).
 # Uses editor TileSet at res://assets/textures/main_tileset.tres (do not build atlases at runtime).
+# Streaming creates per-chunk layers under BackgroundMaps, ChunkMaps (FG), DecorationsMaps.
 class_name TileMapPopulator
 extends Node
 
 const TILESET_PATH := "res://assets/textures/main_tileset.tres"
+## Temporary darken for walls until dedicated wall atlas variants exist.
+const WALL_MODULATE := Color(0.70, 0.70, 0.70, 1.0)
 
+@export var background_root_path: NodePath = ^"../BackgroundMaps"
 @export var maps_root_path: NodePath = ^"../ChunkMaps"
+@export var decorations_root_path: NodePath = ^"../DecorationsMaps"
+
+@onready var background_root: Node2D = get_node_or_null(background_root_path)
 @onready var maps_root: Node2D = get_node_or_null(maps_root_path)
+@onready var decorations_root: Node2D = get_node_or_null(decorations_root_path)
 
 var _tileset: TileSet
-var _layers: Dictionary = {} # Vector2i -> TileMapLayer
+var _fg_layers: Dictionary = {} # Vector2i -> TileMapLayer
+var _bg_layers: Dictionary = {} # Vector2i -> TileMapLayer
+var _deco_layers: Dictionary = {} # Vector2i -> TileMapLayer (empty for now)
 
 # Log batching (group consecutive cy per column)
 var _batching := false
@@ -20,19 +30,23 @@ var _batch_drop_ms: int = 0
 
 
 func _ready() -> void:
+	if background_root == null:
+		background_root = get_node_or_null("../BackgroundMaps")
 	if maps_root == null:
 		maps_root = get_node_or_null("../ChunkMaps")
+	if decorations_root == null:
+		decorations_root = get_node_or_null("../DecorationsMaps")
 	_tileset = load(TILESET_PATH) as TileSet
 	if _tileset == null:
 		push_error("[TileMapPopulator] Missing TileSet at %s (create in editor)" % TILESET_PATH)
 
 
 func has_layer(cx: int, cy: int) -> bool:
-	return _layers.has(Vector2i(cx, cy))
+	return _fg_layers.has(Vector2i(cx, cy))
 
 
 func active_layer_count() -> int:
-	return _layers.size()
+	return _fg_layers.size()
 
 
 func begin_log_batch() -> void:
@@ -65,12 +79,9 @@ func populate(data: ChunkData) -> TileMapLayer:
 func drop_layer(cx: int, cy: int) -> void:
 	var t0 := Time.get_ticks_msec()
 	var key := Vector2i(cx, cy)
-	if not _layers.has(key):
-		return
-	var layer: TileMapLayer = _layers[key]
-	_layers.erase(key)
-	if is_instance_valid(layer):
-		layer.queue_free()
+	_free_layer_dict(_fg_layers, key)
+	_free_layer_dict(_bg_layers, key)
+	_free_layer_dict(_deco_layers, key)
 	var elapsed: int = Time.get_ticks_msec() - t0
 	if _batching:
 		_batch_drop_keys.append(key)
@@ -81,7 +92,7 @@ func drop_layer(cx: int, cy: int) -> void:
 
 func drop_all() -> void:
 	begin_log_batch()
-	for k in _layers.keys():
+	for k in _fg_layers.keys():
 		drop_layer(k.x, k.y)
 	end_log_batch()
 
@@ -94,9 +105,15 @@ func align_layers_to_camera(camera_px: float) -> void:
 	var period: float = float(w * cs * ts)
 	if period <= 0.0:
 		return
-	for key in _layers.keys():
+	_align_dict(_bg_layers, camera_px, period, cs, ts)
+	_align_dict(_fg_layers, camera_px, period, cs, ts)
+	_align_dict(_deco_layers, camera_px, period, cs, ts)
+
+
+func _align_dict(layers: Dictionary, camera_px: float, period: float, cs: int, ts: int) -> void:
+	for key in layers.keys():
 		var k: Vector2i = key
-		var layer: TileMapLayer = _layers[k]
+		var layer: TileMapLayer = layers[k]
 		if not is_instance_valid(layer):
 			continue
 		var base_x: float = float(k.x * cs * ts)
@@ -106,66 +123,91 @@ func align_layers_to_camera(camera_px: float) -> void:
 
 func _populate_internal(data: ChunkData) -> TileMapLayer:
 	var key := Vector2i(data.chunk_x, data.chunk_y)
-	var layer: TileMapLayer
 	var cs: int = WorldConfig.chunk_size()
 	var ts: int = WorldConfig.tile_size_px()
-	if _layers.has(key):
-		layer = _layers[key]
-		layer.clear()
-	else:
-		layer = TileMapLayer.new()
-		layer.name = "Chunk_%d_%d" % [data.chunk_x, data.chunk_y]
-		layer.tile_set = _tileset
-		layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		# Align with Helpers.pos_block_to_pixel: block (gx,gy) center at (gx*ts+ts/2, -gy*ts-ts/2).
-		# Cell (lx, cs-1-ly) top-left must be at (gx*ts, -(gy+1)*ts) → layer origin below.
-		# X may be shifted later by align_layers_to_camera for cylindrical wrap.
-		layer.position = Vector2(data.chunk_x * cs * ts, -(data.chunk_y + 1) * cs * ts)
-		if maps_root:
-			maps_root.add_child(layer)
-		_layers[key] = layer
+	var fg: TileMapLayer = _ensure_layer(_fg_layers, maps_root, key, data, "Chunk", cs, ts, Color.WHITE)
+	var bg: TileMapLayer = _ensure_layer(
+		_bg_layers, background_root, key, data, "Wall", cs, ts, WALL_MODULATE
+	)
+	# Decorations: create empty layer for streaming parity (no cells yet).
+	var _deco: TileMapLayer = _ensure_layer(
+		_deco_layers, decorations_root, key, data, "Deco", cs, ts, Color.WHITE
+	)
 
-	_sync_debug_outline(layer, cs, ts)
+	_sync_debug_outline(fg, cs, ts)
 
 	TileIdRegistry.ensure_ready()
 	for ly in cs:
 		for lx in cs:
-			var terrain_id: int = ChunkData.unpack_terrain(data.get_cell(lx, ly))
-			if terrain_id == 0:
-				continue
-			var info: Dictionary = TileIdRegistry.atlas_for_id(terrain_id)
-			if info.is_empty():
-				continue
-			# TileMap local: y increases downward; our ly is upward from chunk bottom
+			var packed: int = data.get_cell(lx, ly)
+			var terrain_id: int = ChunkData.unpack_terrain(packed)
+			var wall_id: int = ChunkData.unpack_data(packed)
+			# Backfill wall for older saves that only have FG solids.
+			if wall_id <= 0 and terrain_id > 0:
+				wall_id = WallTiles.wall_id_for(terrain_id)
 			var cell := Vector2i(lx, cs - 1 - ly)
-			layer.set_cell(cell, int(info["atlas"]), info["pos"])
+			_set_layer_cell(fg, cell, terrain_id)
+			_set_layer_cell(bg, cell, wall_id)
+	return fg
+
+
+func _ensure_layer(
+	dict: Dictionary, root: Node2D, key: Vector2i, data: ChunkData,
+	prefix: String, cs: int, ts: int, modulate: Color
+) -> TileMapLayer:
+	var layer: TileMapLayer
+	if dict.has(key):
+		layer = dict[key]
+		layer.clear()
+	else:
+		layer = TileMapLayer.new()
+		layer.name = "%s_%d_%d" % [prefix, data.chunk_x, data.chunk_y]
+		layer.tile_set = _tileset
+		layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		layer.modulate = modulate
+		# Align with Helpers.pos_block_to_pixel; X may shift via align_layers_to_camera.
+		layer.position = Vector2(data.chunk_x * cs * ts, -(data.chunk_y + 1) * cs * ts)
+		if root:
+			root.add_child(layer)
+		dict[key] = layer
 	return layer
 
 
-## Update a single global block on its TileMapLayer (if that chunk layer is loaded).
+func _set_layer_cell(layer: TileMapLayer, cell: Vector2i, terrain_id: int) -> void:
+	if terrain_id <= 0:
+		layer.set_cell(cell)
+		return
+	var info: Dictionary = TileIdRegistry.atlas_for_id(terrain_id)
+	if info.is_empty():
+		layer.set_cell(cell)
+		return
+	layer.set_cell(cell, int(info["atlas"]), info["pos"])
+
+
+func _free_layer_dict(dict: Dictionary, key: Vector2i) -> void:
+	if not dict.has(key):
+		return
+	var layer: TileMapLayer = dict[key]
+	dict.erase(key)
+	if is_instance_valid(layer):
+		layer.queue_free()
+
+
+## Update FG only when mining/placing. Background walls are never overwritten by place.
 func set_global_cell(gx: int, gy: int, terrain_id: int) -> void:
 	var cs: int = WorldConfig.chunk_size()
 	var wx: int = Helpers.wrap_block_x(gx)
 	var cx: int = posmod(int(floor(float(wx) / float(cs))), WorldConfig.world_chunks_wide_max())
 	var cy: int = int(floor(float(gy) / float(cs)))
 	var key := Vector2i(cx, cy)
-	if not _layers.has(key):
-		return
-	var layer: TileMapLayer = _layers[key]
-	if not is_instance_valid(layer):
+	if not _fg_layers.has(key):
 		return
 	var lx: int = posmod(wx, cs)
 	var ly: int = posmod(gy, cs)
 	var cell := Vector2i(lx, cs - 1 - ly)
-	if terrain_id <= 0:
-		layer.set_cell(cell)
-		return
-	TileIdRegistry.ensure_ready()
-	var info: Dictionary = TileIdRegistry.atlas_for_id(terrain_id)
-	if info.is_empty():
-		layer.set_cell(cell)
-		return
-	layer.set_cell(cell, int(info["atlas"]), info["pos"])
+	var fg: TileMapLayer = _fg_layers[key]
+	if is_instance_valid(fg):
+		_set_layer_cell(fg, cell, terrain_id)
 
 
 func _sync_debug_outline(layer: TileMapLayer, cs: int, ts: int) -> void:

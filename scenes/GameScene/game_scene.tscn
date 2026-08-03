@@ -30,7 +30,14 @@ script = ExtResource("1_7un8v")
 
 [node name="Mapping" type="Node" parent="World" unique_id=1473215594]
 
+[node name="BackgroundMaps" type="Node2D" parent="World/Mapping"]
+z_index = -10
+
 [node name="ChunkMaps" type="Node2D" parent="World/Mapping" unique_id=321702890]
+z_index = 0
+
+[node name="DecorationsMaps" type="Node2D" parent="World/Mapping"]
+z_index = 10
 
 [node name="BoundsFiller" type="Node2D" parent="World/Mapping" unique_id=698325330]
 script = ExtResource("m_bf")
@@ -41,8 +48,11 @@ script = ExtResource("m_cm")
 [node name="ChunkPersistence" type="Node" parent="World/Mapping" unique_id=1424378937]
 script = ExtResource("m_cp")
 
-[node name="TileMapPopulator" type="Node" parent="World/Mapping" unique_id=1363787636]
+[node name="TileMapPopulator" type="Node" parent="World/Mapping" unique_id=1363787636 node_paths=PackedStringArray("background_root_path", "maps_root_path", "decorations_root_path")]
 script = ExtResource("m_tp")
+background_root_path = NodePath("../BackgroundMaps")
+maps_root_path = NodePath("../ChunkMaps")
+decorations_root_path = NodePath("../DecorationsMaps")
 
 [node name="VisibilityManager" type="Node" parent="World/Mapping" unique_id=1299291697]
 script = ExtResource("m_vm")

@@ -80,7 +80,9 @@ func _input_camera_movement(event: InputEvent) -> void:
 	if event.is_action_pressed("camera_zoom_out"):
 		new_zoom += Vector2(-ZOOM_SPEED, -ZOOM_SPEED)
 	
-	zoom = new_zoom.clamp(Vector2(0.02, 0.02), Vector2(3,3))
+	var zmin: float = WorldConfig.min_zoom()
+	var zmax: float = WorldConfig.max_zoom()
+	zoom = new_zoom.clamp(Vector2(zmin, zmin), Vector2(zmax, zmax))
 	scale = Vector2(1 / zoom.x, 1 / zoom.y)
 
 	if Input.is_action_just_pressed("look_at_portal"): # centers camera on bottom block of portal anim

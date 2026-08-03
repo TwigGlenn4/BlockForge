@@ -125,9 +125,27 @@ func set_terrain_id(gx: int, gy: int, terrain_id: int) -> bool:
 	if data == null:
 		return false
 	var local := global_to_local(gx, gy)
-	data.set_terrain(local.x, local.y, terrain_id)
+	var cur: int = data.get_cell(local.x, local.y)
+	var wall: int = ChunkData.unpack_data(cur)
+	# Dig to air → keep wall. Place solid → do not overwrite existing background wall.
+	data.set_cell_packed(
+		local.x, local.y,
+		ChunkData.pack_cell(terrain_id, ChunkData.unpack_item(cur), wall)
+	)
 	_invalidate_surface(gx)
 	return true
+
+
+func get_wall_id(gx: int, gy: int) -> int:
+	var tall_px: int = WorldConfig.world_chunks_tall_max() * WorldConfig.chunk_size()
+	if gy < 0 or gy >= tall_px:
+		return -1
+	var cxy := global_to_chunk(gx, gy)
+	var data: ChunkData = get_chunk(cxy.x, cxy.y)
+	if data == null:
+		return -1
+	var local := global_to_local(gx, gy)
+	return data.get_wall(local.x, local.y)
 
 
 ## Scan+store surface for every local-x in chunk column. Call after create/load.
