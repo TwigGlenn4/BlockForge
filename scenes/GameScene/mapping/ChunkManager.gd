@@ -3,6 +3,23 @@ class_name ChunkManager
 extends Node
 
 var _chunks: Dictionary = {} # Vector2i -> ChunkData
+## Per-column surface gy (wrapped world x). -1 = unknown; unload keeps stale values.
+var _surface: PackedInt32Array = PackedInt32Array()
+
+
+func _ready() -> void:
+	_init_surface_cache()
+
+
+func _init_surface_cache() -> void:
+	var w: int = WorldConfig.world_width_tiles()
+	_surface.resize(w)
+	_surface.fill(-1)
+
+
+func _ensure_surface_cache() -> void:
+	if _surface.size() != WorldConfig.world_width_tiles():
+		_init_surface_cache()
 
 
 func has_chunk(cx: int, cy: int) -> bool:
@@ -109,11 +126,40 @@ func set_terrain_id(gx: int, gy: int, terrain_id: int) -> bool:
 		return false
 	var local := global_to_local(gx, gy)
 	data.set_terrain(local.x, local.y, terrain_id)
+	_invalidate_surface(gx)
 	return true
 
 
-## Highest solid block gy at column gx (skips log/leaves canopy). -1 if unknown/unloaded.
+## Scan+store surface for every local-x in chunk column. Call after create/load.
+func cache_column_surfaces(cx: int) -> void:
+	_ensure_surface_cache()
+	var cs: int = WorldConfig.chunk_size()
+	var wcx: int = wrap_column(cx)
+	for lx in cs:
+		var wx: int = Helpers.wrap_block_x(wcx * cs + lx)
+		var h: int = _scan_surface_height(wx)
+		_surface[wx] = h
+
+
+func _invalidate_surface(gx: int) -> void:
+	_ensure_surface_cache()
+	_surface[Helpers.wrap_block_x(gx)] = -1
+
+
+## Highest solid block gy at column gx (skips log/leaves canopy). -1 if unknown.
 func find_surface_height(gx: int) -> int:
+	_ensure_surface_cache()
+	var wx: int = Helpers.wrap_block_x(gx)
+	var cached: int = _surface[wx]
+	if cached >= 0:
+		return cached
+	var h: int = _scan_surface_height(wx)
+	if h >= 0:
+		_surface[wx] = h
+	return h
+
+
+func _scan_surface_height(gx: int) -> int:
 	var cs: int = WorldConfig.chunk_size()
 	var wx: int = Helpers.wrap_block_x(gx)
 	var cx: int = wrap_column(int(floor(float(wx) / float(cs))))
