@@ -264,6 +264,7 @@ func _try_load_column(column_x: int) -> bool:
 			populator.populate(data)
 	if populator:
 		populator.end_log_batch()
+	chunk_manager.cache_column_surfaces(column_x)
 	column_needed.emit(column_x)
 	return true
 
@@ -295,6 +296,7 @@ func _generate_column_async(column_x: int) -> void:
 		for c in col:
 			populator.populate(c as ChunkData)
 		populator.end_log_batch()
+	chunk_manager.cache_column_surfaces(column_x)
 	_generating.erase(column_x)
 	column_needed.emit(column_x)
 
