@@ -57,7 +57,7 @@ func _cave_tunnel_branches( tunnel_mask: Dictionary, pos: Vector2i ) -> int:
 
 
 # fill_column: generate an entire vertical column (coroutine — yields between phases).
-# Returns { "rows": Array[PackedInt64Array], "surfaces": PackedInt32Array }. Callers must await.
+# Returns { "rows", "surfaces", "lava_top", "stone_top", "rock_top", "soil_wall" }. Callers must await.
 func fill_column(column_x: int) -> Dictionary:
 	var t0 := Time.get_ticks_msec()
 	if noise.is_empty():
@@ -91,6 +91,7 @@ func fill_column(column_x: int) -> Dictionary:
 	var stone_top := PackedInt32Array(); stone_top.resize(cs)
 	var rock_top := PackedInt32Array(); rock_top.resize(cs)
 	var surfaces := PackedInt32Array(); surfaces.resize(cs)
+	var soil_wall := PackedInt32Array(); soil_wall.resize(cs)
 	var growable := PackedByteArray(); growable.resize(cs)
 
 	for lx in cs:
@@ -106,6 +107,7 @@ func fill_column(column_x: int) -> Dictionary:
 		stone_top[lx] = st
 		rock_top[lx] = rt
 		surfaces[lx] = surface
+		soil_wall[lx] = id_sand if n_hum < WG_Settings.DESERT_HUMIDITY_MAX else id_dirt
 
 		var top_id: int = id_sand
 		if n_hum >= WG_Settings.DESERT_HUMIDITY_MAX:
@@ -124,25 +126,27 @@ func fill_column(column_x: int) -> Dictionary:
 			elif gy < rt:
 				terrain_id = id_cobble
 			elif gy < surface:
-				terrain_id = id_sand if n_hum < WG_Settings.DESERT_HUMIDITY_MAX else id_dirt
+				terrain_id = soil_wall[lx]
 			elif gy == surface:
 				terrain_id = top_id
-			strip[gy * cs + lx] = WallTiles.pack_with_wall(terrain_id)
+			strip[gy * cs + lx] = WallTiles.pack_fg_with_band_wall(
+				terrain_id, 0, gy, lt, st, rt, soil_wall[lx]
+			)
 
 	await get_tree().process_frame
 
 	# Same pipeline as chunky_filling(): layers → caves → ores
-	_map_generate_layers(strip, cs, world_h, wrapped_cx, lava_top, rock_top)
+	_map_generate_layers(strip, cs, world_h, wrapped_cx, lava_top, stone_top, rock_top, soil_wall)
 	await get_tree().process_frame
-	await _map_dig_caves(strip, cs, world_h, wrapped_cx, lava_top, rock_top)
-	await _map_generate_ores(strip, cs, world_h, wrapped_cx, lava_top, stone_top, rock_top)
+	await _map_dig_caves(strip, cs, world_h, wrapped_cx, lava_top, stone_top, rock_top, soil_wall)
+	await _map_generate_ores(strip, cs, world_h, wrapped_cx, lava_top, stone_top, rock_top, soil_wall)
 
 	# Trees after underground features
 	_map_fill_trees_strip(strip, cs, world_h, wrapped_cx, surfaces, growable, id_log, id_leaves)
 	await get_tree().process_frame
 
 	# Portal once (mapped surface dressing) — after trees so canopy cannot overwrite it
-	_map_try_place_portal(strip, cs, world_h, wrapped_cx, surfaces)
+	_map_try_place_portal(strip, cs, world_h, wrapped_cx, surfaces, lava_top, stone_top, rock_top, soil_wall)
 
 	# Slice into per-chunk arrays
 	var rows: Array = []
@@ -157,7 +161,14 @@ func fill_column(column_x: int) -> Dictionary:
 		rows[cy] = cells
 
 	WorldConfig.logv("[Chunk] Generated column %d in %d ms" % [wrapped_cx, Time.get_ticks_msec() - t0])
-	return { "rows": rows, "surfaces": surfaces }
+	return {
+		"rows": rows,
+		"surfaces": surfaces,
+		"lava_top": lava_top,
+		"stone_top": stone_top,
+		"rock_top": rock_top,
+		"soil_wall": soil_wall,
+	}
 
 
 # fill_chunk_array: pack one chunk row (uses fill_column; prefer fill_column for streaming).
@@ -184,20 +195,27 @@ func _map_host_ids(host_names: Array) -> Array:
 	return out
 
 
-func _map_strip_overwrite(strip: PackedInt64Array, cs: int, world_h: int, lx: int, gy: int, tid: int, hosts: Array) -> bool:
+func _map_strip_overwrite(
+	strip: PackedInt64Array, cs: int, world_h: int, lx: int, gy: int, tid: int, hosts: Array,
+	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array,
+	soil_wall: PackedInt32Array
+) -> bool:
 	if lx < 0 or lx >= cs or gy < 0 or gy >= world_h:
 		return false
 	var idx: int = gy * cs + lx
 	var cur: int = ChunkData.unpack_terrain(strip[idx])
 	if hosts.find(cur) == -1:
 		return false
-	strip[idx] = WallTiles.pack_with_wall(tid)
+	strip[idx] = WallTiles.pack_fg_with_band_wall(
+		tid, 0, gy, lava_top[lx], stone_top[lx], rock_top[lx], soil_wall[lx], strip[idx]
+	)
 	return true
 
 
 func _map_generate_layers(
 	strip: PackedInt64Array, cs: int, world_h: int, column_x: int,
-	lava_top: PackedInt32Array, rock_top: PackedInt32Array
+	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array,
+	soil_wall: PackedInt32Array
 ) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = world.w_seed + column_x * 7919 + 17
@@ -254,7 +272,10 @@ func _map_generate_layers(
 						var gy: int = center_y + dy
 						if gy < lt or gy >= rt:
 							continue
-						if _map_strip_overwrite(strip, cs, world_h, cx, gy, layer_tid, hosts):
+						if _map_strip_overwrite(
+							strip, cs, world_h, cx, gy, layer_tid, hosts,
+							lava_top, stone_top, rock_top, soil_wall
+						):
 							for iname in incl_names:
 								if not all_incl.has(iname):
 									continue
@@ -265,13 +286,18 @@ func _map_generate_layers(
 									continue
 								var itid: int = TileIdRegistry.id_from_name(str(icfg.get("tile", "")))
 								if itid != 0:
-									strip[gy * cs + cx] = WallTiles.pack_with_wall(itid)
+									var idx: int = gy * cs + cx
+									strip[idx] = WallTiles.pack_fg_with_band_wall(
+										itid, 0, gy, lava_top[cx], stone_top[cx], rock_top[cx],
+										soil_wall[cx], strip[idx]
+									)
 				x += seg_len + rng.randi_range(gap_min, gap_max)
 
 
 func _map_dig_caves(
 	strip: PackedInt64Array, cs: int, world_h: int, column_x: int,
-	lava_top: PackedInt32Array, rock_top: PackedInt32Array
+	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array,
+	soil_wall: PackedInt32Array
 ) -> void:
 	var caves: Dictionary = Yaml.chunky("caves")
 	for cave_name in caves:
@@ -315,7 +341,9 @@ func _map_dig_caves(
 				var pos := Vector2i(x, y)
 				if absf(float(cave_noise.get(pos, 0.5)) - 0.5) <= width:
 					var idx: int = y * cs + x
-					strip[idx] = WallTiles.carve_air_preserve_wall(strip[idx])
+					strip[idx] = WallTiles.carve_air_preserve_wall(
+						strip[idx], y, lava_top[x], stone_top[x], rock_top[x], soil_wall[x]
+					)
 					tunnel_mask[pos] = true
 
 		# Pass 2: chambers at junctions
@@ -343,7 +371,7 @@ func _map_dig_caves(
 			var jt: float = clampf(float(jitter_noise.get(seed_pos, 0.5)), 0.0, 1.0)
 			var base_r: float = lerpf(chamber_r_min, chamber_r_max, jt)
 			if _map_cave_carve_irregular(
-				strip, cs, world_h, lava_top, rock_top, seed_pos, base_r,
+				strip, cs, world_h, lava_top, stone_top, rock_top, soil_wall, seed_pos, base_r,
 				chamber_jitter, jitter_noise, tunnel_mask
 			) > 0:
 				used_seeds.append(seed_pos)
@@ -352,7 +380,8 @@ func _map_dig_caves(
 
 func _map_cave_carve_irregular(
 	strip: PackedInt64Array, cs: int, world_h: int,
-	lava_top: PackedInt32Array, rock_top: PackedInt32Array,
+	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array,
+	soil_wall: PackedInt32Array,
 	center: Vector2i, radius: float, jitter: float, jitter_noise: Dictionary, tunnel_mask: Dictionary
 ) -> int:
 	var carved := 0
@@ -373,7 +402,9 @@ func _map_cave_carve_irregular(
 			if tunnel_mask.has(pos):
 				continue
 			var idx: int = py * cs + px
-			strip[idx] = WallTiles.carve_air_preserve_wall(strip[idx])
+			strip[idx] = WallTiles.carve_air_preserve_wall(
+				strip[idx], py, lava_top[px], stone_top[px], rock_top[px], soil_wall[px]
+			)
 			tunnel_mask[pos] = true
 			carved += 1
 	return carved
@@ -381,7 +412,8 @@ func _map_cave_carve_irregular(
 
 func _map_generate_ores(
 	strip: PackedInt64Array, cs: int, world_h: int, column_x: int,
-	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array
+	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array,
+	soil_wall: PackedInt32Array
 ) -> void:
 	var ores: Dictionary = Yaml.chunky("ores")
 	for ore_name in ores:
@@ -415,7 +447,10 @@ func _map_generate_ores(
 						continue
 					var nv: float = float(ore_noise.get(Vector2i(x, y), 0.5))
 					if absf(nv - 0.5) <= width:
-						_map_strip_overwrite(strip, cs, world_h, x, y, ore_tid, hosts)
+						_map_strip_overwrite(
+							strip, cs, world_h, x, y, ore_tid, hosts,
+							lava_top, stone_top, rock_top, soil_wall
+						)
 		await get_tree().process_frame
 
 
@@ -518,15 +553,24 @@ func ensure_mapped_portal_x() -> void:
 	])
 
 
-func _map_strip_set(strip: PackedInt64Array, cs: int, world_h: int, lx: int, gy: int, terrain_id: int) -> void:
+func _map_strip_set(
+	strip: PackedInt64Array, cs: int, world_h: int, lx: int, gy: int, terrain_id: int,
+	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array,
+	soil_wall: PackedInt32Array
+) -> void:
 	if lx < 0 or lx >= cs or gy < 0 or gy >= world_h:
 		return
-	strip[gy * cs + lx] = WallTiles.pack_with_wall(terrain_id)
+	strip[gy * cs + lx] = WallTiles.pack_fg_with_band_wall(
+		terrain_id, 0, gy, lava_top[lx], stone_top[lx], rock_top[lx], soil_wall[lx],
+		strip[gy * cs + lx]
+	)
 
 
 # Mapped equivalent of surface_dressing portal placement (natural stone base).
 func _map_try_place_portal(
-	strip: PackedInt64Array, cs: int, world_h: int, wrapped_cx: int, surfaces: PackedInt32Array
+	strip: PackedInt64Array, cs: int, world_h: int, wrapped_cx: int, surfaces: PackedInt32Array,
+	lava_top: PackedInt32Array, stone_top: PackedInt32Array, rock_top: PackedInt32Array,
+	soil_wall: PackedInt32Array
 ) -> void:
 	ensure_mapped_portal_x()
 	# y != 0 means already placed this session
@@ -547,9 +591,9 @@ func _map_try_place_portal(
 	var id_base: int = TileIdRegistry.id_from_name("blockforge:portal_base_stone")
 	var id_btm: int = TileIdRegistry.id_from_name("blockforge:portal_btm")
 	var id_top: int = TileIdRegistry.id_from_name("blockforge:portal_top")
-	_map_strip_set(strip, cs, world_h, lx, surface, id_base)
-	_map_strip_set(strip, cs, world_h, lx, surface + 1, id_btm)
-	_map_strip_set(strip, cs, world_h, lx, surface + 2, id_top)
+	_map_strip_set(strip, cs, world_h, lx, surface, id_base, lava_top, stone_top, rock_top, soil_wall)
+	_map_strip_set(strip, cs, world_h, lx, surface + 1, id_btm, lava_top, stone_top, rock_top, soil_wall)
+	_map_strip_set(strip, cs, world_h, lx, surface + 2, id_top, lava_top, stone_top, rock_top, soil_wall)
 
 	world.world_portal_pos = Vector2i(portal_gx, surface)
 	WorldConfig.logv("[Chunk] Portal placed at %s" % Helpers.coord_string(portal_gx, surface))

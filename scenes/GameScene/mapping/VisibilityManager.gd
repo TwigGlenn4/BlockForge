@@ -253,6 +253,10 @@ func _try_load_column(column_x: int) -> bool:
 	var loaded: Array = persistence.load_column(column_x)
 	if loaded.size() < tall:
 		return false
+	# Band tops before populate so wall backfill can use them.
+	chunk_manager.cache_column_surfaces(column_x)
+	if _generator != null and _generator.has_method("map_surface_height"):
+		chunk_manager.cache_column_band_tops(column_x, _generator.map_surface_height)
 	if populator:
 		populator.begin_log_batch()
 	for c in loaded:
@@ -262,7 +266,6 @@ func _try_load_column(column_x: int) -> bool:
 			populator.populate(data)
 	if populator:
 		populator.end_log_batch()
-	chunk_manager.cache_column_surfaces(column_x)
 	column_needed.emit(column_x)
 	return true
 
@@ -277,6 +280,10 @@ func _generate_column_async(column_x: int) -> void:
 	var result: Dictionary = await _generator.fill_column(column_x)
 	var rows: Array = result.get("rows", [])
 	var surfaces: PackedInt32Array = result.get("surfaces", PackedInt32Array())
+	var lava_top: PackedInt32Array = result.get("lava_top", PackedInt32Array())
+	var stone_top: PackedInt32Array = result.get("stone_top", PackedInt32Array())
+	var rock_top: PackedInt32Array = result.get("rock_top", PackedInt32Array())
+	var soil_wall: PackedInt32Array = result.get("soil_wall", PackedInt32Array())
 
 	# Materialize rows → ChunkData, always save to disk before populate
 	var col: Array = []
@@ -299,6 +306,10 @@ func _generate_column_async(column_x: int) -> void:
 		chunk_manager.seed_column_surfaces(column_x, surfaces)
 	else:
 		chunk_manager.cache_column_surfaces(column_x)
+	if lava_top.size() > 0 and stone_top.size() > 0 and rock_top.size() > 0 and soil_wall.size() > 0:
+		chunk_manager.seed_column_band_tops(column_x, lava_top, stone_top, rock_top, soil_wall)
+	elif _generator != null and _generator.has_method("map_surface_height"):
+		chunk_manager.cache_column_band_tops(column_x, _generator.map_surface_height)
 	_generating.erase(column_x)
 	column_needed.emit(column_x)
 

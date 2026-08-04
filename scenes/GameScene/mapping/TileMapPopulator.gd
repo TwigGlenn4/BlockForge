@@ -11,10 +11,12 @@ const WALL_MODULATE := Color(0.70, 0.70, 0.70, 1.0)
 @export var background_root_path: NodePath = ^"../BackgroundMaps"
 @export var maps_root_path: NodePath = ^"../ChunkMaps"
 @export var decorations_root_path: NodePath = ^"../DecorationsMaps"
+@export var chunk_manager_path: NodePath = ^"../ChunkManager"
 
 @onready var background_root: Node2D = get_node_or_null(background_root_path)
 @onready var maps_root: Node2D = get_node_or_null(maps_root_path)
 @onready var decorations_root: Node2D = get_node_or_null(decorations_root_path)
+@onready var chunk_manager: ChunkManager = get_node_or_null(chunk_manager_path)
 
 var _tileset: TileSet
 var _fg_layers: Dictionary = {} # Vector2i -> TileMapLayer
@@ -36,6 +38,8 @@ func _ready() -> void:
 		maps_root = get_node_or_null("../ChunkMaps")
 	if decorations_root == null:
 		decorations_root = get_node_or_null("../DecorationsMaps")
+	if chunk_manager == null:
+		chunk_manager = get_node_or_null("../ChunkManager") as ChunkManager
 	_tileset = load(TILESET_PATH) as TileSet
 	if _tileset == null:
 		push_error("[TileMapPopulator] Missing TileSet at %s (create in editor)" % TILESET_PATH)
@@ -143,11 +147,16 @@ func _populate_internal(data: ChunkData) -> TileMapLayer:
 		var packed: int = cells[i]
 		var terrain_id: int = ChunkData.unpack_terrain(packed)
 		var wall_id: int = ChunkData.unpack_data(packed)
-		# Backfill wall for older saves that only have FG solids.
-		if wall_id <= 0 and terrain_id > 0:
-			wall_id = WallTiles.wall_id_for(terrain_id)
 		var lx: int = i % cs
 		var ly: int = int(i / cs)
+		# Backfill wall for older saves / missing wall bits — prefer band base.
+		if wall_id <= 0 and terrain_id > 0:
+			var gx: int = data.chunk_x * cs + lx
+			var gy: int = data.chunk_y * cs + ly
+			if chunk_manager:
+				wall_id = WallTiles.wall_id_at(gx, gy, chunk_manager)
+			if wall_id <= 0:
+				wall_id = WallTiles.wall_id_for(terrain_id)
 		var cell := Vector2i(lx, cs - 1 - ly)
 		_set_layer_cell_cached(fg, cell, terrain_id, atlas_by_id)
 		_set_layer_cell_cached(bg, cell, wall_id, atlas_by_id)
