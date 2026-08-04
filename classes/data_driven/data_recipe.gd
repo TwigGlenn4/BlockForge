@@ -24,7 +24,10 @@ func _init(id: String, workstation: String, duration: float = 1.0, ingredients: 
 	assert(!has(id), "[DataRecipe (id:\""+id+"\")] Recipe id already in use: \""+id+"\"")
 	self.id = id
 
-	assert(DataTile.tile(workstation), "[DataRecipe (id:\""+id+"\")] Workstation does not exist: \""+workstation+"\"")
+	if workstation == "":
+		print("[DataRecipe (id:\""+id+"\")] Workstation field is empty, recipe will not be craftable.")
+	else:
+		assert(Tiles.find(workstation), "[DataRecipe (id:\""+id+"\")] Workstation does not exist: \""+workstation+"\"")
 	self.workstation = workstation
 
 	assert(duration >= 0.0, "[DataRecipe (id:\""+id+"\")] Duration must not be negative: \""+str(duration)+"\"")

@@ -19,6 +19,7 @@ func get_texture() -> Texture2D:
 		print("[DataTexture] loading tile set")
 		tile_set = load("uid://dpfjjvmnau73i") # res://assets/textures/main_tileset.tres
 
+	
 	var tile_set_source := tile_set.get_source(atlas) as TileSetAtlasSource
 	var texture_region := tile_set_source.get_tile_texture_region(pos)
 	var tile_image := tile_set_source.texture.get_image().get_region(texture_region)

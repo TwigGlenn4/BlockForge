@@ -106,7 +106,7 @@ func _input_block_interact(block_pos: Vector2i) -> bool:
 	if tile.interactable:
 		_tile_interacion(block_pos, tile)
 		return true
-	elif tile != Tiles.AIR:
+	elif tile != DataTile.AIR:
 		print("[Interactor] Creating BREAK Job.")
 		var job: Job = Job.new(Job.TYPE.BREAK, block_pos)
 		GameScene.selected_character.add_job(job)
@@ -166,7 +166,7 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 			# 	var dig_tile: DataTile = GameScene.world.get_tile_v(dig_pos)
 			# 	var want_dig: bool = (
 			# 		dig_tile != null
-			# 		and dig_tile != Tiles.AIR
+			# 		and dig_tile != DataTile.AIR
 			# 		and not dig_tile.interactable
 			# 	)
 			# 	var is_tree_click: bool = want_dig and Pathfinding.is_tree_tile(dig_pos)
@@ -187,7 +187,6 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
 	match tile.interactable:
 		DataTile.INTERACTION.CRAFT:
-			var _grassify_dirt = Recipes.PORTAL.GRASSIFY_DIRT
 			print("Interacting with crafting block ", tile.name, " at ", block_pos)
 
 			if active_recipe_selector:

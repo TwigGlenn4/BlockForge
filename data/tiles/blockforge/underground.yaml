@@ -1,0 +1,116 @@
+format-version: 1
+tiles:
+  "blockforge:limestone":
+    texture:
+      atlas: "underground.png"
+      x: 0
+      y: 0
+    name: "Limestone"
+    background: "blockforge:stone"
+  "blockforge:marble":
+    texture:
+      atlas: "underground.png"
+      x: 1
+      y: 0
+    name: "Marble"
+    background: "blockforge:stone"
+
+  "blockforge:ore_coal":
+    texture:
+      atlas: "underground.png"
+      x: 2
+      y: 0
+    name: "Coal Ore"
+    background: "blockforge:stone"
+  "blockforge:ore_tin":
+    texture:
+      atlas: "underground.png"
+      x: 3
+      y: 0
+    name: "Tin Ore"
+    background: "blockforge:stone"
+  "blockforge:ore_copper":
+    texture:
+      atlas: "underground.png"
+      x: 4
+      y: 0
+    name: "Copper Ore"
+    background: "blockforge:stone"
+  "blockforge:ore_iron":
+    texture:
+      atlas: "underground.png"
+      x: 5
+      y: 0
+    name: "Iron Ore"
+    background: "blockforge:stone"
+  "blockforge:ore_gold":
+    texture:
+      atlas: "underground.png"
+      x: 6
+      y: 0
+    name: "Gold Ore"
+    background: "blockforge:stone"
+  "blockforge:ore_titanium":
+    texture:
+      atlas: "underground.png"
+      x: 7
+      y: 0
+    name: "Titanium Ore"
+    background: "blockforge:stone"
+  "blockforge:ore_platinum":
+    texture:
+      atlas: "underground.png"
+      x: 8
+      y: 0
+    name: "Platinum Ore"
+    background: "blockforge:stone"
+
+  "blockforge:black_sand":
+    texture:
+      atlas: "underground.png"
+      x: 9
+      y: 0
+    name: "Black Sand"
+  
+  "blockforge:flint":
+    texture:
+      atlas: "underground.png"
+      x: 10
+      y: 0
+    name: "Flint Ore"
+    background: "blockforge:dirt"
+  "blockforge:clay":
+    texture:
+      atlas: "underground.png"
+      x: 11
+      y: 0
+    name: "Clay Ore"
+    background: "blockforge:dirt"
+  "blockforge:oil":
+    texture:
+      atlas: "underground.png"
+      x: 12
+      y: 0
+    name: "Oil Ore"
+    background: "blockforge:limestone"
+
+  "blockforge:sandstone":
+    texture:
+      atlas: "underground.png"
+      x: 13
+      y: 0
+    name: "Sandstone"
+  "blockforge:red_marble":
+    texture:
+      atlas: "underground.png"
+      x: 14
+      y: 0
+    name: "Red Marble"
+    background: "blockforge:stone"
+  "blockforge:lapis_lazuli":
+    texture:
+      atlas: "underground.png"
+      x: 15
+      y: 0
+    name: "Lapis Lazuli"
+    background: "blockforge:stone"

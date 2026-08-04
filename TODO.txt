@@ -8,7 +8,9 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * numbers for hotbar
 * * Disable arrow-key camera panning while crafting menu open
 
-* Convert custom tile atlas to Godot texture atlas
+* Dynamically add texture atlases to tilemap source
+* * currently using a workaround to map atlas filenames to numbers
+* * Need to read image from filename given by tile def, create a new TileSetAtlasSource with it, add to DataTexture tile_set, and store index to get texture back out
 
 * Inventory.add_items() take an ItemStackString and a multiplier. To allow passing DataTile.drops directly to Inventory.add_items()
 

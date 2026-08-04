@@ -28,7 +28,7 @@ func setup(character: Character, job: Job) -> void:
 		Job.TYPE.BREAK:
 			icon.texture = texture_job_break
 		Job.TYPE.PLACE:
-			var tile := DataTile.tile(job.data)
+			var tile := Tiles.find(job.data)
 			var texture := tile.texture.get_texture()
 			icon.texture = texture
 		Job.TYPE.CRAFT:

@@ -106,14 +106,6 @@ static func array_local_max_vec2i( array_vec2i, size:Vector2i ):
 	return result
 
 
-
-## is_growable(): returns true if given tile is in TILES.GROWABLE
-static func is_growable( tile ):
-	if TILES.GROWABLE.find(tile) == -1:
-		return false
-	return true
-
-
 ## coord_string(): format given coordinates as (x, y)
 static func coord_string( x:int, y:int ):
 	return "("+str(x)+", "+str(y)+")"

@@ -41,11 +41,11 @@ func get_tile( gx: int, gy: int ) -> DataTile:
 	if tid < 0:
 		return null # unloaded / out of bounds
 	if tid == 0:
-		return Tiles.AIR
+		return DataTile.AIR
 	var tile_name: String = TileIdRegistry.name_for_id(tid)
 	if tile_name.is_empty() or tile_name == "air":
-		return Tiles.AIR
-	return DataTile.tile(tile_name)
+		return DataTile.AIR
+	return Tiles.find(tile_name)
 
 
 # tile_match(): return true if the tile at (gx, gy) is contained in array match_arr
@@ -69,7 +69,7 @@ func place_tile( x: int, y: int, tile: DataTile) -> bool:
 	if chunk_manager == null:
 		return false
 	var terrain_id: int = 0
-	if tile != null and tile != Tiles.AIR and tile != DataTile.UNDEFINED:
+	if tile != null and tile != DataTile.AIR and tile != DataTile.UNDEFINED:
 		terrain_id = TileIdRegistry.id_from_name(tile.name)
 	if not chunk_manager.set_terrain_id(x, y, terrain_id):
 		return false

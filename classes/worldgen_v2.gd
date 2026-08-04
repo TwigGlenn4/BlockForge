@@ -24,7 +24,7 @@ func setup():
 	noise.layers = Helpers.create_noise( world.w_seed + 40, 0.008, 2 )
 
 	# Ensure underground tiles are registered
-	var _ug = Tiles.UNDERGROUND
+	# var _ug = Tiles.UNDERGROUND
 
 
 func _ready():
@@ -64,7 +64,7 @@ func fill_column(column_x: int) -> Dictionary:
 		setup()
 	TileIdRegistry.ensure_ready()
 	# Force underground tile table init for name lookups used below
-	Tiles.UNDERGROUND.size()
+	# Tiles.UNDERGROUND.size()
 
 	var cs: int = WorldConfig.chunk_size()
 	var tall: int = WorldConfig.world_chunks_tall_max()

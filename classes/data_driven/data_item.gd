@@ -31,7 +31,7 @@ static func exists(tile_name:String) -> bool:
 
 
 static func item(tile_name:String) -> DataItem:
-	if DataTile.exists(tile_name):
+	if Tiles.exists(tile_name):
 		return all_items[tile_name]
 	else:
 		return UNDEFINED

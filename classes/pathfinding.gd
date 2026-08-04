@@ -5,8 +5,8 @@ class_name Pathfinding
 static func is_tree_tile(pos: Vector2i) -> bool:
 	var tile: DataTile = GameScene.world.get_tile_v(pos)
 	return tile != null and (
-		tile == DataTile.tile("blockforge:log")
-		or tile == DataTile.tile("blockforge:leaves")
+		tile == Tiles.find("blockforge:log")
+		or tile == Tiles.find("blockforge:leaves")
 	)
 
 
@@ -141,11 +141,11 @@ static func find_tree_base(place: Vector2i) -> Vector2i:
 		var p := Vector2i(x, y)
 		if not is_tree_tile(p):
 			break
-		if GameScene.world.get_tile_v(p) == DataTile.tile("blockforge:log"):
+		if GameScene.world.get_tile_v(p) == Tiles.find("blockforge:log"):
 			last_log = p
 	if last_log.x >= 0:
 		var y2: int = last_log.y - 1
-		while y2 >= 0 and GameScene.world.get_tile_v(Vector2i(x, y2)) == DataTile.tile("blockforge:log"):
+		while y2 >= 0 and GameScene.world.get_tile_v(Vector2i(x, y2)) == Tiles.find("blockforge:log"):
 			last_log = Vector2i(x, y2)
 			y2 -= 1
 		print("found tree base at ", str(last_log))
@@ -157,7 +157,7 @@ static func find_tree_base(place: Vector2i) -> Vector2i:
 				continue
 			var bx: int = Helpers.wrap_block_x(place.x + dx * side)
 			var by: int = GameScene.world.get_surface(bx) + 1
-			if GameScene.world.get_tile_v(Vector2i(bx, by)) == DataTile.tile("blockforge:log"):
+			if GameScene.world.get_tile_v(Vector2i(bx, by)) == Tiles.find("blockforge:log"):
 				print("found tree base at ", str(Vector2i(bx, by)))
 				return Vector2i(bx, by)
 	return Vector2i(-1, -1)

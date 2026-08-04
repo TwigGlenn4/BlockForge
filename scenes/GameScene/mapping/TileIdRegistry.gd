@@ -14,15 +14,14 @@ static func ensure_ready() -> void:
 	if _ready:
 		return
 	_ready = true
-	# Touch tile tables so DataTile entries register themselves
-	for group in [Tiles.TERRAIN, Tiles.UNDERGROUND, Tiles.PORTAL]:
-		for tile in group.values():
-			# Dictionaries include int metadata keys like `_ATLAS`
-			if not (tile is DataTile) or tile == DataTile.UNDEFINED:
-				continue
-			if tile.texture.atlas < 0:
-				continue
-			_register(tile)
+	TileParser.run()
+	for tile in Tiles.get_all_tiles():
+		# Dictionaries include int metadata keys like `_ATLAS`
+		if not (tile is DataTile) or tile == DataTile.UNDEFINED:
+			continue
+		if tile.texture.atlas < 0:
+			continue
+		_register(tile)
 	_rebuild_atlas_array()
 	WorldConfig.logv("[TileIdRegistry] Registered %d terrain ids" % (_next_id - 1))
 
@@ -62,8 +61,8 @@ static func id_from_name(tile_name: String) -> int:
 		return 0
 	if _name_to_id.has(tile_name):
 		return int(_name_to_id[tile_name])
-	if DataTile.exists(tile_name):
-		var id: int = _register(DataTile.tile(tile_name))
+	if Tiles.exists(tile_name):
+		var id: int = _register(Tiles.find(tile_name))
 		_rebuild_atlas_array()
 		return id
 	return 0

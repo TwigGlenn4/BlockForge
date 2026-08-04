@@ -18,6 +18,7 @@ tiles:
     name: "Grass"
     drops: "blockforge:dirt"
     background: "blockforge:dirt"
+    groups: [soil]
   "blockforge:workbench":
     texture:
       atlas: "workstations.png"
@@ -42,7 +43,7 @@ The `tile_id` and `texture` items must be included. The other items are optional
 * ItemStackString: Drops a number of items of a given type. An ItemStackString is an item_id and optionally a count. ex. `"blockforge:dirt 2"` or `"blockforge:grass"`.
 * `none`: Drops nothing.
 
-`background`: What tile is remains in the background layer when this tile is destroyed
+`background`: What tile remains in the background layer when this tile is destroyed
 
 * `""` (Empty string): Uses itself as the background. (default)
 * Tile ID: Use a different tile as the background. ex. `"blockforge:dirt"`.
@@ -58,6 +59,14 @@ The `tile_id` and `texture` items must be included. The other items are optional
 
 * `false`: This tile exists in the foreground layer and blocks movement. (default)
 * `true`: This tile exists in the decoration layer and does not block movement.
+
+
+`groups`: An array of groups this tile belongs to. Groups will be created if needed.
+
+* `""` (Empty string): No groups. (default)
+* `[group_one, group_two]`: Any number of groups.
+* BlockForge built-in groups:
+* * `soil`: Most plants can grow on this tile.
 
 ### YAML notes
 

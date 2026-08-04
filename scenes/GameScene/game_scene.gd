@@ -57,5 +57,7 @@ func _ready():
 	world_canvas_layer = get_node("World/WorldCanvasLayer")
 	main_camera = get_node("World/MainCamera")
 
+	
 	TileParser.run()
 	print()
+	Recipes.register_recipes_temp()

@@ -76,7 +76,7 @@ func _validate() -> void:
 			pass
 		TYPE.PLACE:
 			assert(data != "_", "[Job] PLACE job missing param: data")
-			assert(DataTile.exists(data), "[Job] PLACE job has invalid data: \"" + data + "\" is not a tile")
+			assert(Tiles.exists(data), "[Job] PLACE job has invalid data: \"" + data + "\" is not a tile")
 		TYPE.CRAFT:
 			# TODO: validate crafting
 			assert(data != "_", "[Job] CRAFT job missing param: data")

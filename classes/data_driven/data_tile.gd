@@ -3,6 +3,7 @@ class_name DataTile
 static var _registered = {}
 
 static var UNDEFINED = DataTile.new("undefined", DataTexture.UNDEFINED)
+static var AIR = DataTile.new("air", DataTexture.new("air", -1, Vector2i(0,0)))
 
 var name: String
 var texture: DataTexture
@@ -31,14 +32,14 @@ func _init(name: String, texture: DataTexture, drop: String = "self", interactab
 	_registered[name] = self
 
 
-static func exists(tile_name:String) -> bool:
-	return _registered.has(tile_name)
+# static func exists(tile_name:String) -> bool:
+# 	return _registered.has(tile_name)
 
-static func tile(tile_name: String) -> DataTile:
-	return _registered.get(tile_name, UNDEFINED)
+# static func tile(tile_name: String) -> DataTile:
+# 	return _registered.get(tile_name, UNDEFINED)
 
-static func is_interactable(tile_name: String) -> bool:
-	return tile(tile_name).interactable != INTERACTION.NONE
+# static func is_interactable(tile_name: String) -> bool:
+# 	return tile(tile_name).interactable != INTERACTION.NONE
 
 
 func _to_string() -> String:

@@ -138,14 +138,14 @@ func _process_jobs():
 
 func _job_break(job) -> void:
 	var tile: DataTile = GameScene.world.get_tile_v(job.pos)
-	if tile == Tiles.AIR:
+	if tile == DataTile.AIR:
 		print("[Character] Tried to break air at ", str(job.pos), ", character at ", str(current_pos))
 		remove_active_job()
 		return
 	else:
 		inventory.add_items(tile.drops, 1)
 		# TODO: drop items if inventory full
-		GameScene.world.place_tile_v(job.pos, Tiles.AIR)
+		GameScene.world.place_tile_v(job.pos, DataTile.AIR)
 		print("[Character] broke tile ", tile, " at ", job.pos)
 	remove_active_job()
 	return
@@ -153,12 +153,12 @@ func _job_break(job) -> void:
 
 func _job_place(job) -> void:
 	var world_tile: DataTile = GameScene.world.get_tile_v(job.pos)
-	if world_tile != Tiles.AIR:
+	if world_tile != DataTile.AIR:
 		print("[Character:_job_place] Position %s is not air at time of job execution, not placing." % [job.pos])
 		remove_active_job()
 		return
 	var tile_string: String = job.data
-	var tile: DataTile = DataTile.tile(tile_string)
+	var tile: DataTile = Tiles.find(tile_string)
 	if tile:
 		if inventory.has(tile_string):
 			inventory.remove_items(tile_string)

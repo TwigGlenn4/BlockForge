@@ -1,0 +1,31 @@
+format-version: 1
+tiles:
+  "blockforge:portal_base_stone":
+    texture:
+      atlas: "portal.png"
+      x: 0
+      y: 0
+    name: "Portal"
+    background: "blockforge:stone"
+  "blockforge:portal_base_cobble":
+    texture:
+      atlas: "portal.png"
+      x: 0
+      y: 1
+    name: "Portal"
+    background: "blockforge:cobblestone"
+  "blockforge:portal_top":
+    texture:
+      atlas: "portal.png"
+      x: 1
+      y: 0
+    name: "Portal"
+    background: none
+  "blockforge:portal_btm":
+    texture:
+      atlas: "portal.png"
+      x: 1
+      y: 1
+    name: "Portal"
+    background: none
+    interaction: craft

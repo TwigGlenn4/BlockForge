@@ -3,12 +3,12 @@ class_name TileParser
 const BUILTIN_TILE_PATH := "res://data/tiles"
 const CURRENT_FORMAT_VERSION := 1
 
-static var parser_has_started := false
+static var parsing_started := false
 
 static func run() -> void:
-	if parser_has_started:
+	if parsing_started:
 		return
-	parser_has_started = true
+	parsing_started = true
 	print()
 
 	_load_path(BUILTIN_TILE_PATH)
@@ -87,8 +87,17 @@ static func _parse_tile(path:String, tile_id: String, tile_def: Dictionary) -> b
 	
 	# parse texture
 	var texture_atlas = texture_dict["atlas"]
-	var texture_x = texture_dict["x"]
-	var texture_y = texture_dict["y"]
+	var texture_x: int = texture_dict["x"]
+	var texture_y: int = texture_dict["y"]
+
+	#TODO: replace this with proper atlas name handling in DataTexture
+	match texture_atlas:
+		"terrain.png":
+			texture_atlas = 1
+		"portal.png":
+			texture_atlas = 2
+		"underground.png":
+			texture_atlas = 3
 
 	# parse name option
 	var name := tile_id # default to self
@@ -133,5 +142,16 @@ static func _parse_tile(path:String, tile_id: String, tile_def: Dictionary) -> b
 		if layer_def.to_lower() == "true":
 			deco_layer = true
 
-	print("[TileParser]       Parsed %-28s: name=%-28s, drops=%-28s, background=%-28s, interaction=%1s, deco-layer=%-5s, texture=%s(%d,%d)" % [tile_id, name, drops, background, interaction, deco_layer, texture_atlas, texture_x, texture_y])
+	# parse group option
+	var group_list: PackedStringArray = [] # default to no groups
+	if tile_def.has("groups"): # check if key exists before accessing
+		var group_def = tile_def["groups"] # explicit cast to string to safely handle invalid options
+		if typeof(group_def) == TYPE_ARRAY:
+			group_list = PackedStringArray(group_def)
+	
+	print("[TileParser]       Parsed %-28s: name=%-28s, drops=%-28s, background=%-28s, interaction=%1s, deco-layer=%-5s, texture=%s(%d,%d), groups=%s" % [tile_id, name, drops, background, interaction, deco_layer, texture_atlas, texture_x, texture_y, group_list])
+	
+	var d_texture = DataTexture.new(tile_id, texture_atlas, Vector2i(texture_x, texture_y))
+	Tiles.register(tile_id, d_texture, name, drops, background, interaction, deco_layer, group_list)
+
 	return true
