@@ -12,13 +12,12 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 * * currently using a workaround to map atlas filenames to numbers
 * * Need to read image from filename given by tile def, create a new TileSetAtlasSource with it, add to DataTexture tile_set, and store index to get texture back out
 
-* Inventory.add_items() take an ItemStackString and a multiplier. To allow passing DataTile.drops directly to Inventory.add_items()
-
 / Parsing data-driven classes
 * X Caves & ores
-* * Tiles
+* / Tiles
+* * * background and deco-layer properties are still non-functional
 * * Recipe lists
-* * Textures? surely texture atlas is scriptable
+* * Textures? I want to be able to reference TileSetAtlasSource by filename in tile defs
 
 * Expand Job system
 * X Job IDs (UUID): reference a job in a player's job queue for action
@@ -55,6 +54,8 @@ x X X Crafting Progress emits craft_complete and update_job_status signals. Conn
 X Fix overlapping place jobs.
 X X When two place jobs are created at the same position before the character reaches it, the second job still places and effectively deletes an item.
 X X Fix this with a check that the place job is still valid when the character arrives.
+
+X Inventory.add_items() take an ItemStackString and a multiplier. To allow passing DataTile.drops directly to Inventory.add_items()
 
 
 OLDER TODO

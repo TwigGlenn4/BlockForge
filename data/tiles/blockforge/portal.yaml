@@ -21,6 +21,7 @@ tiles:
       y: 0
     name: "Portal"
     background: none
+    deco-layer: true
   "blockforge:portal_btm":
     texture:
       atlas: "portal.png"
@@ -29,3 +30,4 @@ tiles:
     name: "Portal"
     background: none
     interaction: craft
+    deco-layer: true

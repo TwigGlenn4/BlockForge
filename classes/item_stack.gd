@@ -73,7 +73,7 @@ func get_item() -> DataItem:
 	if tracked:
 		return item_list[0]
 
-	return DataItem.all_items[item_id]
+	return DataItem.item(item_id)
 
 ## Parse an itemstack string into an ItemStack
 static func parse(itemstack_string: String) -> ItemStack:

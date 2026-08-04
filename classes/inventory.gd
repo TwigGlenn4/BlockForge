@@ -31,15 +31,18 @@ func has_recipe_ingredients(recipe_id: String, recipe_count: int = 1) -> bool:
 	return has_all_ingredients
 
 
-# currently assuming items will be referred to with strings, likely to change.
-## Add a number of (untracked) items to the inventory, stacking into existing stacks where possible.
+## Add a multiple of (untracked) ItemStacks to the inventory, stacking into existing stacks where possible.
 ## Returns the number of leftover items that don't fit into the inventory
-func add_items( item_name:String, count:int = 1) -> int: 
+func add_items(itemstack_string: String, multiplier:int = 1) -> int: 
 	_contents_changed = true
 	# print("[Inventory.add_items(%s, %d)]" % [item_name, count])
+	# break out itemstack_string into item_name and count
+	var item_stack = ItemStack.parse(itemstack_string)
+	var item_id = item_stack.item_id
+	var count = item_stack.count * multiplier
 	# add to existing stacks
 	for stack:ItemStack in contents: # for every stack in contents
-		if stack != null and stack.item_id == item_name:    # if the item name matches, stack into this stack
+		if stack != null and stack.item_id == item_id:    # if the item name matches, stack into this stack
 			count = stack.add_items(count)
 
 			if count <= 0:
@@ -48,7 +51,7 @@ func add_items( item_name:String, count:int = 1) -> int:
 	# create new stack(s) if needed
 	for i:int in contents.size():
 		if contents[i] == null:
-			var stack: ItemStack = ItemStack.new(item_name)
+			var stack: ItemStack = ItemStack.new(item_id)
 			count = stack.add_items(count)
 			print("[Inventory.add_items()] created stack of ", stack)
 			contents[i] = stack

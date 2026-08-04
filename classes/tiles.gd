@@ -14,7 +14,7 @@ static var AIR = DataTile.new("air", DataTexture.new("air", -1, Vector2i(0,0)))
 static func register(tile_id: String, texture: DataTexture, name: String = "", drop: String = "", background: String = "",
                      interaction: DataTile.INTERACTION = DataTile.INTERACTION.NONE, deco_layer: bool = false, groups: PackedStringArray = []) -> DataTile:
 	
-	print("[Tiles] Registering ", tile_id)
+	# print("[Tiles] Registering ", tile_id)
 	var tile = DataTile.new(tile_id, texture, name, drop, background, interaction, deco_layer)
 	_registered_tiles.set(tile_id, tile)
 
