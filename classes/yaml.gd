@@ -47,6 +47,15 @@ static func _parse_yaml(text: String) -> Dictionary:
 			continue
 		var key := content.substr(0, colon).strip_edges()
 		var rest := content.substr(colon + 1).strip_edges()
+		if key.begins_with("\"") and not key.ends_with("\""): # if key starts with a quote but does not end in a quote, match the quote
+			var end_quote_idx = content.find("\"", 1)
+			colon = content.find(":", end_quote_idx)
+			if colon < 0:
+				continue
+			key = content.substr(0, colon).strip_edges()
+			if key.begins_with("\"") and key.ends_with("\""):
+				key = key.substr(1, key.length()-2)
+			rest = content.substr(colon + 1).strip_edges()
 		if rest.is_empty():
 			var child: Dictionary = {}
 			parent[key] = child

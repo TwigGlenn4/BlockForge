@@ -47,6 +47,7 @@ static func _on_selected_character_inventory_changed_internal() -> void:
 
 
 func _ready():
+
 	# set static references
 	# these don't use get_node_or_null() because these node references aren't optional.
 	selected_character = get_node("World/Character")
@@ -55,3 +56,6 @@ func _ready():
 	inventory_ui = get_node("World/MainCamera/MainUI/InventoryUI")
 	world_canvas_layer = get_node("World/WorldCanvasLayer")
 	main_camera = get_node("World/MainCamera")
+
+	TileParser.run()
+	print()

@@ -10,6 +10,8 @@ https://trello.com/b/nR7499xf/blockheadsrenewedg
 
 * Convert custom tile atlas to Godot texture atlas
 
+* Inventory.add_items() take an ItemStackString and a multiplier. To allow passing DataTile.drops directly to Inventory.add_items()
+
 / Parsing data-driven classes
 * X Caves & ores
 * * Tiles

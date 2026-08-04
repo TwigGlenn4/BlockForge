@@ -1,0 +1,123 @@
+format-version: 1
+tiles:
+  "blockforge:texture_missing_atlas":
+    texture:
+      x: 1
+      y: 0
+  "blockforge:texture_missing_x":
+    texture:
+      atlas: "terrain.png"
+      y: 0
+  "blockforge:texture_missing_y":
+    texture:
+      atlas: "terrain.png"
+      x: 1
+  "blockforge:texture_empty":
+    texture:
+  "blockforge:texture_coords_not_int":
+    texture:
+      atlas: "terrain.png"
+      x: g
+      y: h
+  "blockforge:texture_missing":
+  "blockforge:texture_only":
+    texture:
+      atlas: "terrain.png"
+      x: 1
+      y: 0
+  
+  "blockforge:name":
+    texture:
+      atlas: "terrain.png"
+      x: 1
+      y: 0
+    name: "Named Item"
+
+  "blockforge:drop_empty":
+    texture:
+      atlas: "terrain.png"
+      x: 2
+      y: 0
+    drops: ""
+  "blockforge:drop_none":
+    texture:
+      atlas: "terrain.png"
+      x: 2
+      y: 0
+    drops: "none"
+  "blockforge:drop_tile":
+    texture:
+      atlas: "terrain.png"
+      x: 2
+      y: 0
+    drops: "blockforge:drop_none"
+  
+  "blockforge:bg_empty":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    background: ""
+  "blockforge:bg_none":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    background: "none"
+  "blockforge:bg_tile":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    background: "blockforge:bg_none"
+
+
+  "blockforge:interaction_empty":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    interaction: ""
+  "blockforge:interaction_craft":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    interaction: "craft"
+  "blockforge:interaction_bad":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    interaction: "invalid"
+
+  "blockforge:deco_true":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    deco-layer: true
+  "blockforge:deco_str_true":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    deco-layer: "true"
+  "blockforge:deco_false":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    deco-layer: false
+  "blockforge:deco_invalid":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    deco-layer: invalid
+  "blockforge:deco_invalid_int":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    deco-layer: 7

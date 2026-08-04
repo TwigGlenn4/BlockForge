@@ -1,0 +1,72 @@
+format-version: 1
+tiles:
+  "blockforge:dirt":
+    texture:
+      atlas: "terrain.png"
+      x: 1
+      y: 0
+    name: "Dirt"
+  "blockforge:stone":
+    texture:
+      atlas: "terrain.png"
+      x: 2
+      y: 0
+    name: "Stone"
+  "blockforge:cobblestone":
+    texture:
+      atlas: "terrain.png"
+      x: 3
+      y: 0
+    name: "Cobblestone"
+  "blockforge:water":
+    texture:
+      atlas: "terrain.png"
+      x: 4
+      y: 0
+    drops: "none"
+    background: "none"
+  "blockforge:sand":
+    texture:
+      atlas: "terrain.png"
+      x: 5
+      y: 0
+    name: "Sand"
+  "blockforge:snow":
+    texture:
+      atlas: "terrain.png"
+      x: 6
+      y: 0
+    name: "Grass with Snow"
+    drops: "blockforge:dirt"
+    background: "blockforge:dirt"
+  "blockforge:grass":
+    texture:
+      atlas: "terrain.png"
+      x: 7
+      y: 0
+    name: "Grass"
+    drops: "blockforge:dirt"
+    background: "blockforge:dirt"
+  "blockforge:log":
+    texture:
+      atlas: "terrain.png"
+      x: 8
+      y: 0
+    name: "Log"
+    background: "none"
+  "blockforge:leaves":
+    texture:
+      atlas: "terrain.png"
+      x: 9
+      y: 0
+    name: "Leaves"
+    drops: "blockforge:leaves 3"
+    deco-layer: true
+    background: "none"
+  "blockforge:lava":
+    texture:
+      atlas: "terrain.png"
+      x: 10
+      y: 0
+    drops: "none"
+    background: "none"
