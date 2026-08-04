@@ -1,6 +1,5 @@
 class_name TileParser
 
-const BUILTIN_TILE_PATH := "res://data/tiles"
 const CURRENT_FORMAT_VERSION := 1
 
 static var parsing_started := false
@@ -11,12 +10,16 @@ static func run() -> void:
 	parsing_started = true
 	print()
 
-	_load_path(BUILTIN_TILE_PATH)
+	for data_path: String in GameScene.data_path_list:
+		if !data_path.ends_with("/"): # add path separator if needed
+			data_path += "/"
+		_load_path(data_path +"tiles")
 
 static func _load_path(path: String) -> void:
 	var dir := DirAccess.open(path)
 	if dir == null:
-		printerr("[TileParser] could not load BUILTIN_TILE_PATH='%s'. Error: %s" % [BUILTIN_TILE_PATH, DirAccess.get_open_error()])
+		printerr("[TileParser] could not load path '%s'. Error: %s" % [path, DirAccess.get_open_error()])
+		return
 	print("[TileParser] Reading path '%s'" % [path])
 	
 	for namespace_dirname in dir.get_directories():

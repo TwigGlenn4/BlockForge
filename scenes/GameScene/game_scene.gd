@@ -32,6 +32,10 @@ static var selected_character_changed: Signal = _create_static_signal("selected_
 static var selected_character_inventory_changed: Signal = _create_static_signal("selected_character_inventory_changed")
 
 
+static var data_path_list: PackedStringArray = ["res://data"]
+
+
+
 # signal functions
 ## Create a static signal on Interactor and return the signal
 ## Usage: `static var signal_name: Signal = _create_static_signal("signal_name")`.

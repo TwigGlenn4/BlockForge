@@ -1,8 +1,6 @@
 extends Control
 
 const HOTBAR_NUM_SLOTS: int = 8
-static var SLOT_TEXTURE = load("res://assets/textures/atlas/inventory_slot.png")
-
 static var HOTBAR_SLOT_SCENE = preload("res://scenes/GameScene/HotbarSlot/HotbarSlot.tscn")
 
 var hotbar: Array[HotbarSlot]
