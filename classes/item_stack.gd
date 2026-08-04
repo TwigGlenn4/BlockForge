@@ -1,18 +1,20 @@
 class_name ItemStack
 
-var item_name:String
+var item_id: String
+var item_name: String
 var count:int
 var stack_max: int
 var tracked: bool # determines if item_list should be used. 
 var item_list: Array[DataItem] = [] # Needed for TOOL, ARMOR, and CONTAINER items to retain individual data.
 
 
-func _init( item_name_string:String, count: int = 0):
-	item_name = item_name_string
+func _init(item_id: String, count: int = 0):
+	self.item_id = item_id
 	self.count = count
 
-	var data_item = DataItem.item(item_name)
+	var data_item = DataItem.item(item_id)
 	stack_max = data_item.stack_max
+	item_name = data_item.name
 
 	if data_item.tracked():
 		tracked = true
@@ -23,7 +25,7 @@ func _init( item_name_string:String, count: int = 0):
 
 func add_items( num:int ) -> int: # adds items and returns remainder to add if stack is full.
 	if tracked:
-		print("[ItemStack.add_items(%d)]: %s is tracked. Use ItemStack.add_tracked_item( item_name:DataItem )" % [num, item_name])
+		print("[ItemStack.add_items(%d)]: %s is tracked. Use ItemStack.add_tracked_item( item_id:DataItem )" % [num, item_id])
 		return 0
 
 	if num < 0:
@@ -45,7 +47,7 @@ func add_items( num:int ) -> int: # adds items and returns remainder to add if s
 
 func remove_items( num:int ) -> bool: # removes items and returns remainder to remove if stack is empty
 	if tracked:
-		print("[ItemStack.remove_items(%d)]: %s is tracked. Use ItemStack.remove_tracked_item( item_name:DataItem )" % [num, item_name])
+		print("[ItemStack.remove_items(%d)]: %s is tracked. Use ItemStack.remove_tracked_item( item_id:DataItem )" % [num, item_id])
 		return 0
 
 	if num < 0:
@@ -61,7 +63,7 @@ func remove_items( num:int ) -> bool: # removes items and returns remainder to r
 		return -new_count
 
 func _to_string() -> String:
-	return str(item_name, " ", count)
+	return str(item_id, " ", count)
 
 ## Returns a DataItem representing the first available item, or DataItem.UNDEFINED
 func get_item() -> DataItem: 
@@ -71,7 +73,7 @@ func get_item() -> DataItem:
 	if tracked:
 		return item_list[0]
 
-	return DataItem.all_items[item_name]
+	return DataItem.all_items[item_id]
 
 ## Parse an itemstack string into an ItemStack
 static func parse(itemstack_string: String) -> ItemStack:

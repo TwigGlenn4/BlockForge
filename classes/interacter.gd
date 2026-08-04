@@ -187,11 +187,11 @@ func _on_world_interactor_click(_event: InputEvent) -> void:
 func _tile_interacion(block_pos: Vector2i, tile: DataTile) -> void:
 	match tile.interactable:
 		DataTile.INTERACTION.CRAFT:
-			print("Interacting with crafting block ", tile.name, " at ", block_pos)
+			print("Interacting with crafting block ", tile.tile_id, " at ", block_pos)
 
 			if active_recipe_selector:
 				active_recipe_selector.queue_free()
 
 			active_recipe_selector = RECIPE_SELECTOR_SCENE.instantiate()
-			active_recipe_selector.setup(tile.name, block_pos)
+			active_recipe_selector.setup(tile.tile_id, block_pos)
 			GameScene.main_ui.add_child(active_recipe_selector)

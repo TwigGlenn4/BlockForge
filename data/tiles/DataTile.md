@@ -43,7 +43,7 @@ The `tile_id` and `texture` items must be included. The other items are optional
 * ItemStackString: Drops a number of items of a given type. An ItemStackString is an item_id and optionally a count. ex. `"blockforge:dirt 2"` or `"blockforge:grass"`.
 * `none`: Drops nothing.
 
-`background`: What tile remains in the background layer when this tile is destroyed
+`background`: What tile is placed in the background layer when this tile is placed
 
 * `""` (Empty string): Uses itself as the background. (default)
 * Tile ID: Use a different tile as the background. ex. `"blockforge:dirt"`.

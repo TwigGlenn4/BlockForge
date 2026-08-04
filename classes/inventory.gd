@@ -12,7 +12,7 @@ func _init(num_slots:int = 25) -> void:
 func has(item_name:String, count:int = 1) -> bool:
 	var num_found = 0
 	for stack:ItemStack in contents: # for every stack in contents
-		if stack && stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
+		if stack && stack.item_id == item_name:    # if the item name matches, increment num_found by the number of items in the stack
 			num_found += stack.count
 			if num_found >= count:       # if enough items have been found, return num found
 				return true
@@ -25,8 +25,8 @@ func has_recipe_ingredients(recipe_id: String, recipe_count: int = 1) -> bool:
 
 	for ingredient: ItemStack in recipe.ingredients: # for each item in ingredients, disable this recipe if any ingredient is missing
 		var items_needed: int = ingredient.count * recipe_count
-		if not self.has(ingredient.item_name, items_needed):
-			print("[Inventory:has_recipe_ingredients] inventory has less than %d of %s for recipe %s" % [items_needed, ingredient.item_name, recipe_id])
+		if not self.has(ingredient.item_id, items_needed):
+			print("[Inventory:has_recipe_ingredients] inventory has less than %d of %s for recipe %s" % [items_needed, ingredient.item_id, recipe_id])
 			has_all_ingredients = false
 	return has_all_ingredients
 
@@ -39,7 +39,7 @@ func add_items( item_name:String, count:int = 1) -> int:
 	# print("[Inventory.add_items(%s, %d)]" % [item_name, count])
 	# add to existing stacks
 	for stack:ItemStack in contents: # for every stack in contents
-		if stack != null and stack.item_name == item_name:    # if the item name matches, stack into this stack
+		if stack != null and stack.item_id == item_name:    # if the item name matches, stack into this stack
 			count = stack.add_items(count)
 
 			if count <= 0:
@@ -66,7 +66,7 @@ func remove_items( item_name:String, count:int = 1) -> bool:
 		_contents_changed = true
 		for i in contents.size(): # for every stack in contents
 			var stack: ItemStack = contents[i]
-			if stack && stack.item_name == item_name:    # if the item name matches, increment num_found by the number of items in the stack
+			if stack && stack.item_id == item_name:    # if the item name matches, increment num_found by the number of items in the stack
 
 				count = stack.remove_items(count)
 				if stack.count <= 0: # this stack has been emptied, remove it
@@ -81,7 +81,7 @@ func remove_items( item_name:String, count:int = 1) -> bool:
 func count_items( item_name:String ) -> int:
 	var count = 0;
 	for stack:ItemStack in contents:
-		if stack && stack.item_name == item_name:
+		if stack && stack.item_id == item_name:
 			count += stack.count
 
 	return count

@@ -1,5 +1,5 @@
 # TileIdRegistry — small int IDs ↔ TileSet atlas source + atlas coords (0 = air).
-# Built from DataTile.all_tiles / Tiles.*; atlas indices match editor main_tileset.tres.
+# Built from Tiles.get_all_tiles(); atlas indices match editor main_tileset.tres.
 class_name TileIdRegistry
 extends RefCounted
 
@@ -27,15 +27,15 @@ static func ensure_ready() -> void:
 
 
 static func _register(tile: DataTile) -> int:
-	if _name_to_id.has(tile.name):
-		return int(_name_to_id[tile.name])
+	if _name_to_id.has(tile.tile_id):
+		return int(_name_to_id[tile.tile_id])
 	var id: int = _next_id
 	_next_id += 1
-	_name_to_id[tile.name] = id
+	_name_to_id[tile.tile_id] = id
 	_id_to_atlas[id] = {
 		"atlas": tile.texture.atlas,
 		"pos": tile.texture.pos,
-		"name": tile.name,
+		"name": tile.tile_id,
 	}
 	return id
 

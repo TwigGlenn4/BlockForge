@@ -190,7 +190,7 @@ func _job_craft(job) -> void:
 		# remove items from inventory
 		var recipe = DataRecipe.find(job.data)
 		for ingredient: ItemStack in recipe.ingredients:
-			inventory.remove_items(ingredient.item_name, ingredient.count * job.data2)
+			inventory.remove_items(ingredient.item_id, ingredient.count * job.data2)
 		# update inventory when craft_complete (attach signal)
 		active_crafting_progress.craft_complete.connect(_on_craft_complete)
 		# update job when update_job_status fires (attach signal)
@@ -211,12 +211,12 @@ func _on_craft_complete(job_uuid: UUID, quantity_crafted: int) -> void:
 
 	var recipe = DataRecipe.find(job_active.data)
 	for result: ItemStack in recipe.results:
-		print("[Character:_on_craft_complete()] attempting to add %d of %s to inventory" % [quantity_crafted * result.count, result.item_name])
-		var items_left_over = inventory.add_items(result.item_name, quantity_crafted * result.count)
+		print("[Character:_on_craft_complete()] attempting to add %d of %s to inventory" % [quantity_crafted * result.count, result.item_id])
+		var items_left_over = inventory.add_items(result.item_id, quantity_crafted * result.count)
 
 		if items_left_over > 0:
-			print("[Character:_on_craft_complete()] dropping %d of %s that did not fit in inventory" % [items_left_over, result.item_name])
-			drop_items(result.item_name, items_left_over)
+			print("[Character:_on_craft_complete()] dropping %d of %s that did not fit in inventory" % [items_left_over, result.item_id])
+			drop_items(result.item_id, items_left_over)
 
 
 func _on_update_craft_job_status(job_uuid: UUID, quantity_remaining: int) -> void:
@@ -239,12 +239,12 @@ func _on_craft_cancelled(job_uuid: UUID, quantity_remaining: int) -> void:
 	# refund items
 	var recipe = DataRecipe.find(job_active.data)
 	for ingredient: ItemStack in recipe.ingredients:
-		print("[Character:_on_craft_cancelled()] attempting to refund %d of %s to inventory" % [quantity_remaining * ingredient.count, ingredient.item_name])
-		var items_left_over = inventory.add_items(ingredient.item_name, quantity_remaining * ingredient.count)
+		print("[Character:_on_craft_cancelled()] attempting to refund %d of %s to inventory" % [quantity_remaining * ingredient.count, ingredient.item_id])
+		var items_left_over = inventory.add_items(ingredient.item_id, quantity_remaining * ingredient.count)
 
 		if items_left_over > 0:
-			print("[Character:_on_craft_cancelled()] dropping %d of %s that did not fit in inventory" % [items_left_over, ingredient.item_name])
-			drop_items(ingredient.item_name, items_left_over)
+			print("[Character:_on_craft_cancelled()] dropping %d of %s that did not fit in inventory" % [items_left_over, ingredient.item_id])
+			drop_items(ingredient.item_id, items_left_over)
 	# cancel job
 	remove_active_job()
 

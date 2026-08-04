@@ -70,7 +70,7 @@ func place_tile( x: int, y: int, tile: DataTile) -> bool:
 		return false
 	var terrain_id: int = 0
 	if tile != null and tile != DataTile.AIR and tile != DataTile.UNDEFINED:
-		terrain_id = TileIdRegistry.id_from_name(tile.name)
+		terrain_id = TileIdRegistry.id_from_name(tile.tile_id)
 	if not chunk_manager.set_terrain_id(x, y, terrain_id):
 		return false
 	if tile_populator:

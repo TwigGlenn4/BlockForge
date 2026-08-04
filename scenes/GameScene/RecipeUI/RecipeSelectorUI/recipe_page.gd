@@ -22,7 +22,7 @@ func _ready() -> void:
 
 func set_recipe(recipe_id: String) -> void:
 	recipe = DataRecipe.find(recipe_id)
-	name += "_" + recipe.id
+	name = "RecipePage_" + recipe.id
 	# print("[RecipePage] Setting up page for recipe " + recipe.id)
 
 	title.text = recipe.name
@@ -49,14 +49,14 @@ func _update_contents_inv_quantity():
 
 	var result_text: String = "Result: "
 	for result: ItemStack in recipe.results:
-		var num_in_inventory: int = GameScene.selected_character.inventory.count_items(result.item_name)
+		var num_in_inventory: int = GameScene.selected_character.inventory.count_items(result.item_id)
 		result_text += str(result.count) + " " + result.item_name +  " ("+str(num_in_inventory)+"), "
 	result.text = result_text.substr(0, result_text.length()-2)
 
 	var max_recipe_quantity: int = 99 # calcs how many recipes can be made using inventory ingredients. Set to max in one craft job.
 
 	for ingredient: ItemStack in recipe.ingredients:
-		var num_in_inventory: int = GameScene.selected_character.inventory.count_items(ingredient.item_name)
+		var num_in_inventory: int = GameScene.selected_character.inventory.count_items(ingredient.item_id)
 		ingredient_text += str(ingredient.count) + " " + ingredient.item_name + " ("+str(num_in_inventory)+")\n"
 
 		var max_recipes_this_ingredient: int = num_in_inventory / ingredient.count

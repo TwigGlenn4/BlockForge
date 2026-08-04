@@ -82,7 +82,7 @@ func _validate_itemstack_list(itemstring_list: Array[String]) -> Array[ItemStack
 
 	for stack_string in itemstring_list:
 		var parsed_stack: ItemStack = ItemStack.parse(stack_string)
-		var item_string: String = parsed_stack.item_name
+		var item_string: String = parsed_stack.item_id
 
 		if !DataItem.exists(item_string): # check that item is valid and exists
 			print("WARN: [DataRecipe (id:\"",id,"\")] Item does not exist: \"",stack_string,"\"")

@@ -13,17 +13,19 @@ enum ITEM_TYPES {
 	CONTAINER,  # Tracks items inside the container
 }
 
-var name: String
+var item_id: String
 var texture: DataTexture
+var name: String
 var stack_max: int
 var item_type: ITEM_TYPES
 
-func _init(item_name:String, item_texture:DataTexture = DataTexture.UNDEFINED, item_stack_max:int = 99):
-	name = item_name
+func _init(item_id:String, item_texture:DataTexture = DataTexture.UNDEFINED, name: String = "", item_stack_max:int = 99):
+	self.item_id = item_id
 	texture = item_texture
 	stack_max = item_stack_max
+	self.name = name
 	item_type = ITEM_TYPES.SIMPLE
-	all_items[name] = self
+	all_items[item_id] = self
 
 
 static func exists(tile_name:String) -> bool:
@@ -38,7 +40,7 @@ static func item(tile_name:String) -> DataItem:
 
 
 func _to_string() -> String:
-	return str(name)
+	return str(item_id)
 
 
 func tracked() -> bool:

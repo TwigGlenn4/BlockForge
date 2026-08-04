@@ -24,7 +24,7 @@ func setup(num: int) -> void:
 
 
 func set_stack(stack: ItemStack) -> void:
-	if stack == null or stack.item_name == "":
+	if stack == null or stack.item_id == "":
 		item_icon.visible = false
 		item_icon.texture = null
 		item_count_label.text = ""
