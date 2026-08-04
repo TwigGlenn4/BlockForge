@@ -6,11 +6,13 @@ const CONFIG_PATH := "res://data/world_config.yaml"
 
 static var _cfg: Dictionary = {}
 static var _loaded := false
+static var _chunk_size: int = -1
 
 
 static func reload() -> void:
 	_cfg = Yaml.load_yaml(CONFIG_PATH)
 	_loaded = true
+	_chunk_size = -1
 	WorldConfig.logv("[WorldConfig] Loaded %s" % CONFIG_PATH)
 
 
@@ -25,7 +27,9 @@ static func get_value(key: String, default: Variant = null) -> Variant:
 
 
 static func chunk_size() -> int:
-	return int(get_value("chunk_size", 64))
+	if _chunk_size < 0:
+		_chunk_size = int(get_value("chunk_size", 64))
+	return _chunk_size
 
 
 static func world_chunks_wide_max() -> int:

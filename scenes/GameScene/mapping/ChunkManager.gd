@@ -148,7 +148,7 @@ func get_wall_id(gx: int, gy: int) -> int:
 	return data.get_wall(local.x, local.y)
 
 
-## Scan+store surface for every local-x in chunk column. Call after create/load.
+## Scan+store surface for every local-x in chunk column. Call after load (no gen surfaces).
 func cache_column_surfaces(cx: int) -> void:
 	_ensure_surface_cache()
 	var cs: int = WorldConfig.chunk_size()
@@ -157,6 +157,18 @@ func cache_column_surfaces(cx: int) -> void:
 		var wx: int = Helpers.wrap_block_x(wcx * cs + lx)
 		var h: int = _scan_surface_height(wx)
 		_surface[wx] = h
+
+
+## Seed surface cache from fill_column's per-lx heights (avoids rescan after gen).
+func seed_column_surfaces(cx: int, surfaces: PackedInt32Array) -> void:
+	_ensure_surface_cache()
+	var cs: int = WorldConfig.chunk_size()
+	var wcx: int = wrap_column(cx)
+	var n: int = mini(cs, surfaces.size())
+	for lx in n:
+		var wx: int = Helpers.wrap_block_x(wcx * cs + lx)
+		var h: int = surfaces[lx]
+		_surface[wx] = h if h >= 0 else -1
 
 
 func _invalidate_surface(gx: int) -> void:
@@ -189,8 +201,10 @@ func _scan_surface_height(gx: int) -> int:
 		var data: ChunkData = get_chunk(cx, cy)
 		if data == null:
 			continue
-		for ly in range(cs - 1, -1, -1):
-			var tid: int = ChunkData.unpack_terrain(data.get_cell(lx, ly))
+		var cells: PackedInt64Array = data.cells
+		var dcs: int = data.size
+		for ly in range(dcs - 1, -1, -1):
+			var tid: int = ChunkData.unpack_terrain(cells[ly * dcs + lx])
 			if tid == 0 or tid == id_log or tid == id_leaves:
 				continue
 			return cy * cs + ly

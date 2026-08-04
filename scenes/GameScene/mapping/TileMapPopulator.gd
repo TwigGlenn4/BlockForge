@@ -123,7 +123,7 @@ func _align_dict(layers: Dictionary, camera_px: float, period: float, cs: int, t
 
 func _populate_internal(data: ChunkData) -> TileMapLayer:
 	var key := Vector2i(data.chunk_x, data.chunk_y)
-	var cs: int = WorldConfig.chunk_size()
+	var cs: int = data.size if data.size > 0 else WorldConfig.chunk_size()
 	var ts: int = WorldConfig.tile_size_px()
 	var fg: TileMapLayer = _ensure_layer(_fg_layers, maps_root, key, data, "Chunk", cs, ts, Color.WHITE)
 	var bg: TileMapLayer = _ensure_layer(
@@ -136,18 +136,21 @@ func _populate_internal(data: ChunkData) -> TileMapLayer:
 
 	_sync_debug_outline(fg, cs, ts)
 
-	TileIdRegistry.ensure_ready()
-	for ly in cs:
-		for lx in cs:
-			var packed: int = data.get_cell(lx, ly)
-			var terrain_id: int = ChunkData.unpack_terrain(packed)
-			var wall_id: int = ChunkData.unpack_data(packed)
-			# Backfill wall for older saves that only have FG solids.
-			if wall_id <= 0 and terrain_id > 0:
-				wall_id = WallTiles.wall_id_for(terrain_id)
-			var cell := Vector2i(lx, cs - 1 - ly)
-			_set_layer_cell(fg, cell, terrain_id)
-			_set_layer_cell(bg, cell, wall_id)
+	var atlas_by_id: Array = TileIdRegistry.atlas_by_id_array()
+	var cells: PackedInt64Array = data.cells
+	var n: int = cells.size()
+	for i in n:
+		var packed: int = cells[i]
+		var terrain_id: int = ChunkData.unpack_terrain(packed)
+		var wall_id: int = ChunkData.unpack_data(packed)
+		# Backfill wall for older saves that only have FG solids.
+		if wall_id <= 0 and terrain_id > 0:
+			wall_id = WallTiles.wall_id_for(terrain_id)
+		var lx: int = i % cs
+		var ly: int = int(i / cs)
+		var cell := Vector2i(lx, cs - 1 - ly)
+		_set_layer_cell_cached(fg, cell, terrain_id, atlas_by_id)
+		_set_layer_cell_cached(bg, cell, wall_id, atlas_by_id)
 	return fg
 
 
@@ -171,6 +174,23 @@ func _ensure_layer(
 			root.add_child(layer)
 		dict[key] = layer
 	return layer
+
+
+## Skip air/empty writes after clear(); only paint solid cells.
+func _set_layer_cell_cached(
+	layer: TileMapLayer, cell: Vector2i, terrain_id: int, atlas_by_id: Array
+) -> void:
+	if terrain_id <= 0:
+		return
+	if terrain_id >= atlas_by_id.size():
+		return
+	var info: Variant = atlas_by_id[terrain_id]
+	if info == null:
+		return
+	var d: Dictionary = info
+	if d.is_empty():
+		return
+	layer.set_cell(cell, int(d["atlas"]), d["pos"])
 
 
 func _set_layer_cell(layer: TileMapLayer, cell: Vector2i, terrain_id: int) -> void:

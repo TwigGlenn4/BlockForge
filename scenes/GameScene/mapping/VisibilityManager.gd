@@ -64,15 +64,13 @@ func begin_streaming() -> void:
 
 
 func _on_viewport_size_changed() -> void:
-	if not _streaming_enabled:
-		var vp := get_viewport()
-		if vp:
-			_last_viewport_size = Vector2i(vp.get_visible_rect().size)
-		return
 	var vp := get_viewport()
 	if vp == null:
 		return
 	var sz: Vector2i = Vector2i(vp.get_visible_rect().size)
+	if not _streaming_enabled:
+		_last_viewport_size = sz
+		return
 	if sz == _last_viewport_size:
 		return
 	var grew: bool = sz.x > _last_viewport_size.x or sz.y > _last_viewport_size.y
@@ -272,12 +270,13 @@ func _try_load_column(column_x: int) -> bool:
 func _generate_column_async(column_x: int) -> void:
 	# TODO: Async/threaded generation (WorkerThreadPool) for fill_column heavy work
 	var tall: int = WorldConfig.world_chunks_tall_max()
-	var rows: Array = []
 	if _generator == null or not _generator.has_method("fill_column"):
 		push_error("[Visibility] Generator missing fill_column")
 		_generating.erase(column_x)
 		return
-	rows = await _generator.fill_column(column_x)
+	var result: Dictionary = await _generator.fill_column(column_x)
+	var rows: Array = result.get("rows", [])
+	var surfaces: PackedInt32Array = result.get("surfaces", PackedInt32Array())
 
 	# Materialize rows → ChunkData, always save to disk before populate
 	var col: Array = []
@@ -296,7 +295,10 @@ func _generate_column_async(column_x: int) -> void:
 		for c in col:
 			populator.populate(c as ChunkData)
 		populator.end_log_batch()
-	chunk_manager.cache_column_surfaces(column_x)
+	if surfaces.size() > 0:
+		chunk_manager.seed_column_surfaces(column_x, surfaces)
+	else:
+		chunk_manager.cache_column_surfaces(column_x)
 	_generating.erase(column_x)
 	column_needed.emit(column_x)
 
