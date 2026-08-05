@@ -82,6 +82,22 @@ func place_tile_v(pos: Vector2i, tile: DataTile) -> bool:
 	return place_tile(pos.x, pos.y, tile)
 
 
+## Place or clear a lantern light at (x,y). Uses item_id; does not change terrain/wall.
+func set_torch(x: int, y: int, enabled: bool = true) -> bool:
+	return set_lantern(x, y, enabled)
+
+
+func set_lantern(x: int, y: int, enabled: bool = true) -> bool:
+	if chunk_manager == null:
+		return false
+	var item_id: int = ChunkLightManager.lantern_item_id() if enabled else 0
+	if not chunk_manager.set_item_id(x, y, item_id):
+		return false
+	if tile_populator and tile_populator.light_manager:
+		tile_populator.light_manager.sync_global_cell(Helpers.wrap_block_x(x), y)
+	return true
+
+
 # place_tile_overwrite(): place a tile if the existing tile is contained in overwrite_tiles array. Returns true if placed.
 func place_tile_overwrite(x: int, y: int, tile, overwrite_tiles):
 	if tile_matches(x, y, overwrite_tiles):

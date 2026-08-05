@@ -161,6 +161,24 @@ func get_wall_id(gx: int, gy: int) -> int:
 	return data.get_wall(local.x, local.y)
 
 
+## Set item_id bits (lantern etc). Preserves terrain and wall.
+func set_item_id(gx: int, gy: int, item_id: int) -> bool:
+	var tall_px: int = WorldConfig.world_chunks_tall_max() * WorldConfig.chunk_size()
+	if gy < 0 or gy >= tall_px:
+		return false
+	var cxy := global_to_chunk(gx, gy)
+	var data: ChunkData = get_chunk(cxy.x, cxy.y)
+	if data == null:
+		return false
+	var local := global_to_local(gx, gy)
+	var cur: int = data.get_cell(local.x, local.y)
+	data.set_cell_packed(
+		local.x, local.y,
+		ChunkData.pack_cell(ChunkData.unpack_terrain(cur), item_id, ChunkData.unpack_data(cur))
+	)
+	return true
+
+
 ## Scan+store surface for every local-x in chunk column. Call after load (no gen surfaces).
 func cache_column_surfaces(cx: int) -> void:
 	_ensure_surface_cache()

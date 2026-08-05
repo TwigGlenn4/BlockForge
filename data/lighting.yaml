@@ -1,0 +1,27 @@
+# Lighting — ambient + per-source light params / decoration stubs.
+# Lantern: plain soft PointLight2D (walls only) + Bresenham LOS via wall shader map.
+# No LOS-baked light cookies. No visible ambient occlusion overlay.
+
+masks:
+  blocks: 1 # Foreground TileMapLayer
+  walls: 2 # Background / wall TileMapLayer (receives lantern PointLight2D)
+
+mask:
+  leak_radius: 2 # Corner leak: unmask blocked cells visible from lit rim (Chebyshev)
+
+ambient:
+  modulate: [0.55, 0.55, 0.62, 1.0]
+
+bevel:
+  edge_px: 2 # Border width in pixels
+  darken: 0.70 # Top / right edges
+  brighten: 1.30 # Bottom / left edges
+
+sources:
+  lantern:
+    item_id: 1
+    energy: 3
+    radius_px: 360
+    color: [1.0, 0.72, 0.35, 1.0]
+    item_cull_mask: 2 # walls only
+    sprite: res://assets/textures/decoration/lantern.png

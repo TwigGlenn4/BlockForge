@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://d0pb0x0u4pjt7" path="res://scenes/GameScene/mapping/TileMapPopulator.gd" id="m_tp"]
 [ext_resource type="Script" uid="uid://dnxn0jme6xkm5" path="res://scenes/GameScene/mapping/VisibilityManager.gd" id="m_vm"]
 [ext_resource type="Script" uid="uid://c1kmhvlu4wdu2" path="res://scenes/GameScene/mapping/WorldInitializer.gd" id="m_wi"]
+[ext_resource type="Script" path="res://scenes/GameScene/mapping/ChunkLightManager.gd" id="m_cl"]
 
 [node name="GameScene" type="Node2D" unique_id=115789075]
 script = ExtResource("1_xqlox")
@@ -39,6 +40,12 @@ z_index = 0
 [node name="DecorationsMaps" type="Node2D" parent="World/Mapping"]
 z_index = 10
 
+[node name="LightsRoot" type="Node2D" parent="World/Mapping"]
+z_index = -5
+
+[node name="WorldCanvasModulate" type="CanvasModulate" parent="World/Mapping"]
+color = Color(0.55, 0.55, 0.62, 1)
+
 [node name="BoundsFiller" type="Node2D" parent="World/Mapping" unique_id=698325330]
 script = ExtResource("m_bf")
 
@@ -48,11 +55,21 @@ script = ExtResource("m_cm")
 [node name="ChunkPersistence" type="Node" parent="World/Mapping" unique_id=1424378937]
 script = ExtResource("m_cp")
 
-[node name="TileMapPopulator" type="Node" parent="World/Mapping" unique_id=1363787636 node_paths=PackedStringArray("background_root_path", "maps_root_path", "decorations_root_path")]
+[node name="TileMapPopulator" type="Node" parent="World/Mapping" unique_id=1363787636 node_paths=PackedStringArray("background_root_path", "maps_root_path", "decorations_root_path", "chunk_manager_path", "light_manager_path")]
 script = ExtResource("m_tp")
 background_root_path = NodePath("../BackgroundMaps")
 maps_root_path = NodePath("../ChunkMaps")
 decorations_root_path = NodePath("../DecorationsMaps")
+chunk_manager_path = NodePath("../ChunkManager")
+light_manager_path = NodePath("../ChunkLightManager")
+
+[node name="ChunkLightManager" type="Node" parent="World/Mapping" node_paths=PackedStringArray("lights_root_path", "decorations_root_path", "chunk_manager_path", "canvas_modulate_path", "populator_path")]
+script = ExtResource("m_cl")
+lights_root_path = NodePath("../LightsRoot")
+decorations_root_path = NodePath("../DecorationsMaps")
+chunk_manager_path = NodePath("../ChunkManager")
+canvas_modulate_path = NodePath("../WorldCanvasModulate")
+populator_path = NodePath("../TileMapPopulator")
 
 [node name="VisibilityManager" type="Node" parent="World/Mapping" unique_id=1299291697]
 script = ExtResource("m_vm")
