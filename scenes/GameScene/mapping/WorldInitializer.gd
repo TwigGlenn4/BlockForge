@@ -112,6 +112,14 @@ func _boot() -> void:
 	if "stats" in player and player.stats is Dictionary:
 		player.stats.speed = WorldConfig.player_speed()
 
+	# ===== DEBUG
+	# Lantern near portal after PC spawn (warm PointLight2D via item_id lantern).
+	if world and world.has_method("set_lantern"):
+		var lantern_col: int = chunk_manager.wrap_column(int(floor(1035.0 / float(WorldConfig.chunk_size()))))
+		await visibility.ensure_column(lantern_col)
+		world.set_lantern(1035, 234, true)
+	# ===== DEBUG
+
 	# Start streaming only after spawn so visibility doesn't unload center columns
 	# while the camera is still at the origin.
 	visibility.begin_streaming()
